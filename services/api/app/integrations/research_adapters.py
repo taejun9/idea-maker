@@ -50,6 +50,20 @@ class OrganizationResult:
     notes: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class BusinessContextGenerationResult:
+    provider: ResearchProvider
+    status: ResearchStageStatus
+    business_field: str
+    users: tuple[str, ...]
+    job: str
+    outcome: str
+    adoption_risk: str
+    differentiation_focus: str
+    mvp_capability: str
+    notes: tuple[str, ...]
+
+
 class GeminiSearchItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -76,6 +90,17 @@ class GemmaOrganizationPayload(BaseModel):
     opportunities: list[str] = Field(min_length=1, max_length=6)
     risks: list[str] = Field(min_length=1, max_length=6)
     mvp_scope: list[str] = Field(min_length=1, max_length=6)
+
+
+class GemmaBusinessContextPayload(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    users: list[str] = Field(min_length=3, max_length=3)
+    job: str = Field(min_length=1, max_length=240)
+    outcome: str = Field(min_length=1, max_length=240)
+    adoption_risk: str = Field(min_length=1, max_length=240)
+    differentiation_focus: str = Field(min_length=1, max_length=240)
+    mvp_capability: str = Field(min_length=1, max_length=240)
 
 
 class GeminiCliSearchAdapter:
@@ -246,6 +271,101 @@ class LocalGemmaOrganizer:
         )
 
 
+class LocalGemmaBusinessContextGenerator:
+    def __init__(
+        self,
+        *,
+        base_url: str | None = None,
+        model: str | None = None,
+        timeout_seconds: float | None = None,
+        environment: Mapping[str, str] = os.environ,
+    ) -> None:
+        self.base_url = (
+            base_url or environment.get("LOCAL_GEMMA_BASE_URL", DEFAULT_GEMMA_BASE_URL)
+        ).rstrip("/")
+        self.model = model or environment.get("LOCAL_GEMMA_MODEL", DEFAULT_GEMMA_MODEL)
+        self.timeout_seconds = timeout_seconds or float(
+            environment.get(
+                "LOCAL_GEMMA_CONTEXT_TIMEOUT_SECONDS",
+                environment.get("LOCAL_GEMMA_TIMEOUT_SECONDS", "4"),
+            )
+        )
+
+    def generate(
+        self,
+        *,
+        business_field: str,
+    ) -> BusinessContextGenerationResult:
+        request_body = json.dumps(
+            {
+                "model": self.model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You create concise Korean product strategy context. "
+                            "Return only a JSON object that matches the requested schema."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": gemma_business_context_prompt(business_field),
+                    },
+                ],
+                "temperature": 0.7,
+                "max_tokens": 700,
+                "response_format": {"type": "json_object"},
+            },
+            ensure_ascii=False,
+        ).encode("utf-8")
+        request = Request(
+            f"{self.base_url}/v1/chat/completions",
+            data=request_body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        try:
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                raw_body = response.read(250_000)
+        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            return business_context_generation_fallback(
+                business_field,
+                f"Gemma business context generator unavailable: {exc}",
+            )
+
+        try:
+            response_payload = json.loads(raw_body.decode("utf-8"))
+            content = response_payload["choices"][0]["message"]["content"]
+            payload = GemmaBusinessContextPayload.model_validate(parse_json_object(content))
+        except (
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            KeyError,
+            IndexError,
+            TypeError,
+            ValidationError,
+            ValueError,
+        ) as exc:
+            return business_context_generation_fallback(
+                business_field,
+                f"Gemma business context output was not valid JSON: {exc}",
+            )
+
+        return BusinessContextGenerationResult(
+            provider="gemma4",
+            status="success",
+            business_field=business_field,
+            users=tuple(payload.users),
+            job=payload.job,
+            outcome=payload.outcome,
+            adoption_risk=payload.adoption_risk,
+            differentiation_focus=payload.differentiation_focus,
+            mvp_capability=payload.mvp_capability,
+            notes=(f"Gemma generated business context for {business_field}.",),
+        )
+
+
 def search_fallback(reason: str) -> SearchAdapterResult:
     return SearchAdapterResult(
         provider="fallback",
@@ -285,6 +405,24 @@ def organization_fallback(idea: str, reason: str) -> OrganizationResult:
             "차별화 기회, 주요 리스크, 다음 검증 단계",
         ),
         notes=(reason, "Using deterministic organization instead of local Gemma4."),
+    )
+
+
+def business_context_generation_fallback(
+    business_field: str,
+    reason: str,
+) -> BusinessContextGenerationResult:
+    return BusinessContextGenerationResult(
+        provider="fallback",
+        status="fallback",
+        business_field=business_field,
+        users=(),
+        job="",
+        outcome="",
+        adoption_risk="",
+        differentiation_focus="",
+        mvp_capability="",
+        notes=(reason, "Using deterministic business-field context instead of local Gemma4."),
     )
 
 
@@ -353,4 +491,20 @@ def gemma_organization_prompt(idea: str, records: list[NormalizedSourceRecord]) 
         "risks, mvp_scope. Each list should contain 3 to 5 concise Korean strings.\n\n"
         f"Selected idea: {idea}\n"
         f"Sources: {json.dumps(compact_records, ensure_ascii=False)}"
+    )
+
+
+def gemma_business_context_prompt(business_field: str) -> str:
+    return (
+        "Generate a Korean business-field context for idea report generation. "
+        "Use the given business field only; do not invent market facts, company names, "
+        "URLs, statistics, or claims of current adoption. Treat this as product strategy "
+        "framing, not sourced research. Return only JSON with this exact schema: "
+        '{"users":["user segment 1","user segment 2","user segment 3"],'
+        '"job":"job-to-be-done phrase","outcome":"desired measurable outcome",'
+        '"adoption_risk":"adoption risks or constraints",'
+        '"differentiation_focus":"differentiation focus",'
+        '"mvp_capability":"minimum viable capability"}. '
+        "All values must be concise Korean strings suitable for a startup idea report.\n\n"
+        f"Business field: {business_field}"
     )
