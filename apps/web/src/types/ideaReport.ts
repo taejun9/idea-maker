@@ -52,6 +52,10 @@ export interface ResearchStatus {
 }
 
 export interface IdeaReportResponse {
+  id: string;
+  idea: string;
+  locale: string;
+  created_at: string;
   overview: string;
   clarified_concept: string;
   target_users: string[];
@@ -67,4 +71,19 @@ export interface IdeaReportResponse {
   source_references: SourceReference[];
   next_validation_steps: string[];
   research_status: ResearchStatus;
+}
+
+export interface IdeaReportSummary {
+  id: string;
+  idea: string;
+  created_at: string;
+  overview: string;
+  research_requested: boolean;
+  domestic_competitor_count: number;
+  overseas_competitor_count: number;
+  source_reference_count: number;
+}
+
+export interface IdeaReportListResponse {
+  reports: IdeaReportSummary[];
 }

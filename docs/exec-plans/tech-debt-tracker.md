@@ -19,9 +19,9 @@ Every intentional shortcut must have:
 | --- | --- | --- | --- | --- | --- | --- |
 | DEBT-0002 | CI | Frontend/backend dependency installation may be skipped until lockfiles exist | CI is initially partial | Codex | package lockfiles are added | open |
 | DEBT-0004 | frontend | npm install reports 5 moderate audit findings in starter dependency tree | dependency risk needs triage before production | `platform-smith` | before public deployment or auth/user data launch | open |
-| DEBT-0005 | backend | MVP reports are not persisted | Users cannot retrieve generated reports after refresh or across sessions | Codex | report persistence plan starts | open |
 | DEBT-0006 | product | Export/share workflow is deferred | Users must manually copy report content | Codex | export/share plan starts | open |
 | DEBT-0007 | integrations | Product Hunt and BetaList remain fixture-backed and PitchWall lacks scheduled network smoke coverage | Source breadth and third-party drift are not fully verified | `api-crafter` / `reliability-warden` | next source integration plan or scheduled smoke-test plan starts | open |
+| DEBT-0008 | backend | Report persistence schema is created by repository startup DDL instead of versioned migrations | Schema evolution is harder to review and roll back as tables grow | `api-crafter` / `platform-smith` | first multi-table persistence change or production deployment preparation | open |
 
 ## Resolved Debt
 
@@ -29,6 +29,7 @@ Every intentional shortcut must have:
 | --- | --- | --- |
 | DEBT-0001 | 2026-05-03 | Replaced placeholder-only report source data with normalized collectors under `services/api/app/integrations/`; PitchWall now has a live path and remaining source gaps are tracked separately. |
 | DEBT-0003 | 2026-05-03 | Ran harness improvement work from `codex/plan-0008-harness-engineering` worktree and added no-active-plan `ci` verification for clean `main`. |
+| DEBT-0005 | 2026-05-03 | Added PostgreSQL-backed `idea_reports` persistence for generated reports, plus list/detail API and UI history pages. |
 
 ## Weekly Gardening Checklist
 

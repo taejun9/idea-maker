@@ -32,6 +32,13 @@ Forbidden:
 - Frontend validation improves UX but never replaces backend validation.
 - External source responses are untrusted and must be normalized through schemas before use.
 
+## Report History Data
+
+- Generated reports are persisted because user-facing history requires lookup after refresh.
+- Treat saved report `idea` and `report` payloads as sensitive business intent.
+- The current MVP has no authentication or per-user ownership. Do not expose report
+  history in a shared production environment until auth and ownership rules are added.
+
 ## Dependency Policy
 
 - Prefer boring, well-maintained dependencies with clear docs.

@@ -26,6 +26,7 @@ Idea-maker is a web service that turns a short idea into a structured business/p
 7. System recommends adjacent products/startups using sources such as Product Hunt, PitchWall, and BetaList.
 8. System separates domestic Korean competitors and overseas competitors.
 9. System generates a report containing overview, clarified concept, target users, core use cases, strengths, weaknesses, differentiation opportunities, risks, MVP scope, competitor table, source references, research status, and next validation steps.
+10. User can reopen generated reports from the report history list and detail pages.
 
 ## Input Experience
 
@@ -56,6 +57,7 @@ Idea-maker is a web service that turns a short idea into a structured business/p
 
 The current report API exposes the following MVP sections:
 
+- Report identity and history metadata: `id`, `idea`, `locale`, `created_at`
 - Executive summary: `overview`
 - Clarified concept: `clarified_concept`
 - Target users: `target_users`
@@ -69,6 +71,15 @@ The current report API exposes the following MVP sections:
 - Startup and source references: `source_references`
 - Validation checklist: `next_validation_steps`
 - Search and organization status: `research_status`
+
+The report history API exposes:
+
+- `GET /api/idea-reports`: newest-first report summaries for the report history page
+- `GET /api/idea-reports/{report_id}`: the full saved report detail
+
+The Docker runtime persists generated reports in PostgreSQL 18. Local tests without
+`DATABASE_URL` use an in-memory repository so routine unit tests do not require a
+database outside Docker.
 
 ## Data Source Rules
 

@@ -12,6 +12,10 @@ function apiUrl(path: string) {
 }
 
 const sampleReport = {
+  id: "report-sample-1",
+  idea: "동네 소상공인을 위한 AI 리뷰 분석 도구",
+  locale: "ko-KR",
+  created_at: "2026-05-03T00:00:00Z",
   overview: "'동네 소상공인을 위한 AI 리뷰 분석 도구' 아이디어를 초기 검증 가능한 제품 개념으로 구체화합니다.",
   clarified_concept:
     "동네 소상공인을 위한 AI 리뷰 분석 도구를 반복 업무를 줄이는 SaaS로 정의합니다.",
@@ -97,12 +101,28 @@ const sampleRecommendations = {
   ],
 };
 
+const sampleReportList = {
+  reports: [
+    {
+      id: sampleReport.id,
+      idea: sampleReport.idea,
+      created_at: sampleReport.created_at,
+      overview: sampleReport.overview,
+      research_requested: false,
+      domestic_competitor_count: 1,
+      overseas_competitor_count: 1,
+      source_reference_count: 1,
+    },
+  ],
+};
+
 const longerIdea =
   "지역 기반 소상공인 리뷰와 고객 문의를 분석하고 매장 운영 개선 과제를 자동으로 정리하는 B2B SaaS 플랫폼";
 
 describe("App", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    window.history.replaceState(null, "", "/");
   });
 
   it("renders the idea report entry workflow", () => {
@@ -276,5 +296,48 @@ describe("App", () => {
     expect(wrapper.find('[data-testid="key-risks"]').text()).toContain("fixture-backed");
     expect(wrapper.find('[data-testid="recommended-mvp-scope"]').text()).toContain("아이디어 입력");
     expect(wrapper.find('[data-testid="report-summary"]').text()).toContain("Product Hunt");
+    expect(wrapper.find('[data-testid="open-report-detail"]').attributes("href")).toBe(
+      "#/reports/report-sample-1",
+    );
+  });
+
+  it("loads the report history list page", async () => {
+    window.location.hash = "#/reports";
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(sampleReportList),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const wrapper = mount(App);
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="report-history-list"]').exists()).toBe(true);
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(apiUrl("/api/idea-reports"));
+    expect(wrapper.find('[data-testid="report-history-list"]').text()).toContain(
+      sampleReport.idea,
+    );
+    expect(wrapper.find('[data-testid="history-detail-link"]').attributes("href")).toBe(
+      "#/reports/report-sample-1",
+    );
+  });
+
+  it("loads a saved report detail page", async () => {
+    window.location.hash = "#/reports/report-sample-1";
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(sampleReport),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const wrapper = mount(App);
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="report-summary"]').exists()).toBe(true);
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(apiUrl("/api/idea-reports/report-sample-1"));
+    expect(wrapper.find('[data-testid="report-summary"]').text()).toContain(sampleReport.idea);
+    expect(wrapper.find('[data-testid="clarified-concept"]').text()).toContain("SaaS");
   });
 });
