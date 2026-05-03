@@ -41,6 +41,8 @@ Primary screens should expose stable selectors:
 - `data-testid="idea-input"`
 - `data-testid="generate-report"`
 - `data-testid="report-summary"`
+- `data-testid="report-history-list"`
+- `data-testid="history-detail-link"`
 - `data-testid="domestic-competitors"`
 - `data-testid="overseas-competitors"`
 - `data-testid="source-references"`

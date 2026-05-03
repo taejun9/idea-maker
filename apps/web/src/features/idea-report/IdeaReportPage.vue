@@ -172,6 +172,13 @@ async function generateReport(
 function competitorMarketLabel(competitor: Competitor) {
   return competitor.market === "domestic_kr" ? "국내" : "해외";
 }
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
 </script>
 
 <template>
@@ -340,6 +347,24 @@ function competitorMarketLabel(competitor: Competitor) {
         class="grid gap-6"
         aria-live="polite"
       >
+        <header class="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+          <div class="grid gap-1">
+            <p class="text-sm font-medium text-slate-500">
+              저장된 보고서 · {{ formatDateTime(report.created_at) }}
+            </p>
+            <h2 class="text-2xl font-semibold leading-tight text-slate-950">
+              {{ report.idea }}
+            </h2>
+          </div>
+          <a
+            class="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-500 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            data-testid="open-report-detail"
+            :href="`#/reports/${report.id}`"
+          >
+            상세 페이지 열기
+          </a>
+        </header>
+
         <section class="grid gap-3">
           <h2 class="text-xl font-semibold">요약</h2>
           <p class="rounded border border-slate-200 bg-white p-4 leading-7 text-slate-700">
@@ -470,7 +495,7 @@ function competitorMarketLabel(competitor: Competitor) {
         </section>
 
         <section class="grid gap-4 lg:grid-cols-2">
-          <div class="grid gap-3">
+          <div class="grid gap-3" data-testid="domestic-competitors">
             <h2 class="text-lg font-semibold">국내 경쟁 서비스</h2>
             <article
               v-for="competitor in report.domestic_competitors"
@@ -491,7 +516,7 @@ function competitorMarketLabel(competitor: Competitor) {
             </article>
           </div>
 
-          <div class="grid gap-3">
+          <div class="grid gap-3" data-testid="overseas-competitors">
             <h2 class="text-lg font-semibold">해외 경쟁 서비스</h2>
             <article
               v-for="competitor in report.overseas_competitors"
@@ -513,7 +538,7 @@ function competitorMarketLabel(competitor: Competitor) {
           </div>
         </section>
 
-        <section class="grid gap-3">
+        <section class="grid gap-3" data-testid="source-references">
           <h2 class="text-lg font-semibold">추천 소스</h2>
           <div class="grid gap-3 md:grid-cols-3">
             <article

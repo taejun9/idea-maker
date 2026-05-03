@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -75,6 +75,10 @@ class ResearchStatus(BaseModel):
 
 
 class IdeaReportResponse(BaseModel):
+    id: str
+    idea: str
+    locale: str
+    created_at: datetime
     overview: str
     clarified_concept: str
     target_users: list[str]
@@ -90,3 +94,18 @@ class IdeaReportResponse(BaseModel):
     source_references: list[SourceReference]
     next_validation_steps: list[str]
     research_status: ResearchStatus
+
+
+class IdeaReportSummary(BaseModel):
+    id: str
+    idea: str
+    created_at: datetime
+    overview: str
+    research_requested: bool
+    domestic_competitor_count: int
+    overseas_competitor_count: int
+    source_reference_count: int
+
+
+class IdeaReportListResponse(BaseModel):
+    reports: list[IdeaReportSummary]

@@ -1,4 +1,6 @@
 from datetime import UTC, datetime
+from typing import Protocol
+from uuid import uuid4
 
 from services.api.app.integrations.research_adapters import (
     GeminiCliSearchAdapter,
@@ -17,8 +19,10 @@ from services.api.app.schemas import (
     IdeaRecommendation,
     IdeaRecommendationRequest,
     IdeaRecommendationResponse,
+    IdeaReportListResponse,
     IdeaReportRequest,
     IdeaReportResponse,
+    IdeaReportSummary,
     ResearchStatus,
     SourceReference,
 )
@@ -61,13 +65,25 @@ RECOMMENDATION_PATTERNS = (
 )
 
 
+class IdeaReportRepository(Protocol):
+    def save_report(self, report: IdeaReportResponse) -> None:
+        ...
+
+    def list_reports(self, *, limit: int) -> list[IdeaReportResponse]:
+        ...
+
+    def get_report(self, report_id: str) -> IdeaReportResponse | None:
+        ...
+
+
 def create_idea_report(
     payload: IdeaReportRequest,
     *,
     search_adapter: GeminiCliSearchAdapter | None = None,
     organizer: LocalGemmaOrganizer | None = None,
 ) -> IdeaReportResponse:
-    observed = datetime.now(tz=UTC).date()
+    created_at = datetime.now(tz=UTC)
+    observed = created_at.date()
     normalized_idea = payload.idea.strip()
     baseline_records = collect_source_records(idea=normalized_idea, observed_date=observed)
     search_result: SearchAdapterResult | None = None
@@ -95,6 +111,10 @@ def create_idea_report(
     )
 
     return IdeaReportResponse(
+        id=str(uuid4()),
+        idea=normalized_idea,
+        locale=payload.locale,
+        created_at=created_at,
         overview=report_overview(normalized_idea, payload.research, organization),
         clarified_concept=(
             f"{normalized_idea}를 특정 고객군의 반복 업무를 줄이는 문제-해결형 "
@@ -130,6 +150,40 @@ def create_idea_report(
             search_result=search_result,
             organization=organization,
         ),
+    )
+
+
+def list_idea_reports(
+    repository: IdeaReportRepository,
+    *,
+    limit: int = 50,
+) -> IdeaReportListResponse:
+    return IdeaReportListResponse(
+        reports=[
+            summarize_idea_report(report)
+            for report in repository.list_reports(limit=limit)
+        ],
+    )
+
+
+def get_idea_report(
+    repository: IdeaReportRepository,
+    *,
+    report_id: str,
+) -> IdeaReportResponse | None:
+    return repository.get_report(report_id)
+
+
+def summarize_idea_report(report: IdeaReportResponse) -> IdeaReportSummary:
+    return IdeaReportSummary(
+        id=report.id,
+        idea=report.idea,
+        created_at=report.created_at,
+        overview=report.overview,
+        research_requested=report.research_status.requested,
+        domestic_competitor_count=len(report.domestic_competitors),
+        overseas_competitor_count=len(report.overseas_competitors),
+        source_reference_count=len(report.source_references),
     )
 
 

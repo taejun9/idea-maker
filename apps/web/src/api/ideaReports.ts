@@ -1,4 +1,5 @@
 import type {
+  IdeaReportListResponse,
   IdeaRecommendationRequest,
   IdeaRecommendationResponse,
   IdeaReportRequest,
@@ -23,6 +24,28 @@ export async function createIdeaReport(
 
   if (!response.ok) {
     throw new Error(`보고서 생성 실패: HTTP ${response.status}`);
+  }
+
+  return (await response.json()) as IdeaReportResponse;
+}
+
+export async function listIdeaReports(): Promise<IdeaReportListResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/idea-reports`);
+
+  if (!response.ok) {
+    throw new Error(`보고서 목록 조회 실패: HTTP ${response.status}`);
+  }
+
+  return (await response.json()) as IdeaReportListResponse;
+}
+
+export async function getIdeaReport(reportId: string): Promise<IdeaReportResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/idea-reports/${encodeURIComponent(reportId)}`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`보고서 상세 조회 실패: HTTP ${response.status}`);
   }
 
   return (await response.json()) as IdeaReportResponse;

@@ -12,6 +12,9 @@ Generated date: 2026-05-03
 | --- | --- | --- | --- |
 | `GET` | `/health` | none | `HealthResponse` |
 | `POST` | `/api/idea-reports` | `IdeaReportRequest` | `IdeaReportResponse` |
+| `GET` | `/api/idea-reports` | optional `limit` query, 1-100, default 50 | `IdeaReportListResponse` |
+| `GET` | `/api/idea-reports/{report_id}` | path `report_id` | `IdeaReportResponse` |
+| `POST` | `/api/idea-recommendations` | `IdeaRecommendationRequest` | `IdeaRecommendationResponse` |
 
 ## `IdeaReportRequest`
 
@@ -19,11 +22,16 @@ Generated date: 2026-05-03
 | --- | --- | --- | --- |
 | `idea` | string | yes | minimum 5 characters, maximum 2000 characters |
 | `locale` | string | no | defaults to `ko-KR` |
+| `research` | boolean | no | defaults to `false` |
 
 ## `IdeaReportResponse`
 
 | Field | Type | Notes |
 | --- | --- | --- |
+| `id` | string UUID | report id for history/detail lookup |
+| `idea` | string | normalized idea saved with the report |
+| `locale` | string | request locale |
+| `created_at` | date-time string | report creation timestamp |
 | `overview` | string | clarified idea summary |
 | `clarified_concept` | string | concrete product concept derived from the idea |
 | `target_users` | string array | target user segments |
@@ -38,6 +46,49 @@ Generated date: 2026-05-03
 | `overseas_competitors` | `Competitor[]` | overseas competitor section |
 | `source_references` | `SourceReference[]` | source metadata and confidence |
 | `next_validation_steps` | string array | recommended validation work |
+| `research_status` | `ResearchStatus` | search and organization adapter status |
+
+## `IdeaReportListResponse`
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `reports` | `IdeaReportSummary[]` | newest-first saved report summaries |
+
+## `IdeaReportSummary`
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | string UUID | report id for detail lookup |
+| `idea` | string | normalized idea saved with the report |
+| `created_at` | date-time string | report creation timestamp |
+| `overview` | string | report summary excerpt |
+| `research_requested` | boolean | true when live-search organization was requested |
+| `domestic_competitor_count` | integer | domestic competitor count in the saved report |
+| `overseas_competitor_count` | integer | overseas competitor count in the saved report |
+| `source_reference_count` | integer | source reference count in the saved report |
+
+## `IdeaRecommendationRequest`
+
+| Field | Type | Required | Rules |
+| --- | --- | --- | --- |
+| `keyword` | string | yes | 1-120 characters; must be a word or short sentence |
+| `locale` | string | no | defaults to `ko-KR` |
+
+## `IdeaRecommendationResponse`
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `keyword` | string | normalized keyword |
+| `recommendations` | `IdeaRecommendation[]` | concrete item recommendations |
+
+## `IdeaRecommendation`
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `title` | string | recommendation title |
+| `summary` | string | short recommendation summary |
+| `rationale` | string | why this item fits the input |
+| `report_seed` | string | full idea seed used to create a report |
 
 ## `Competitor`
 
@@ -51,6 +102,17 @@ Generated date: 2026-05-03
 | `source_url` | string or null | source URL when available |
 | `observed_date` | date string | source observation date |
 | `confidence` | `low`, `medium`, or `high` | source confidence |
+
+## `ResearchStatus`
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `requested` | boolean | whether research adapters were requested |
+| `search_provider` | `gemini_cli`, `fallback`, or `not_requested` | search provider status label |
+| `search_status` | `success`, `fallback`, or `skipped` | search execution status |
+| `organization_provider` | `gemma4`, `fallback`, or `not_requested` | organizer provider status label |
+| `organization_status` | `success`, `fallback`, or `skipped` | organization execution status |
+| `notes` | string array | adapter notes and fallback reasons |
 
 ## `SourceReference`
 

@@ -1,13 +1,22 @@
 import os
-from collections.abc import Mapping
+from collections.abc import AsyncIterator, Mapping
+from contextlib import asynccontextmanager
+from typing import Annotated
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
+from services.api.app.core.settings import database_url
+from services.api.app.repositories.idea_reports import (
+    IdeaReportRepository,
+    InMemoryIdeaReportRepository,
+    PostgresIdeaReportRepository,
+)
 from services.api.app.schemas import (
     HealthResponse,
     IdeaRecommendationRequest,
     IdeaRecommendationResponse,
+    IdeaReportListResponse,
     IdeaReportRequest,
     IdeaReportResponse,
 )
@@ -16,6 +25,12 @@ from services.api.app.services import (
 )
 from services.api.app.services import (
     create_idea_report as build_idea_report,
+)
+from services.api.app.services import (
+    get_idea_report as fetch_idea_report,
+)
+from services.api.app.services import (
+    list_idea_reports as build_idea_report_list,
 )
 
 
@@ -42,7 +57,23 @@ def allowed_cors_origins(environment: Mapping[str, str] = os.environ) -> list[st
     return list(dict.fromkeys(origins))
 
 
-app = FastAPI(title="Idea Maker API")
+def build_idea_report_repository(
+    environment: Mapping[str, str] = os.environ,
+) -> IdeaReportRepository:
+    configured_database_url = database_url(environment)
+    if configured_database_url:
+        return PostgresIdeaReportRepository(configured_database_url)
+    return InMemoryIdeaReportRepository()
+
+
+@asynccontextmanager
+async def lifespan(app_instance: FastAPI) -> AsyncIterator[None]:
+    app_instance.state.idea_report_repository.ensure_schema()
+    yield
+
+
+app = FastAPI(title="Idea Maker API", lifespan=lifespan)
+app.state.idea_report_repository = build_idea_report_repository()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_cors_origins(),
@@ -52,6 +83,10 @@ app.add_middleware(
 )
 
 
+def idea_report_repository() -> IdeaReportRepository:
+    return app.state.idea_report_repository
+
+
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     return HealthResponse(status="ok", service="idea-maker-api")
@@ -59,7 +94,30 @@ def health() -> HealthResponse:
 
 @app.post("/api/idea-reports", response_model=IdeaReportResponse)
 def create_idea_report(payload: IdeaReportRequest) -> IdeaReportResponse:
-    return build_idea_report(payload)
+    report = build_idea_report(payload)
+    idea_report_repository().save_report(report)
+    return report
+
+
+@app.get("/api/idea-reports", response_model=IdeaReportListResponse)
+def list_idea_reports(
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+) -> IdeaReportListResponse:
+    return build_idea_report_list(idea_report_repository(), limit=limit)
+
+
+@app.get("/api/idea-reports/{report_id}", response_model=IdeaReportResponse)
+def get_idea_report(report_id: str) -> IdeaReportResponse:
+    report = fetch_idea_report(idea_report_repository(), report_id=report_id)
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error_code": "idea_report_not_found",
+                "message": "보고서를 찾을 수 없습니다.",
+            },
+        )
+    return report
 
 
 @app.post("/api/idea-recommendations", response_model=IdeaRecommendationResponse)
