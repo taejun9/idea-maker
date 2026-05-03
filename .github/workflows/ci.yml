@@ -26,6 +26,6 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
       - name: Harness verification
-        run: scripts/agent-task.sh verify
+        run: scripts/agent-task.sh ci
       - name: Docker runtime tests
         run: scripts/agent-task.sh docker-test

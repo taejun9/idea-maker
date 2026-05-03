@@ -16,9 +16,9 @@ Quality score is the compact operating dashboard for this repository. Codex upda
 | Docs freshness | 85 | block on missing root review dates | Source-of-record docs established. |
 | Reliability | 65 | warn | Basic logging and health contract drafted. |
 | Security | 65 | block on secret leakage | Baseline policy drafted. |
-| Agent operability | 85 | block on harness failure | `scripts/agent-task.sh verify` is primary loop. |
+| Agent operability | 88 | block on harness failure | `verify` covers task branches; `ci` covers clean main/CI and execution-plan structure. |
 
-Overall: 72 / 100
+Overall: 73 / 100
 
 ## Merge Thresholds
 
@@ -34,6 +34,7 @@ Update this file when:
 - a quality gate changes from warn to block or block to warn
 - test strategy changes
 - architecture rules are added or relaxed
+- execution-plan or agent workflow gates change
 - repeated regressions reveal missing enforcement
 - a monthly entropy review completes
 

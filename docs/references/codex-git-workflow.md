@@ -31,6 +31,10 @@ scripts/agent-task.sh worktree-clean <task-id>
 scripts/agent-task.sh finish-report <task-id> "merged"
 ```
 
+`verify` is the task-branch command and requires an active plan. `ci` runs the
+same non-plan-gate checks for CI or clean `main`, where completed plans normally
+leave `docs/exec-plans/active/` empty except for `.gitkeep`.
+
 Default behavior: once work is implemented and required verification passes, Codex must merge and push immediately without waiting for a separate approval. Stop before merge only when the user explicitly asks to pause, when verification fails, or when the operation would be destructive beyond the documented merge/push flow.
 
 Plan gate: Codex must create or update an active execution plan before task work. If `docs/exec-plans/active/` has no `plan-NNNN-<task>.md` file, stop before implementation and create or request the missing plan.
@@ -76,11 +80,12 @@ Forbidden on `main`:
 
 1. Ensure PR branch is up to date with `main`.
 2. Run CI.
-3. Run `scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"` from the `main` worktree without waiting for extra approval.
-4. Remove worktree.
-5. Delete local branch.
-6. Delete remote branch if it still exists.
-7. Send finish report.
+3. Run `scripts/agent-task.sh ci` after completing and moving the active plan if a no-active-plan local check is needed.
+4. Run `scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"` from the `main` worktree without waiting for extra approval.
+5. Remove worktree.
+6. Delete local branch.
+7. Delete remote branch if it still exists.
+8. Send finish report.
 
 ## Emergency Exception
 

@@ -62,11 +62,18 @@ Run before final handoff:
 scripts/agent-task.sh verify
 ```
 
+CI and clean `main` use:
+
+```bash
+scripts/agent-task.sh ci
+```
+
 Minimum checks:
 
 - structure guard
 - docs freshness and links
 - architecture rule scan
+- execution plan structure guard
 - backend tests when backend changed
 - frontend build/test when frontend changed
 - Docker Compose integration checks when runtime behavior changed
