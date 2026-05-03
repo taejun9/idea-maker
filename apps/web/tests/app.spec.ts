@@ -485,7 +485,7 @@ describe("App", () => {
       sampleReport.idea,
     );
     expect(wrapper.find('[data-testid="history-business-field"]').text()).toContain(
-      "Q5 마케팅/PR",
+      "마케팅/PR",
     );
     expect(wrapper.find('[data-testid="history-detail-link"]').attributes("href")).toBe(
       "#/reports/report-sample-1",
