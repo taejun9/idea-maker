@@ -14,19 +14,23 @@ class IdeaReportRequest(BaseModel):
 
     idea: str = Field(min_length=5, max_length=2000)
     locale: str = Field(default="ko-KR")
+    research: bool = Field(default=False)
 
 
 class IdeaRecommendationRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    keyword: str = Field(min_length=1, max_length=80)
+    keyword: str = Field(min_length=1, max_length=120)
     locale: str = Field(default="ko-KR")
 
     @field_validator("keyword")
     @classmethod
-    def keyword_must_be_single_word(cls, value: str) -> str:
-        if len(value.split()) != 1:
-            raise ValueError("keyword must contain exactly one word")
+    def keyword_must_be_short(cls, value: str) -> str:
+        tokens = value.split()
+        if not tokens:
+            raise ValueError("keyword must not be blank")
+        if len(tokens) > 5 and len(value) > 40:
+            raise ValueError("keyword must be a word or short sentence")
         return value
 
 
@@ -61,6 +65,15 @@ class SourceReference(BaseModel):
     confidence: Literal["low", "medium", "high"]
 
 
+class ResearchStatus(BaseModel):
+    requested: bool
+    search_provider: Literal["gemini_cli", "fallback", "not_requested"]
+    search_status: Literal["success", "fallback", "skipped"]
+    organization_provider: Literal["gemma4", "fallback", "not_requested"]
+    organization_status: Literal["success", "fallback", "skipped"]
+    notes: list[str]
+
+
 class IdeaReportResponse(BaseModel):
     overview: str
     clarified_concept: str
@@ -76,3 +89,4 @@ class IdeaReportResponse(BaseModel):
     overseas_competitors: list[Competitor]
     source_references: list[SourceReference]
     next_validation_steps: list[str]
+    research_status: ResearchStatus

@@ -37,6 +37,30 @@ Recommendation sources include Product Hunt, PitchWall, BetaList, domestic compe
 - confidence
 - source name
 
+## Research Adapter Boundary
+
+Selected recommendations can request an optional research pipeline:
+
+1. `GeminiCliSearchAdapter` runs Gemini CLI in headless mode to collect public-source leads.
+2. Search results are normalized into source records before report generation.
+3. `LocalGemmaOrganizer` calls a llama.cpp OpenAI-compatible chat endpoint to organize normalized records.
+4. Adapter failures return structured fallback status and must not raise uncaught request errors.
+
+Runtime configuration:
+
+- `GEMINI_CLI_COMMAND`, default `gemini`
+- `GEMINI_CLI_MODEL`, default `gemini-2.5-flash`
+- `GEMINI_SEARCH_TIMEOUT_SECONDS`, default `12`
+- `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_CLOUD_PROJECT`, or
+  `GOOGLE_CLOUD_PROJECT_ID` when Gemini CLI needs non-interactive authentication
+- `LOCAL_GEMMA_BASE_URL`, default `http://localhost:8089` in code and `http://host.docker.internal:8089` in Docker Compose
+- `LOCAL_GEMMA_MODEL`, default `gemma4`
+- `LOCAL_GEMMA_TIMEOUT_SECONDS`, default `4`
+
+Routes must not call subprocesses or HTTP adapters directly; this logic belongs in service/integration modules.
+The API Docker image includes Node 22 and `@google/gemini-cli` so Docker Compose
+can run Gemini CLI when credentials are provided.
+
 ## Verification
 
 When backend changes:

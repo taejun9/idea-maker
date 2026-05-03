@@ -22,6 +22,7 @@ export interface SourceReference {
 export interface IdeaReportRequest {
   idea: string;
   locale?: string;
+  research?: boolean;
 }
 
 export interface IdeaRecommendationRequest {
@@ -41,6 +42,15 @@ export interface IdeaRecommendationResponse {
   recommendations: IdeaRecommendation[];
 }
 
+export interface ResearchStatus {
+  requested: boolean;
+  search_provider: "gemini_cli" | "fallback" | "not_requested";
+  search_status: "success" | "fallback" | "skipped";
+  organization_provider: "gemma4" | "fallback" | "not_requested";
+  organization_status: "success" | "fallback" | "skipped";
+  notes: string[];
+}
+
 export interface IdeaReportResponse {
   overview: string;
   clarified_concept: string;
@@ -56,4 +66,5 @@ export interface IdeaReportResponse {
   overseas_competitors: Competitor[];
   source_references: SourceReference[];
   next_validation_steps: string[];
+  research_status: ResearchStatus;
 }

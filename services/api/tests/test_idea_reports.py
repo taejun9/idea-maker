@@ -1,10 +1,17 @@
 from fastapi.testclient import TestClient
 
+from services.api.app.integrations.research_adapters import (
+    OrganizationResult,
+    SearchAdapterResult,
+)
 from services.api.app.integrations.source_collectors import (
+    NormalizedSourceRecord,
     SourceCollectorError,
     UrlFetchingSourceClient,
 )
 from services.api.app.main import allowed_cors_origins, app
+from services.api.app.schemas import IdeaReportRequest
+from services.api.app.services import create_idea_report
 
 
 def fail_live_source_fetch(self, url: str, *, timeout_seconds: float) -> object:
@@ -38,6 +45,7 @@ def test_create_idea_report_returns_competitor_sections(monkeypatch) -> None:
     assert body["key_risks"]
     assert body["build_complexity"].startswith("중간")
     assert body["recommended_mvp_scope"]
+    assert body["research_status"]["requested"] is False
 
 
 def test_create_idea_report_validates_short_idea() -> None:
@@ -63,12 +71,84 @@ def test_create_idea_recommendations_returns_related_items() -> None:
     assert body["recommendations"][0]["rationale"]
 
 
-def test_create_idea_recommendations_requires_single_keyword() -> None:
+def test_create_idea_recommendations_accepts_short_sentence() -> None:
     client = TestClient(app)
 
     response = client.post("/api/idea-recommendations", json={"keyword": "리뷰 분석"})
 
+    assert response.status_code == 200
+    assert response.json()["keyword"] == "리뷰 분석"
+
+
+def test_create_idea_recommendations_requires_concise_input() -> None:
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/idea-recommendations",
+        json={
+            "keyword": (
+                "너무 긴 입력은 추천 전에 더 명확한 문장으로 다듬어야 하므로 "
+                "바로 보고서 생성 대상으로 취급합니다"
+            )
+        },
+    )
+
     assert response.status_code == 422
+
+
+def test_create_researched_idea_report_uses_search_and_organization_adapters() -> None:
+    class FakeSearchAdapter:
+        def search(self, *, idea: str, observed_date) -> SearchAdapterResult:
+            return SearchAdapterResult(
+                provider="gemini_cli",
+                status="success",
+                records=(
+                    NormalizedSourceRecord(
+                        title="ReviewPulse",
+                        url="https://example.com/reviewpulse",
+                        market="overseas",
+                        category="test search result",
+                        summary=f"{idea} related live-search candidate.",
+                        strengths=("Fresh search lead",),
+                        weaknesses=("Needs manual verification",),
+                        observed_date=observed_date,
+                        confidence="medium",
+                        source_name="Gemini CLI search",
+                        access_method="live_http",
+                    ),
+                ),
+                notes=("fake gemini search used",),
+            )
+
+    class FakeOrganizer:
+        def organize(self, *, idea: str, records: list[NormalizedSourceRecord]):
+            return OrganizationResult(
+                provider="gemma4",
+                status="success",
+                summary=f"{idea} organized with {len(records)} records.",
+                target_users=("리뷰 담당 운영자",),
+                core_use_cases=("리뷰 이슈를 모아 우선순위를 정한다.",),
+                opportunities=("리뷰 기반 개선 루프를 자동화한다.",),
+                risks=("검색 결과 사실 확인이 필요하다.",),
+                mvp_scope=("리뷰 수집과 이슈 분류",),
+                notes=("fake gemma organizer used",),
+            )
+
+    report = create_idea_report(
+        IdeaReportRequest(
+            idea="리뷰 고객 반응 분석 도구",
+            research=True,
+        ),
+        search_adapter=FakeSearchAdapter(),
+        organizer=FakeOrganizer(),
+    )
+
+    assert report.research_status.requested is True
+    assert report.research_status.search_provider == "gemini_cli"
+    assert report.research_status.organization_provider == "gemma4"
+    assert "fake gemini search used" in report.research_status.notes
+    assert "ReviewPulse" in [competitor.name for competitor in report.overseas_competitors]
+    assert report.target_users == ["리뷰 담당 운영자"]
 
 
 def test_idea_report_cors_allows_local_web_origin() -> None:
