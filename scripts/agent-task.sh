@@ -21,6 +21,15 @@ run_python_check() {
   "$PYTHON_BIN" "$1"
 }
 
+require_active_plan() {
+  local active_plans
+  active_plans="$(find docs/exec-plans/active -maxdepth 1 -type f -name 'plan-[0-9][0-9][0-9][0-9]-*.md' -print -quit 2>/dev/null || true)"
+  if [ -z "$active_plans" ]; then
+    echo "No active execution plan found. Create docs/exec-plans/active/plan-NNNN-<task>.md before task work." >&2
+    exit 2
+  fi
+}
+
 case "$cmd" in
   start-report)
     task_id="${2:-[TASK_ID]}"
@@ -97,11 +106,16 @@ EOF
     fi
     git fetch origin main
     git merge --ff-only origin/main
-    git merge --no-ff "$branch" -m "$action $plan_id: $task_summary"
+    git merge --no-ff "$branch" -m "$action($plan_id): $task_summary"
     git push origin main
     echo "Merged $branch into main and pushed origin/main"
     ;;
+  active-plan)
+    require_active_plan
+    echo "active_plan: ok"
+    ;;
   doctor)
+    require_active_plan
     run_python_check tools/agent_doctor.py
     run_python_check tools/structure_guard.py
     ;;
@@ -136,6 +150,7 @@ EOF
     fi
     ;;
   verify)
+    "$0" active-plan
     "$0" doctor
     "$0" docs
     "$0" architecture
@@ -167,6 +182,7 @@ Commands:
   worktree-start Create .worktrees/<task-id> on codex/<task-id>
   worktree-clean Remove .worktrees/<task-id> and delete codex/<task-id>
   main-merge-push Merge codex/<task-id> into main and push origin/main
+  active-plan  Require at least one active execution plan
   docs          Check docs freshness and local markdown links
   architecture  Run architecture boundary scan
   quality       Check docs/quality/quality-score.md
