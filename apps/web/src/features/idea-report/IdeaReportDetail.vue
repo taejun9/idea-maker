@@ -51,29 +51,6 @@ function formatDateTime(value: string) {
 
     <IdeaIntakeQuestions :questions="report.idea_intake_questions" />
 
-    <!-- <section
-      v-if="report.research_status.requested"
-      data-testid="research-status"
-      class="grid gap-3"
-    >
-      <h2 class="text-lg font-semibold">검색 및 자료 정리 상태</h2>
-      <div class="rounded border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700">
-        <p>
-          검색 {{ report.research_status.search_provider }} /
-          {{ report.research_status.search_status }}
-        </p>
-        <p>
-          정리 {{ report.research_status.organization_provider }} /
-          {{ report.research_status.organization_status }}
-        </p>
-        <ul v-if="report.research_status.notes.length > 0" class="mt-2 grid gap-1">
-          <li v-for="note in report.research_status.notes" :key="note">
-            {{ note }}
-          </li>
-        </ul>
-      </div>
-    </section> -->
-
     <section class="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
       <div class="grid gap-3">
         <h2 class="text-lg font-semibold">구체화된 콘셉트</h2>

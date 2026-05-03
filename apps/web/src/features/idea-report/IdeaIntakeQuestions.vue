@@ -41,8 +41,8 @@ defineProps<{
         <select
           v-if="question.options.length > 0"
           class="break-words text-sm leading-6 text-slate-700"
+          :value="question.answer"
         >
-          <option value="">선택하세요</option>
           <option
             v-for="option in question.options"
             :key="option"
@@ -51,12 +51,6 @@ defineProps<{
             {{ option }}
           </option>
         </select>
-        <!-- <p
-          v-if="question.options.length > 0"
-          class="break-words text-sm leading-6 text-slate-700"
-        >
-          선택지: {{ question.options.join(" | ") }}
-        </p> -->
         <dl
           v-if="question.answer"
           class="grid gap-1 rounded border border-emerald-100 bg-emerald-50 p-3 text-sm"
