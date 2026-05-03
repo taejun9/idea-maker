@@ -32,4 +32,4 @@ Every intentional shortcut must have:
 - Close stale active plans.
 - Move completed plans.
 - Convert repeated debt into rules or tests.
-- Update `QUALITY_SCORE.md` if risk changed.
+- Update `docs/quality/quality-score.md` if risk changed.

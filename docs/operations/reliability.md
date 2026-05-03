@@ -1,4 +1,4 @@
-# RELIABILITY.md
+# Reliability
 
 Last reviewed: 2026-05-03
 Owner: Reliability / Codex

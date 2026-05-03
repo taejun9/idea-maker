@@ -6,12 +6,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_DOCS = [
-    "ARCHITECTURE.md",
-    "QUALITY_SCORE.md",
-    "RELIABILITY.md",
-    "SECURITY.md",
-    "FRONTEND.md",
-    "BACKEND.md",
+    "docs/architecture/README.md",
+    "docs/architecture/backend.md",
+    "docs/architecture/frontend.md",
+    "docs/quality/quality-score.md",
+    "docs/quality/review-rubric.md",
+    "docs/operations/reliability.md",
+    "docs/operations/security.md",
+    "docs/observability/README.md",
     "docs/HARNESS_SYSTEM.md",
     "docs/design-docs/index.md",
     "docs/design-docs/core-beliefs.md",
@@ -21,6 +23,7 @@ REQUIRED_DOCS = [
     "docs/exec-plans/tech-debt-tracker.md",
     "docs/references/README.md",
     "docs/references/codex-git-workflow.md",
+    "docs/references/codex-extensions.md",
     "docs/generated/db-schema.md",
 ]
 

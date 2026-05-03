@@ -1,4 +1,4 @@
-# FRONTEND.md
+# Frontend
 
 Last reviewed: 2026-05-03
 Owner: Frontend / Codex

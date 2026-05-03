@@ -9,11 +9,11 @@ You are Codex working in this repository for team 개미군단 (`ant-legion`). F
 
 ## Task Start Prompt
 
-Read `AGENTS.md`, `ARCHITECTURE.md`, and the docs relevant to this task. Send a start report with goal, scope, branch/worktree, and verification plan. State assumptions, identify whether an exec plan is needed, then implement. Do not stop at a proposal unless blocked.
+Read `AGENTS.md`, `docs/architecture/README.md`, and the docs relevant to this task. Send a start report with goal, scope, branch/worktree, and verification plan. State assumptions, identify whether an exec plan is needed, then implement. Do not stop at a proposal unless blocked.
 
 ## Bug Fix Prompt
 
-Reproduce the bug with a failing Docker test or local harness command. Identify the responsible layer using `ARCHITECTURE.md`. Patch the smallest layer, add a regression test, update docs if behavior changed, run `scripts/agent-task.sh verify`, then send a finish report.
+Reproduce the bug with a failing Docker test or local harness command. Identify the responsible layer using `docs/architecture/README.md`. Patch the smallest layer, add a regression test, update docs if behavior changed, run `scripts/agent-task.sh verify`, then send a finish report.
 
 ## New Feature Prompt
 
@@ -25,7 +25,7 @@ Run docs freshness and link checks. Update stale `Last reviewed:` dates only aft
 
 ## Architecture Violation Fix Prompt
 
-Run `tools/architecture_scan.py`. For each violation, move logic to the correct layer without changing behavior. Add or preserve tests. If the rule is wrong, update `ARCHITECTURE.md`, `lint-rules/architecture_rules.yml`, and `QUALITY_SCORE.md` with the rationale.
+Run `tools/architecture_scan.py`. For each violation, move logic to the correct layer without changing behavior. Add or preserve tests. If the rule is wrong, update `docs/architecture/README.md`, `lint-rules/architecture_rules.yml`, and `docs/quality/quality-score.md` with the rationale.
 
 ## PR Review Prompt
 

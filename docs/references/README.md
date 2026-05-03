@@ -28,10 +28,15 @@ For Product Hunt, PitchWall, BetaList, Korean competitors, and overseas competit
 | BetaList | early startup references | volatile; browse or integrate before current claims |
 | Korean search/news/directories | domestic competitors | source must be cited per report |
 
+## Codex Runtime References
+
+- `codex-git-workflow.md`: worktree branch, PR, merge, cleanup flow.
+- `codex-prompt-pack.md`: reusable Codex prompts.
+- `codex-extensions.md`: recommended skills, MCP/plugin capabilities, and installation policy.
+
 ## Update When
 
 - a new source is introduced
 - a source access method changes
 - terms, rate limits, or reliability risks are discovered
 - generated reports rely on a source-specific normalization rule
-

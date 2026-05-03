@@ -1,4 +1,4 @@
-# SECURITY.md
+# Security
 
 Last reviewed: 2026-05-03
 Owner: Security / Codex

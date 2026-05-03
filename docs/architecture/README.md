@@ -1,4 +1,4 @@
-# ARCHITECTURE.md
+# Architecture
 
 Last reviewed: 2026-05-03
 Owner: Platform / Codex

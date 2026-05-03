@@ -12,14 +12,15 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 
 ## Read First
 
-1. `ARCHITECTURE.md` - 계층, 의존성, 금지 패턴
+1. `docs/architecture/README.md` - 계층, 의존성, 금지 패턴
 2. `docs/design-docs/core-beliefs.md` - 제품/엔지니어링 판단 기준
 3. `docs/product-specs/index.md` - 제품 범위와 사용자 가치
 4. `docs/exec-plans/README.md` - 큰 작업을 실행 계획으로 쪼개는 법
 5. `docs/team/roster.md` - 개미군단 역할과 책임
 6. `docs/references/codex-git-workflow.md` - worktree 기반 Git 운영
-7. `QUALITY_SCORE.md` - 품질 점수와 병합 기준
-8. `RELIABILITY.md`, `SECURITY.md`, `FRONTEND.md`, `BACKEND.md` - 영역별 규칙
+7. `docs/references/codex-extensions.md` - 권장 skills/MCP와 사용 기준
+8. `docs/quality/quality-score.md` - 품질 점수와 병합 기준
+9. `docs/operations/reliability.md`, `docs/operations/security.md`, `docs/architecture/frontend.md`, `docs/architecture/backend.md` - 영역별 규칙
 
 ## Standard Codex Loop
 

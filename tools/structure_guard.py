@@ -8,20 +8,22 @@ ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_PATHS = [
     "AGENTS.md",
-    "ARCHITECTURE.md",
-    "QUALITY_SCORE.md",
-    "RELIABILITY.md",
-    "SECURITY.md",
-    "FRONTEND.md",
-    "BACKEND.md",
+    "docs/architecture/README.md",
+    "docs/architecture/backend.md",
+    "docs/architecture/frontend.md",
+    "docs/quality/quality-score.md",
+    "docs/quality/review-rubric.md",
+    "docs/operations/reliability.md",
+    "docs/operations/security.md",
+    "docs/observability/README.md",
     "docs/design-docs/index.md",
     "docs/design-docs/core-beliefs.md",
     "docs/product-specs/index.md",
     "docs/exec-plans/README.md",
     "docs/exec-plans/tech-debt-tracker.md",
     "docs/references/README.md",
+    "docs/references/codex-extensions.md",
     "docs/generated/db-schema.md",
-    "quality/review-rubric.md",
     "scripts/agent-task.sh",
     "tools/architecture_scan.py",
     "lint-rules/architecture_rules.yml",
@@ -48,4 +50,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

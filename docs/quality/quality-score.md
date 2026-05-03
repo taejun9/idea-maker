@@ -1,4 +1,4 @@
-# QUALITY_SCORE.md
+# Quality Score
 
 Last reviewed: 2026-05-03
 Owner: Platform / Codex
@@ -44,4 +44,3 @@ Update this file when:
 - 60-74: documented but partial enforcement
 - 40-59: known risk with weak enforcement
 - 0-39: unmanaged risk
-

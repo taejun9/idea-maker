@@ -129,7 +129,7 @@ Commands:
   worktree-clean Remove .worktrees/<task-id> and delete codex/<task-id>
   docs          Check docs freshness and local markdown links
   architecture  Run architecture boundary scan
-  quality       Check QUALITY_SCORE.md
+  quality       Check docs/quality/quality-score.md
   backend       Run backend lint/tests
   frontend      Run frontend build/tests
   verify        Run the standard Codex verification loop

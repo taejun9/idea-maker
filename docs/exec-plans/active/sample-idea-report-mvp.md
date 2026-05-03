@@ -4,7 +4,7 @@ Status: active
 Owner: Codex
 Created: 2026-05-03
 Last updated: 2026-05-03
-Related docs: `docs/product-specs/index.md`, `ARCHITECTURE.md`, `BACKEND.md`, `FRONTEND.md`
+Related docs: `docs/product-specs/index.md`, `docs/architecture/README.md`, `docs/architecture/backend.md`, `docs/architecture/frontend.md`
 Branch: `codex/plan-0001-idea-report-mvp`
 Worktree: `.worktrees/plan-0001-idea-report-mvp`
 

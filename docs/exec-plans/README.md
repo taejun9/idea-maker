@@ -68,5 +68,4 @@ When complete:
 2. Add outcome and verification evidence.
 3. Move file from `active/` to `completed/`.
 4. Add deferred work to `tech-debt-tracker.md`.
-5. Update `QUALITY_SCORE.md` if gates or risk changed.
-
+5. Update `docs/quality/quality-score.md` if gates or risk changed.

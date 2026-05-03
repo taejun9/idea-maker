@@ -26,7 +26,7 @@ Owner: Platform / Codex
 - Codex가 수정 후 반드시 돌리는 `scripts/agent-task.sh verify`를 둔다.
 - 품질, 문서 신선도, 아키텍처 위반을 CI에서 반복 측정한다.
 
-장점은 반복 가능한 개발, 낮은 온보딩 비용, 작은 PR, 명확한 롤백이다. 한계는 초기 문서/규칙 유지비와 과도한 규칙화 위험이다. 그래서 모든 규칙은 `QUALITY_SCORE.md`와 tech debt tracker에서 주기적으로 조정한다.
+장점은 반복 가능한 개발, 낮은 온보딩 비용, 작은 PR, 명확한 롤백이다. 한계는 초기 문서/규칙 유지비와 과도한 규칙화 위험이다. 그래서 모든 규칙은 `docs/quality/quality-score.md`와 tech debt tracker에서 주기적으로 조정한다.
 
 ## 1. System Blueprint
 
@@ -50,18 +50,20 @@ Human intent
 Repository map:
 
 ```text
-AGENTS.md                 Codex entry map
-ARCHITECTURE.md           enforceable architecture contract
-docs/                     source of record
-quality/                  rubrics and review standards
-tools/                    repository inspection scripts
-scripts/                  Codex command harness
-lint-rules/               machine-readable architecture policies
-observability/            logs, metrics, debugging contracts
-evals/                    harness evaluation scenarios
-apps/web/                 Vue frontend
-services/api/             Python backend
-.github/workflows/        CI
+AGENTS.md                    Codex entry map
+README.md                    human project entry
+docs/                        source of record
+docs/architecture/           enforceable architecture contracts
+docs/operations/             reliability and security operations
+docs/quality/                rubrics and quality score
+docs/observability/          logs, metrics, debugging contracts
+tools/                       repository inspection scripts
+scripts/                     Codex command harness
+lint-rules/                  machine-readable architecture policies
+evals/                       harness evaluation scenarios
+apps/web/                    Vue frontend
+services/api/                Python backend
+.github/workflows/           CI
 ```
 
 Lifecycle:
@@ -79,12 +81,6 @@ Lifecycle:
 ```text
 .
 ├── AGENTS.md
-├── ARCHITECTURE.md
-├── BACKEND.md
-├── FRONTEND.md
-├── QUALITY_SCORE.md
-├── RELIABILITY.md
-├── SECURITY.md
 ├── README.md
 ├── apps/
 │   └── web/
@@ -98,19 +94,29 @@ Lifecycle:
 │       └── tests/
 ├── docs/
 │   ├── HARNESS_SYSTEM.md
+│   ├── architecture/
+│   │   ├── README.md
+│   │   ├── backend.md
+│   │   └── frontend.md
 │   ├── design-docs/
-│   ├── team/
 │   ├── exec-plans/
 │   │   ├── active/
 │   │   └── completed/
+│   ├── generated/
+│   ├── observability/
+│   │   └── README.md
+│   ├── operations/
+│   │   ├── reliability.md
+│   │   └── security.md
 │   ├── product-specs/
+│   ├── quality/
+│   │   ├── quality-score.md
+│   │   └── review-rubric.md
 │   ├── references/
-│   └── generated/
-├── quality/
+│   └── team/
 ├── scripts/
 ├── tools/
 ├── tests/
-├── observability/
 ├── evals/
 ├── lint-rules/
 ├── docker-compose.yml
@@ -120,16 +126,18 @@ Lifecycle:
 Directory responsibilities:
 
 - `docs/design-docs/`: durable engineering decisions and beliefs.
+- `docs/architecture/`: architecture boundaries and frontend/backend rules.
 - `docs/product-specs/`: product goals, users, workflows, report structure.
 - `docs/exec-plans/active/`: current multi-step Codex work.
 - `docs/exec-plans/completed/`: finished plans with outcomes.
 - `docs/references/`: external source notes and integration references.
 - `docs/team/`: 개미군단 역할, 한글 이름, 영어 id, 책임.
 - `docs/generated/`: generated facts such as DB schema and API contracts.
-- `quality/`: scoring rubrics and review standards.
+- `docs/operations/`: reliability, security, and runtime operating rules.
+- `docs/quality/`: scoring rubrics and review standards.
 - `scripts/`: stable commands Codex should run.
 - `tools/`: repository checks used locally and in CI.
-- `observability/`: logging, metrics, tracing, debugging guides.
+- `docs/observability/`: logging, metrics, tracing, debugging guides.
 - `evals/`: scenarios to measure whether the harness works.
 - `lint-rules/`: machine-readable policy source for structure checks.
 
@@ -152,12 +160,13 @@ Required docs and update triggers:
 | `docs/exec-plans/completed/*.md` | outcome history | plan completes |
 | `docs/exec-plans/tech-debt-tracker.md` | debt queue | warn gates, shortcuts, deferred work |
 | `docs/references/README.md` | source policy | source/integration changes |
+| `docs/references/codex-extensions.md` | skills/MCP recommendations | extension install or adoption changes |
 | `docs/generated/db-schema.md` | generated DB facts | DB migration changes |
-| `QUALITY_SCORE.md` | merge quality posture | quality gate changes |
-| `RELIABILITY.md` | health/logging/debugging | reliability behavior changes |
-| `SECURITY.md` | security posture | auth/data/source changes |
-| `FRONTEND.md` | frontend rules | UI architecture changes |
-| `BACKEND.md` | backend rules | API/service architecture changes |
+| `docs/quality/quality-score.md` | merge quality posture | quality gate changes |
+| `docs/operations/reliability.md` | health/logging/debugging | reliability behavior changes |
+| `docs/operations/security.md` | security posture | auth/data/source changes |
+| `docs/architecture/frontend.md` | frontend rules | UI architecture changes |
+| `docs/architecture/backend.md` | backend rules | API/service architecture changes |
 
 ## 5. Execution Plan Framework
 
@@ -178,14 +187,14 @@ Sample plan exists at `docs/exec-plans/active/sample-idea-report-mvp.md`.
 
 ## 6. Architecture Rules
 
-Rules are written in prose in `ARCHITECTURE.md` and mirrored in `lint-rules/architecture_rules.yml` for mechanical checks.
+Rules are written in prose in `docs/architecture/README.md` and mirrored in `lint-rules/architecture_rules.yml` for mechanical checks.
 
 Machine-testable statements:
 
 - `apps/web` must not import from `services/api`.
 - files under `apps/web/src/components` must not call `fetch`.
 - backend route modules must not import `sqlite3`, `psycopg`, `sqlalchemy`, or external source clients directly.
-- all required root docs must include `Last reviewed:`.
+- all required source-of-record docs must include `Last reviewed:`.
 - active exec plans must include `Rollback Strategy`, `Verification`, and `Decision Log`.
 
 ## 7. Mechanical Enforcement
@@ -352,13 +361,13 @@ Month 2+:
 | Deliverable | Purpose | Required | Maintainer | Trigger |
 | --- | --- | --- | --- | --- |
 | `AGENTS.md` | Codex entry map | yes | human + Codex | workflow changes |
-| `ARCHITECTURE.md` | boundary contract | yes | Codex | architecture changes |
+| `docs/architecture/README.md` | boundary contract | yes | Codex | architecture changes |
 | `docs/` | source of record | yes | Codex | every behavior/rule change |
 | `scripts/agent-task.sh` | local harness | yes | Codex | verification changes |
 | `tools/*.py` | mechanical checks | yes | CI + Codex | new rule |
 | `.github/workflows/ci.yml` | repeatable CI | yes | CI | gate changes |
-| `quality/` | review rubric | yes | human + Codex | merge policy changes |
+| `docs/quality/` | review rubric | yes | human + Codex | merge policy changes |
 | `evals/` | harness KPI scenarios | yes | Codex | monthly review |
-| `observability/` | debug/readability contracts | yes | Codex | logging/metrics changes |
+| `docs/observability/` | debug/readability contracts | yes | Codex | logging/metrics changes |
 | `docs/team/roster.md` | 개미군단 역할/책임 | yes | human + Codex | ownership changes |
 | `docker-compose.yml` | local runtime | yes | Codex | runtime changes |
