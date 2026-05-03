@@ -1,0 +1,13 @@
+{
+  "name": "idea-maker",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "verify": "scripts/agent-task.sh verify",
+    "docs": "scripts/agent-task.sh docs",
+    "architecture": "scripts/agent-task.sh architecture"
+  }
+}
+

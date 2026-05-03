@@ -1,0 +1,40 @@
+version: 1
+last_reviewed: 2026-05-03
+rules:
+  - id: frontend-no-backend-internals
+    severity: block
+    description: Frontend must not import backend internals.
+    paths:
+      include:
+        - apps/web/src
+    forbidden_patterns:
+      - "services/api"
+  - id: component-no-fetch
+    severity: block
+    description: Presentational components must not call fetch directly.
+    paths:
+      include:
+        - apps/web/src/components
+    forbidden_patterns:
+      - "fetch("
+  - id: route-no-db-driver
+    severity: block
+    description: Backend routes must not import database drivers directly.
+    paths:
+      include:
+        - services/api/app/routes
+    forbidden_patterns:
+      - "import sqlite3"
+      - "import psycopg"
+      - "from sqlalchemy"
+  - id: no-secret-ish-values
+    severity: block
+    description: Avoid committing obvious secret-looking values.
+    paths:
+      include:
+        - .
+    forbidden_patterns:
+      - "sk-live-"
+      - "ghp_"
+      - "xoxb-"
+

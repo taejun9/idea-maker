@@ -1,0 +1,50 @@
+# SECURITY.md
+
+Last reviewed: 2026-05-03
+Owner: Security / Codex
+
+## Baseline Security Policy
+
+- Never commit secrets.
+- Use environment variables for API keys and credentials.
+- Treat user ideas as sensitive business intent.
+- Do not send user content to external services unless the product spec allows it and the UI communicates it.
+- Redact prompts and report content from logs by default.
+
+## Secret Handling
+
+Allowed:
+
+- `.env.example`
+- documented variable names
+- test-only dummy values
+
+Forbidden:
+
+- real API tokens
+- private cookies
+- copied browser session headers
+- user report exports with personal data
+
+## Input Validation
+
+- Backend request validation uses Pydantic schemas.
+- Frontend validation improves UX but never replaces backend validation.
+- External source responses are untrusted and must be normalized through schemas before use.
+
+## Dependency Policy
+
+- Prefer boring, well-maintained dependencies with clear docs.
+- Do not add scraping or browser automation dependencies without an exec plan explaining legal, reliability, and maintenance risks.
+- Pin backend dependencies in lock files once dependency management is initialized.
+- Local database credentials must be Docker-only development credentials and documented in `.env.example`.
+
+## Security Review Triggers
+
+Human review is required when:
+
+- authentication or authorization changes
+- external data collection changes
+- report sharing/export changes
+- secrets, billing, or user identity is introduced
+- production deployment configuration changes

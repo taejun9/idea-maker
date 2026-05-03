@@ -1,0 +1,42 @@
+version: 1
+last_reviewed: 2026-05-03
+owner: Platform / Codex
+scenarios:
+  - id: eval-001
+    name: add backend report field
+    prompt: Add a new report field named validation_steps and expose it through the API.
+    expected:
+      - schema updated
+      - service output updated
+      - tests updated
+      - generated docs updated
+      - architecture scan passes
+    kpis:
+      prompt_success_rate: pass
+      first_attempt_success_rate: pass
+      architecture_violation_rate: zero
+  - id: eval-002
+    name: fix frontend error state
+    prompt: Improve the report generation error state with a retry action.
+    expected:
+      - component state remains local
+      - API client boundary preserved
+      - UI test or manual verification note added
+  - id: eval-003
+    name: doc gardening
+    prompt: Refresh stale execution plans and update the tech debt tracker.
+    expected:
+      - completed plans moved
+      - stale docs reviewed
+      - broken links fixed
+metrics:
+  prompt_success_rate: "completed task / attempted prompts"
+  first_attempt_success_rate: "completed without user correction / attempted prompts"
+  average_fix_iterations: "patch/test loops per task"
+  docs_reference_accuracy: "claims linked to correct docs / sampled claims"
+  architecture_violation_rate: "violations per PR"
+  human_intervention_time_per_pr: "minutes of human review or correction"
+  regression_bug_ratio: "regression bugs / merged PRs"
+  drift_cleanup_speed: "days from debt detection to closure"
+  docs_freshness: "docs with valid Last reviewed / required docs"
+

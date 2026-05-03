@@ -1,0 +1,41 @@
+# FRONTEND.md
+
+Last reviewed: 2026-05-03
+Owner: Frontend / Codex
+
+## Stack
+
+- Vue 3
+- Vite
+- TailwindCSS
+- TypeScript
+- Vitest for unit tests
+- Playwright or Codex browser verification for user flows
+- Node 22
+- Docker Compose for local runtime
+
+## UI Principles
+
+- Build the usable product screen first, not a marketing landing page.
+- Keep report generation workflow visible and scannable.
+- Prefer dense, clear operational UI over decorative sections.
+- Components should have stable dimensions for repeated controls and result panels.
+- Error states must be specific enough for Codex to diagnose.
+
+## File Rules
+
+- API calls live in `apps/web/src/api/`.
+- Feature-specific components live in `apps/web/src/features/<feature>/`.
+- Reusable presentational components live in `apps/web/src/components/`.
+- Components do not import backend internals.
+- Components do not call `fetch` directly unless they are explicitly container components and documented.
+
+## Verification
+
+When frontend changes:
+
+```bash
+scripts/agent-task.sh docker-test
+```
+
+If UI behavior changes, verify a local screen with Codex browser or Playwright and record the result in the PR notes.
