@@ -201,6 +201,7 @@ class IdeaReportSummary(BaseModel):
     idea: str
     created_at: datetime
     overview: str
+    business_field: str
     research_requested: bool
     domestic_competitor_count: int
     overseas_competitor_count: int

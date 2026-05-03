@@ -49,6 +49,11 @@ Roles: Frontend
 - Fixed Vue compiler errors related to unbalanced closing tags.
 - Verified with `docker-test`.
 
+## Outcome
+- Noto Sans KR is applied globally through the frontend font configuration.
+- The main Vue screens were restyled while preserving existing report workflow behavior.
+- Verification evidence is recorded in the plan's Verification section.
+
 ## Definition of Done
 - Noto Sans KR is applied globally.
 - Overall UI is aesthetically improved.
