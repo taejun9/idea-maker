@@ -4,6 +4,7 @@ import type {
   IdeaReportResponse,
   SourceConfidence,
 } from "../../types/ideaReport";
+import IdeaIntakeQuestions from "./IdeaIntakeQuestions.vue";
 
 defineProps<{
   report: IdeaReportResponse;
@@ -43,6 +44,8 @@ function formatDateTime(value: string) {
         {{ report.overview }}
       </p>
     </section>
+
+    <IdeaIntakeQuestions :questions="report.idea_intake_questions" />
 
     <section
       v-if="report.research_status.requested"

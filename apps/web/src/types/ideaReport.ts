@@ -51,12 +51,21 @@ export interface ResearchStatus {
   notes: string[];
 }
 
+export interface IdeaIntakeQuestion {
+  code: "Q1" | "Q2" | "Q3" | "Q4" | "Q5";
+  prompt: string;
+  requirement: string;
+  photo_guidance: string | null;
+  options: string[];
+}
+
 export interface IdeaReportResponse {
   id: string;
   idea: string;
   locale: string;
   created_at: string;
   overview: string;
+  idea_intake_questions: IdeaIntakeQuestion[];
   clarified_concept: string;
   target_users: string[];
   core_use_cases: string[];

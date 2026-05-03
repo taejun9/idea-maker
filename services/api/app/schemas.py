@@ -74,12 +74,84 @@ class ResearchStatus(BaseModel):
     notes: list[str]
 
 
+BUSINESS_FIELD_OPTIONS = (
+    "IT",
+    "교육",
+    "금융",
+    "운영관리",
+    "네트워킹",
+    "농축/수산업",
+    "라이프스타일",
+    "마케팅/PR",
+    "모빌리티",
+    "미디어/엔터테인먼트",
+    "바이오/의류",
+    "에너지/자원",
+    "유통/물류",
+    "임팩트",
+    "재무",
+    "프롭테크",
+    "하드웨어",
+    "기타",
+)
+
+PHOTO_PLACEMENT_GUIDANCE = (
+    "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. "
+    "사진은 3개 질문 합산 최대 5장까지 가능합니다."
+)
+
+
+class IdeaIntakeQuestion(BaseModel):
+    code: Literal["Q1", "Q2", "Q3", "Q4", "Q5"]
+    prompt: str
+    requirement: str
+    photo_guidance: str | None = None
+    options: list[str] = Field(default_factory=list)
+
+
+def default_idea_intake_questions() -> list[IdeaIntakeQuestion]:
+    return [
+        IdeaIntakeQuestion(
+            code="Q1",
+            prompt="나의 아이디어를 한 줄로 소개해주세요.",
+            requirement="필수, 최소 10자 이상 입력해주세요.",
+        ),
+        IdeaIntakeQuestion(
+            code="Q2",
+            prompt="아이디어를 떠올린 배경 이야기를 들려주세요.",
+            requirement="필수",
+            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
+        ),
+        IdeaIntakeQuestion(
+            code="Q3",
+            prompt="아이디어는 누구의 어떤 문제를 해결해주나요?",
+            requirement="필수",
+            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
+        ),
+        IdeaIntakeQuestion(
+            code="Q4",
+            prompt="아이디어를 어떻게 실현하고 싶으신가요?",
+            requirement="필수",
+            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
+        ),
+        IdeaIntakeQuestion(
+            code="Q5",
+            prompt="사업 분야를 선택해주세요.",
+            requirement="필수",
+            options=list(BUSINESS_FIELD_OPTIONS),
+        ),
+    ]
+
+
 class IdeaReportResponse(BaseModel):
     id: str
     idea: str
     locale: str
     created_at: datetime
     overview: str
+    idea_intake_questions: list[IdeaIntakeQuestion] = Field(
+        default_factory=default_idea_intake_questions
+    )
     clarified_concept: str
     target_users: list[str]
     core_use_cases: list[str]

@@ -7,6 +7,7 @@ import type {
   IdeaReportResponse,
   SourceConfidence,
 } from "../../types/ideaReport";
+import IdeaIntakeQuestions from "./IdeaIntakeQuestions.vue";
 
 const minIdeaLength = 5;
 const maxIdeaLength = 2000;
@@ -371,6 +372,8 @@ function formatDateTime(value: string) {
             {{ report.overview }}
           </p>
         </section>
+
+        <IdeaIntakeQuestions :questions="report.idea_intake_questions" />
 
         <section
           v-if="report.research_status.requested"

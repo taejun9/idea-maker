@@ -14,7 +14,7 @@ from services.api.app.integrations.source_collectors import (
 )
 from services.api.app.main import allowed_cors_origins, app
 from services.api.app.repositories.idea_reports import InMemoryIdeaReportRepository
-from services.api.app.schemas import IdeaReportRequest
+from services.api.app.schemas import IdeaReportRequest, IdeaReportResponse
 from services.api.app.services import create_idea_report
 
 
@@ -55,6 +55,37 @@ def test_create_idea_report_returns_competitor_sections(monkeypatch) -> None:
     assert body["source_references"][0]["observed_date"]
     assert "fixture-backed" in body["source_references"][0]["note"].lower()
     assert "AI 리뷰 분석 도구" in body["overview"]
+    assert body["idea_intake_questions"][0] == {
+        "code": "Q1",
+        "prompt": "나의 아이디어를 한 줄로 소개해주세요.",
+        "requirement": "필수, 최소 10자 이상 입력해주세요.",
+        "photo_guidance": None,
+        "options": [],
+    }
+    assert body["idea_intake_questions"][1]["photo_guidance"].startswith(
+        "사진은 드래그앤드랍"
+    )
+    assert body["idea_intake_questions"][4]["prompt"] == "사업 분야를 선택해주세요."
+    assert body["idea_intake_questions"][4]["options"] == [
+        "IT",
+        "교육",
+        "금융",
+        "운영관리",
+        "네트워킹",
+        "농축/수산업",
+        "라이프스타일",
+        "마케팅/PR",
+        "모빌리티",
+        "미디어/엔터테인먼트",
+        "바이오/의류",
+        "에너지/자원",
+        "유통/물류",
+        "임팩트",
+        "재무",
+        "프롭테크",
+        "하드웨어",
+        "기타",
+    ]
     assert "SaaS" in body["clarified_concept"]
     assert body["core_use_cases"]
     assert body["differentiation_opportunities"]
@@ -108,6 +139,22 @@ def test_get_idea_report_returns_saved_detail(monkeypatch) -> None:
     assert detail_response.json()["id"] == created_report["id"]
     assert detail_response.json()["idea"] == idea
     assert detail_response.json()["clarified_concept"] == created_report["clarified_concept"]
+
+
+def test_idea_report_response_backfills_intake_questions_for_saved_payloads(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(UrlFetchingSourceClient, "fetch_json", fail_live_source_fetch)
+    report = create_idea_report(
+        IdeaReportRequest(idea="기존 저장 보고서 호환성 확인용 아이디어")
+    )
+    saved_payload = report.model_dump(mode="json")
+    saved_payload.pop("idea_intake_questions")
+
+    restored_report = IdeaReportResponse.model_validate(saved_payload)
+
+    assert restored_report.idea_intake_questions[0].code == "Q1"
+    assert restored_report.idea_intake_questions[4].options[-1] == "기타"
 
 
 def test_get_idea_report_returns_not_found_for_missing_report() -> None:
