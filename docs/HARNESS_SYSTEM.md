@@ -183,7 +183,7 @@ Every complex task plan includes:
 - definition of done
 - follow-up cleanup
 
-Sample plan exists at `docs/exec-plans/active/plan-0001-idea-report-mvp.md`.
+Completed MVP plan exists at `docs/exec-plans/completed/plan-0001-idea-report-mvp.md`.
 
 ## 6. Architecture Rules
 

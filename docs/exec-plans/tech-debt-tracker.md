@@ -17,10 +17,12 @@ Every intentional shortcut must have:
 
 | ID | Area | Debt | Risk | Owner | Cleanup Trigger | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| DEBT-0001 | backend | Recommendation output starts with deterministic placeholders | Reports are not market-current | Codex | source collector plan starts | open |
+| DEBT-0001 | backend | Recommendation output starts with deterministic placeholders | Reports are not market-current | Codex | source collector plan completes | open |
 | DEBT-0002 | CI | Frontend/backend dependency installation may be skipped until lockfiles exist | CI is initially partial | Codex | package lockfiles are added | open |
 | DEBT-0003 | git | Initial harness files were drafted before worktree policy was added | Working directory hygiene risk until first branch migration | Codex | first PR is created from a worktree branch | open |
 | DEBT-0004 | frontend | npm install reports 5 moderate audit findings in starter dependency tree | dependency risk needs triage before production | `platform-smith` | before public deployment or auth/user data launch | open |
+| DEBT-0005 | backend | MVP reports are not persisted | Users cannot retrieve generated reports after refresh or across sessions | Codex | report persistence plan starts | open |
+| DEBT-0006 | product | Export/share workflow is deferred | Users must manually copy report content | Codex | export/share plan starts | open |
 
 ## Resolved Debt
 

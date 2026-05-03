@@ -12,3 +12,9 @@ Generated files must include:
 
 Do not manually edit generated sections unless the file explicitly allows it.
 
+## Files
+
+| File | Source | Update trigger |
+| --- | --- | --- |
+| `api-contract.md` | FastAPI OpenAPI schema from `services/api/app/main.py` | API route or schema changes |
+| `db-schema.md` | PostgreSQL migrations once available | database migration changes |

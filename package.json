@@ -6,8 +6,8 @@
   ],
   "scripts": {
     "verify": "scripts/agent-task.sh verify",
+    "docker:up": "scripts/agent-task.sh docker-up",
     "docs": "scripts/agent-task.sh docs",
     "architecture": "scripts/agent-task.sh architecture"
   }
 }
-

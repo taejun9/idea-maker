@@ -1,9 +1,10 @@
 # PLAN-0001 Idea Report MVP
 
-Status: active
+Status: completed
 Owner: Codex
 Created: 2026-05-03
 Last updated: 2026-05-03
+Completed: 2026-05-03
 Related docs: `docs/product-specs/index.md`, `docs/architecture/README.md`, `docs/architecture/backend.md`, `docs/architecture/frontend.md`
 Branch: `codex/plan-0001-idea-report-mvp`
 Worktree: `.worktrees/plan-0001-idea-report-mvp`
@@ -36,14 +37,14 @@ Build the first vertical slice for generating an idea report from a short user p
 
 ## Task Breakdown
 
-- [ ] Define `IdeaReportRequest` and `IdeaReportResponse` schemas.
-- [ ] Implement report service with deterministic sample output.
-- [ ] Add `POST /api/idea-reports`.
-- [ ] Add frontend form and report result view.
-- [ ] Add backend tests for validation and response shape.
-- [ ] Add frontend unit test for report rendering.
-- [ ] Update generated API contract docs.
-- [ ] Run `scripts/agent-task.sh verify`.
+- [x] Define `IdeaReportRequest` and `IdeaReportResponse` schemas.
+- [x] Implement report service with deterministic sample output.
+- [x] Add `POST /api/idea-reports`.
+- [x] Add frontend form and report result view.
+- [x] Add backend tests for validation and response shape.
+- [x] Add frontend unit test for report rendering.
+- [x] Update generated API contract docs.
+- [x] Run `scripts/agent-task.sh verify`.
 
 ## Verification
 
@@ -66,7 +67,25 @@ Build the first vertical slice for generating an idea report from a short user p
 
 ## Progress
 
-Initial plan created with harness.
+2026-05-03: Resumed implementation. Backend schema/service/route exists; remaining work is frontend API integration, report rendering, generated API contract docs, verification, and completion move.
+
+## Outcome
+
+- Added a typed frontend API client under `apps/web/src/api/`.
+- Added the idea report feature view with form submission, loading/error states, and structured report rendering.
+- Added local CORS support for the Docker Compose web origin.
+- Added backend validation/CORS tests and frontend API rendering tests.
+- Added generated API contract documentation.
+- Added `npm run docker:up` as a root script for the Docker Compose runtime.
+
+## Verification Evidence
+
+- `scripts/agent-task.sh verify`
+- `scripts/agent-task.sh docker-test`
+- `npm run docker:up`
+- `curl http://127.0.0.1:8000/health`
+- `curl -X POST http://127.0.0.1:8000/api/idea-reports`
+- Playwright browser verification at `http://127.0.0.1:5173`: submitted the default idea and saw overview, domestic/overseas competitors, source references, and validation steps render.
 
 ## Definition of Done
 
@@ -77,6 +96,6 @@ Initial plan created with harness.
 
 ## Follow-Up Cleanup
 
-- Add real source collector plan.
+- Added real source collector plan as `docs/exec-plans/active/plan-0005-source-collector.md`.
 - Add database persistence plan.
 - Add export/share plan.
