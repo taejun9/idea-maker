@@ -39,6 +39,15 @@ Forbidden:
 - Pin backend dependencies in lock files once dependency management is initialized.
 - Local database credentials must be Docker-only development credentials and documented in `.env.example`.
 
+## External Source Collection
+
+- Live source collectors must not forward raw user ideas unless the product spec and
+  source documentation explicitly allow it.
+- The PitchWall live collector fetches a public new-products endpoint without
+  credentials, cookies, auth headers, or user-query parameters, then filters locally.
+- Source collector tests must use fake payloads or explicit fixture fallback; routine
+  verification must not depend on third-party availability.
+
 ## Security Review Triggers
 
 Human review is required when:

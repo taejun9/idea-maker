@@ -1,9 +1,18 @@
 from fastapi.testclient import TestClient
 
+from services.api.app.integrations.source_collectors import (
+    SourceCollectorError,
+    UrlFetchingSourceClient,
+)
 from services.api.app.main import app
 
 
-def test_create_idea_report_returns_competitor_sections() -> None:
+def fail_live_source_fetch(self, url: str, *, timeout_seconds: float) -> object:
+    raise SourceCollectorError("network disabled in deterministic API tests")
+
+
+def test_create_idea_report_returns_competitor_sections(monkeypatch) -> None:
+    monkeypatch.setattr(UrlFetchingSourceClient, "fetch_json", fail_live_source_fetch)
     client = TestClient(app)
 
     response = client.post(

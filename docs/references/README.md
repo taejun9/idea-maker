@@ -24,11 +24,13 @@ For Product Hunt, PitchWall, BetaList, Korean competitors, and overseas competit
 | Source | Use | Notes |
 | --- | --- | --- |
 | Product Hunt | startup/product launch references | volatile; browse or integrate before current claims |
-| PitchWall | startup/product launch references | volatile; browse or integrate before current claims |
+| PitchWall | startup/product launch references | approved live HTTP collector with fixture fallback; still volatile |
 | BetaList | early startup references | volatile; browse or integrate before current claims |
 | Korean search/news/directories | domestic competitors | source must be cited per report |
 
-Implementation note: current report source records are normalized through fixture-backed collectors documented in `source-collectors.md`.
+Implementation note: current report source records are normalized through collectors
+documented in `source-collectors.md`; PitchWall can return live records, while other
+sources still use fixture-backed fallbacks.
 
 ## Codex Runtime References
 

@@ -22,12 +22,13 @@ Every intentional shortcut must have:
 | DEBT-0004 | frontend | npm install reports 5 moderate audit findings in starter dependency tree | dependency risk needs triage before production | `platform-smith` | before public deployment or auth/user data launch | open |
 | DEBT-0005 | backend | MVP reports are not persisted | Users cannot retrieve generated reports after refresh or across sessions | Codex | report persistence plan starts | open |
 | DEBT-0006 | product | Export/share workflow is deferred | Users must manually copy report content | Codex | export/share plan starts | open |
+| DEBT-0007 | integrations | Product Hunt and BetaList remain fixture-backed and PitchWall lacks scheduled network smoke coverage | Source breadth and third-party drift are not fully verified | `api-crafter` / `reliability-warden` | next source integration plan or scheduled smoke-test plan starts | open |
 
 ## Resolved Debt
 
 | ID | Resolved Date | Resolution |
 | --- | --- | --- |
-| DEBT-0001 | 2026-05-03 | Replaced placeholder-only report source data with normalized fixture-backed collectors under `services/api/app/integrations/`; live market-current collection remains a future collector upgrade. |
+| DEBT-0001 | 2026-05-03 | Replaced placeholder-only report source data with normalized collectors under `services/api/app/integrations/`; PitchWall now has a live path and remaining source gaps are tracked separately. |
 
 ## Weekly Gardening Checklist
 
