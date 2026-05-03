@@ -297,18 +297,17 @@ function formatDateTime(value: string) {
 </script>
 
 <template>
-  <main class="min-h-screen bg-slate-50 text-slate-950">
-    <section class="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-6 sm:px-6 lg:px-8">
-      <header class="border-b border-slate-200 pb-4">
-        <p class="text-sm font-medium text-slate-500">Idea Maker</p>
-        <h1 class="mt-2 text-3xl font-semibold">아이디어 보고서 생성</h1>
-      </header>
+  <div class="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-8 sm:px-6 lg:px-8">
+    <header class="mb-2">
+      <p class="text-sm font-semibold tracking-wide text-emerald-600 uppercase">Idea Maker</p>
+      <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">아이디어 보고서 생성</h1>
+    </header>
 
-      <form
-        class="grid gap-5 border-b border-slate-200 pb-6"
-        :aria-busy="isLoading"
-        @submit.prevent="submitReport"
-      >
+    <form
+      class="grid gap-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60 sm:p-8"
+      :aria-busy="isLoading"
+      @submit.prevent="submitReport"
+    >
         <div class="grid gap-2">
           <label class="text-base font-semibold" for="idea">어떤 아이디어인가요?</label>
           <p id="idea-help" class="max-w-2xl text-sm leading-6 text-slate-600">
@@ -318,18 +317,18 @@ function formatDateTime(value: string) {
 
         <fieldset class="grid gap-2">
           <legend class="text-sm font-medium text-slate-700">빠른 예시</legend>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap gap-3">
             <button
               v-for="example in ideaExamples"
               :key="`${example.field}-${example.idea}`"
-              class="grid gap-1 rounded border border-slate-300 bg-white px-3 py-2 text-left text-sm leading-5 text-slate-700 transition hover:border-emerald-500 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              class="grid gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm leading-5 text-slate-700 shadow-sm transition-all hover:border-emerald-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               :data-business-field="example.field"
               data-testid="idea-example"
               type="button"
               @click="selectIdeaExample(example)"
             >
-              <span class="text-xs font-semibold text-emerald-700">{{ example.field }}</span>
-              <span>{{ example.idea }}</span>
+              <span class="text-xs font-bold text-emerald-600">{{ example.field }}</span>
+              <span class="font-medium text-slate-800">{{ example.idea }}</span>
             </button>
           </div>
         </fieldset>
@@ -339,11 +338,11 @@ function formatDateTime(value: string) {
             id="idea"
             v-model="idea"
             data-testid="idea-input"
-            class="min-h-40 resize-y rounded border bg-white p-3 text-base leading-7 outline-none transition focus:ring-2"
+            class="min-h-40 resize-y rounded-xl border bg-slate-50 p-4 text-base leading-7 outline-none transition-all placeholder:text-slate-400 focus:bg-white focus:ring-4"
             :class="
               shouldShowIdeaError
-                ? 'border-red-600 focus:border-red-700 focus:ring-red-100'
-                : 'border-slate-300 focus:border-emerald-600 focus:ring-emerald-100'
+                ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20'
+                : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20'
             "
             :aria-describedby="ideaDescriptionIds"
             :aria-invalid="shouldShowIdeaError ? 'true' : 'false'"
@@ -383,7 +382,7 @@ function formatDateTime(value: string) {
             <select
               id="intake-q5"
               v-model="selectedBusinessField"
-              class="rounded border border-slate-300 bg-white p-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              class="rounded-xl border border-slate-200 bg-white p-3.5 text-sm outline-none transition-all focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20"
               data-testid="intake-q5"
               aria-describedby="intake-field-help intake-validation"
               :aria-invalid="shouldShowIntakeError ? 'true' : 'false'"
@@ -403,7 +402,7 @@ function formatDateTime(value: string) {
           </div>
 
           <div
-            class="rounded border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700"
+            class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600"
             data-testid="auto-intake-note"
           >
             Q1~Q4 답변은 보고서 생성 시 아이디어 내용에 맞춰 자동 작성됩니다.
@@ -421,10 +420,10 @@ function formatDateTime(value: string) {
           </p>
         </fieldset>
 
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="mt-2 flex flex-wrap items-center gap-4">
           <button
             data-testid="generate-report"
-            class="min-h-11 rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:bg-slate-300"
+            class="min-h-12 w-full sm:w-auto rounded-xl bg-emerald-600 px-6 py-2.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
             type="submit"
             :aria-describedby="submitDisabledDescription"
             :disabled="!canSubmit"
@@ -461,34 +460,34 @@ function formatDateTime(value: string) {
       <section
         v-if="recommendations.length > 0"
         data-testid="recommendation-list"
-        class="grid gap-4 border-b border-slate-200 pb-6"
+        class="grid gap-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60 sm:p-8"
         aria-live="polite"
       >
-        <div class="flex flex-wrap items-end justify-between gap-3">
+        <div class="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 pb-4">
           <div class="grid gap-1">
-            <p class="text-sm font-medium text-slate-500">입력: {{ recommendationKeyword }}</p>
-            <h2 class="text-xl font-semibold">추천 아이템</h2>
+            <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600">입력: {{ recommendationKeyword }}</p>
+            <h2 class="text-2xl font-bold text-slate-900">추천 아이템</h2>
           </div>
         </div>
 
-        <div class="grid gap-3 md:grid-cols-2">
+        <div class="grid gap-4 md:grid-cols-2">
           <article
             v-for="recommendation in recommendations"
             :key="recommendation.title"
-            class="grid gap-3 rounded border bg-white p-4"
+            class="grid gap-4 rounded-xl border bg-slate-50 p-5 shadow-sm transition-all hover:shadow-md"
             :class="
               selectedRecommendationTitle === recommendation.title
-                ? 'border-emerald-500 ring-2 ring-emerald-100'
+                ? 'border-emerald-500 ring-2 ring-emerald-500/20'
                 : 'border-slate-200'
             "
           >
             <div class="grid gap-2">
-              <h3 class="font-semibold leading-6 text-slate-950">{{ recommendation.title }}</h3>
-              <p class="text-sm leading-6 text-slate-700">{{ recommendation.summary }}</p>
+              <h3 class="text-lg font-bold leading-6 text-slate-900">{{ recommendation.title }}</h3>
+              <p class="text-sm font-medium leading-6 text-slate-700">{{ recommendation.summary }}</p>
               <p class="text-sm leading-6 text-slate-600">{{ recommendation.rationale }}</p>
             </div>
             <button
-              class="min-h-10 justify-self-start rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 disabled:cursor-not-allowed disabled:bg-slate-300"
+              class="min-h-11 justify-self-start rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-500/20 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
               data-testid="recommendation-report"
               type="button"
               :disabled="!canCreateReportFromRecommendation"
@@ -509,20 +508,20 @@ function formatDateTime(value: string) {
       <section
         v-if="report"
         data-testid="report-summary"
-        class="grid gap-6"
+        class="grid gap-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60 sm:p-8"
         aria-live="polite"
       >
-        <header class="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
-          <div class="grid gap-1">
-            <p class="text-sm font-medium text-slate-500">
+        <header class="flex flex-wrap items-end justify-between gap-4 border-b border-slate-100 pb-6">
+          <div class="grid gap-1.5">
+            <p class="text-sm font-semibold uppercase tracking-wide text-emerald-600">
               저장된 보고서 · {{ formatDateTime(report.created_at) }}
             </p>
-            <h2 class="text-2xl font-semibold leading-tight text-slate-950">
+            <h2 class="text-3xl font-extrabold leading-tight text-slate-900">
               {{ report.idea }}
             </h2>
           </div>
           <a
-            class="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-500 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            class="rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200 focus:outline-none focus:ring-4 focus:ring-slate-200"
             data-testid="open-report-detail"
             :href="`#/reports/${report.id}`"
           >
@@ -759,10 +758,9 @@ function formatDateTime(value: string) {
       <section
         v-else
         data-testid="report-empty"
-        class="rounded border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600"
+        class="flex items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-12 text-center text-slate-500"
       >
         생성된 보고서가 여기에 표시됩니다.
       </section>
-    </section>
-  </main>
+  </div>
 </template>

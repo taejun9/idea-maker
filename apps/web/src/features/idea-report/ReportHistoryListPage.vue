@@ -53,16 +53,15 @@ function formatDateTime(value: string) {
 </script>
 
 <template>
-  <main class="min-h-screen bg-slate-50 text-slate-950">
-    <section class="mx-auto grid w-full max-w-6xl gap-6 px-5 py-6 sm:px-6 lg:px-8">
-      <header class="grid gap-2 border-b border-slate-200 pb-4">
-        <p class="text-sm font-medium text-slate-500">Idea Maker</p>
-        <h1 class="text-3xl font-semibold">조회한 보고서</h1>
-      </header>
+  <div class="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-8 sm:px-6 lg:px-8">
+    <header class="mb-2">
+      <p class="text-sm font-semibold tracking-wide text-emerald-600 uppercase">Idea Maker</p>
+      <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">조회한 보고서</h1>
+    </header>
 
       <p
         v-if="isLoading"
-        class="rounded border border-slate-200 bg-white p-4 text-sm text-slate-600"
+        class="flex items-center justify-center rounded-2xl bg-white p-12 text-sm font-medium text-slate-500 shadow-sm ring-1 ring-slate-200/60"
         role="status"
       >
         보고서 목록을 불러오고 있습니다.
@@ -70,7 +69,7 @@ function formatDateTime(value: string) {
 
       <p
         v-else-if="errorMessage"
-        class="rounded border border-red-200 bg-white p-4 text-sm font-medium text-red-700"
+        class="rounded-xl border border-red-200 bg-red-50 p-6 text-sm font-medium text-red-700 shadow-sm"
         data-testid="history-error"
         role="alert"
       >
@@ -79,7 +78,7 @@ function formatDateTime(value: string) {
 
       <section
         v-else-if="reports.length > 0"
-        class="grid gap-3"
+        class="grid gap-4"
         data-testid="report-history-list"
       >
         <p
@@ -94,25 +93,25 @@ function formatDateTime(value: string) {
         <article
           v-for="report in reports"
           :key="report.id"
-          class="grid gap-3 rounded border border-slate-200 bg-white p-4"
+          class="grid gap-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/60 transition-shadow hover:shadow-md sm:p-8"
         >
-          <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="grid gap-2">
-              <p class="text-sm text-slate-500">{{ formatDateTime(report.created_at) }}</p>
-              <h2 class="text-lg font-semibold leading-6 text-slate-950">
+              <p class="text-xs font-semibold text-slate-500">{{ formatDateTime(report.created_at) }}</p>
+              <h2 class="text-xl font-bold leading-tight text-slate-900">
                 {{ report.idea }}
               </h2>
             </div>
             <div class="flex shrink-0 flex-wrap gap-2">
               <a
-                class="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-500/20"
                 data-testid="history-detail-link"
                 :href="`#/reports/${report.id}`"
               >
                 열기
               </a>
               <button
-                class="rounded border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:border-red-400 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+                class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-inset ring-red-200 transition-all hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 disabled:ring-slate-200"
                 data-testid="history-delete-report"
                 type="button"
                 :disabled="deletingReportId === report.id"
@@ -149,11 +148,10 @@ function formatDateTime(value: string) {
 
       <section
         v-else
-        class="rounded border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600"
+        class="flex items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-12 text-center text-slate-500"
         data-testid="report-history-empty"
       >
         아직 조회한 보고서가 없습니다.
       </section>
-    </section>
-  </main>
+  </div>
 </template>
