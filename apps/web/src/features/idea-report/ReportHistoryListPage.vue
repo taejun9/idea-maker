@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { listIdeaReports } from "../../api/ideaReports";
+import { deleteIdeaReport, listIdeaReports } from "../../api/ideaReports";
 import type { IdeaReportSummary } from "../../types/ideaReport";
 
 const reports = ref<IdeaReportSummary[]>([]);
 const isLoading = ref(true);
+const deletingReportId = ref("");
 const errorMessage = ref("");
+const deleteErrorMessage = ref("");
 
 onMounted(() => {
   void loadReports();
@@ -14,6 +16,7 @@ onMounted(() => {
 async function loadReports() {
   isLoading.value = true;
   errorMessage.value = "";
+  deleteErrorMessage.value = "";
 
   try {
     const response = await listIdeaReports();
@@ -23,6 +26,21 @@ async function loadReports() {
       error instanceof Error ? error.message : "보고서 목록을 조회하지 못했습니다.";
   } finally {
     isLoading.value = false;
+  }
+}
+
+async function deleteReport(reportId: string) {
+  deletingReportId.value = reportId;
+  deleteErrorMessage.value = "";
+
+  try {
+    await deleteIdeaReport(reportId);
+    reports.value = reports.value.filter((report) => report.id !== reportId);
+  } catch (error) {
+    deleteErrorMessage.value =
+      error instanceof Error ? error.message : "보고서를 삭제하지 못했습니다.";
+  } finally {
+    deletingReportId.value = "";
   }
 }
 
@@ -64,6 +82,15 @@ function formatDateTime(value: string) {
         class="grid gap-3"
         data-testid="report-history-list"
       >
+        <p
+          v-if="deleteErrorMessage"
+          class="rounded border border-red-200 bg-white p-4 text-sm font-medium text-red-700"
+          data-testid="history-delete-error"
+          role="alert"
+        >
+          {{ deleteErrorMessage }}
+        </p>
+
         <article
           v-for="report in reports"
           :key="report.id"
@@ -76,13 +103,24 @@ function formatDateTime(value: string) {
                 {{ report.idea }}
               </h2>
             </div>
-            <a
-              class="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
-              data-testid="history-detail-link"
-              :href="`#/reports/${report.id}`"
-            >
-              열기
-            </a>
+            <div class="flex shrink-0 flex-wrap gap-2">
+              <a
+                class="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                data-testid="history-detail-link"
+                :href="`#/reports/${report.id}`"
+              >
+                열기
+              </a>
+              <button
+                class="rounded border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:border-red-400 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+                data-testid="history-delete-report"
+                type="button"
+                :disabled="deletingReportId === report.id"
+                @click="deleteReport(report.id)"
+              >
+                {{ deletingReportId === report.id ? "삭제 중" : "삭제" }}
+              </button>
+            </div>
           </div>
           <p class="text-sm leading-6 text-slate-700">{{ report.overview }}</p>
           <dl class="flex flex-wrap gap-2 text-xs text-slate-600">

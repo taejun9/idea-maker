@@ -42,6 +42,14 @@ defineProps<{
         >
           선택지: {{ question.options.join(" | ") }}
         </p>
+        <dl
+          v-if="question.answer"
+          class="grid gap-1 rounded border border-emerald-100 bg-emerald-50 p-3 text-sm"
+          data-testid="idea-intake-answer"
+        >
+          <dt class="font-semibold text-emerald-900">입력값</dt>
+          <dd class="break-words leading-6 text-slate-800">{{ question.answer }}</dd>
+        </dl>
       </article>
     </div>
   </section>

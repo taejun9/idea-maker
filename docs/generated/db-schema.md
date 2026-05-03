@@ -27,12 +27,15 @@ when the Docker runtime starts or a report repository operation runs.
 | `locale` | `text` | request locale, default `ko-KR` |
 | `research_requested` | `boolean` | true when the report used the search-and-organization path |
 | `created_at` | `timestamptz` | report creation time; indexed descending for newest-first history |
-| `report` | `jsonb` | full `IdeaReportResponse` payload used by the detail page |
+| `report` | `jsonb` | full `IdeaReportResponse` payload used by the detail page, including Q1-Q5 intake prompts and submitted answer values |
 
 Indexes:
 
 - `idea_reports_pkey` on `id`
 - `idea_reports_created_at_idx` on `created_at DESC`
+
+Saved report deletion uses `DELETE FROM idea_reports WHERE id = $1`; there are no
+dependent tables in the current MVP schema.
 
 ## Update Rule
 

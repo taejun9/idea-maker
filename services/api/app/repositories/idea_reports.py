@@ -31,6 +31,10 @@ class InMemoryIdeaReportRepository:
         with self._lock:
             return self._reports.get(report_id)
 
+    def delete_report(self, report_id: str) -> bool:
+        with self._lock:
+            return self._reports.pop(report_id, None) is not None
+
 
 class PostgresIdeaReportRepository:
     def __init__(self, database_url: str) -> None:
@@ -100,6 +104,19 @@ class PostgresIdeaReportRepository:
         if row is None:
             return None
         return IdeaReportResponse.model_validate(row["report"])
+
+    def delete_report(self, report_id: str) -> bool:
+        self.ensure_schema()
+        psycopg, _, _ = self._psycopg_modules()
+        with psycopg.connect(self._database_url) as connection:
+            cursor = connection.execute(
+                """
+                DELETE FROM idea_reports
+                WHERE id = %s
+                """,
+                (report_id,),
+            )
+            return cursor.rowcount > 0
 
     def ensure_schema(self) -> None:
         if self._schema_ready:

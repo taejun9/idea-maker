@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator, Mapping
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from services.api.app.core.settings import database_url
@@ -25,6 +25,9 @@ from services.api.app.services import (
 )
 from services.api.app.services import (
     create_idea_report as build_idea_report,
+)
+from services.api.app.services import (
+    delete_idea_report as remove_idea_report,
 )
 from services.api.app.services import (
     get_idea_report as fetch_idea_report,
@@ -118,6 +121,20 @@ def get_idea_report(report_id: str) -> IdeaReportResponse:
             },
         )
     return report
+
+
+@app.delete("/api/idea-reports/{report_id}", status_code=204)
+def delete_idea_report(report_id: str) -> Response:
+    deleted = remove_idea_report(idea_report_repository(), report_id=report_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error_code": "idea_report_not_found",
+                "message": "보고서를 찾을 수 없습니다.",
+            },
+        )
+    return Response(status_code=204)
 
 
 @app.post("/api/idea-recommendations", response_model=IdeaRecommendationResponse)
