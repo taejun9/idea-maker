@@ -1,22 +1,20 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
   createIdeaRecommendations,
   createIdeaReport,
+  listQuickIdeaExamples,
 } from '../../api/ideaReports';
 import type {
   Competitor,
   IdeaIntakeAnswerInput,
   IdeaRecommendation,
   IdeaReportResponse,
+  QuickIdeaExample,
   SourceConfidence,
 } from '../../types/ideaReport';
 import IdeaIntakeQuestions from './IdeaIntakeQuestions.vue';
-import {
-  createRandomQuickIdeaExamples,
-  quickExampleBusinessFields,
-  type QuickIdeaExample,
-} from './quickExamples';
+import { quickExampleBusinessFields } from './quickExamples';
 
 const minIdeaLength = 5;
 const maxIdeaLength = 2000;
@@ -121,7 +119,10 @@ const loadingMode = ref<'idle' | 'recommendations' | 'report'>('idle');
 const errorMessage = ref('');
 const hasTriedSubmit = ref(false);
 const isIdeaTouched = ref(false);
-const ideaExamples = ref(createRandomQuickIdeaExamples());
+const ideaExamples = ref<QuickIdeaExample[]>([]);
+const isQuickExamplesLoading = ref(false);
+const quickExamplesError = ref('');
+const selectedQuickExampleIdea = ref('');
 
 const normalizedIdea = computed(() => idea.value.trim());
 const ideaLength = computed(() => normalizedIdea.value.length);
@@ -229,20 +230,48 @@ const confidenceLabel: Record<SourceConfidence, string> = {
 };
 
 function selectIdeaExample(example: QuickIdeaExample) {
+  selectedQuickExampleIdea.value = example.idea;
   idea.value = example.idea;
-  applyInferredBusinessField(example.idea, true);
+  selectedBusinessField.value = example.field;
+  lastAutoBusinessField.value = example.field;
   errorMessage.value = '';
   hasTriedSubmit.value = false;
   isIdeaTouched.value = true;
 }
 
 watch(normalizedIdea, () => {
-  applyInferredBusinessField(normalizedIdea.value);
+  if (selectedQuickExampleIdea.value === normalizedIdea.value) {
+    selectedQuickExampleIdea.value = '';
+  } else {
+    applyInferredBusinessField(normalizedIdea.value);
+  }
   recommendations.value = [];
   recommendationKeyword.value = '';
   selectedRecommendationTitle.value = '';
   errorMessage.value = '';
 });
+
+onMounted(() => {
+  void loadQuickExamples();
+});
+
+async function loadQuickExamples() {
+  isQuickExamplesLoading.value = true;
+  quickExamplesError.value = '';
+
+  try {
+    const response = await listQuickIdeaExamples();
+    ideaExamples.value = response.examples.slice(0, 5);
+  } catch (error) {
+    ideaExamples.value = [];
+    quickExamplesError.value =
+      error instanceof Error
+        ? error.message
+        : '빠른 예시를 불러오지 못했습니다.';
+  } finally {
+    isQuickExamplesLoading.value = false;
+  }
+}
 
 async function submitReport() {
   hasTriedSubmit.value = true;
@@ -412,7 +441,16 @@ function formatDateTime(value: string) {
 
       <fieldset class="grid gap-2">
         <legend class="text-sm font-medium text-slate-700">빠른 예시</legend>
-        <div class="flex flex-wrap gap-3">
+        <p
+          v-if="isQuickExamplesLoading"
+          class="text-sm text-slate-600"
+          data-testid="quick-examples-loading"
+          role="status"
+          aria-live="polite"
+        >
+          빠른 예시를 불러오고 있습니다.
+        </p>
+        <div v-if="ideaExamples.length > 0" class="flex flex-wrap gap-3">
           <button
             v-for="example in ideaExamples"
             :key="`${example.field}-${example.idea}`"
@@ -428,6 +466,14 @@ function formatDateTime(value: string) {
             <span class="font-medium text-slate-800">{{ example.idea }}</span>
           </button>
         </div>
+        <p
+          v-else-if="quickExamplesError"
+          class="text-sm font-medium text-red-700"
+          data-testid="quick-examples-error"
+          role="alert"
+        >
+          {{ quickExamplesError }}
+        </p>
       </fieldset>
 
       <div class="grid gap-2">

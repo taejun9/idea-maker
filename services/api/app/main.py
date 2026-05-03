@@ -19,12 +19,16 @@ from services.api.app.schemas import (
     IdeaReportListResponse,
     IdeaReportRequest,
     IdeaReportResponse,
+    QuickIdeaExampleResponse,
 )
 from services.api.app.services import (
     create_idea_recommendations as build_idea_recommendations,
 )
 from services.api.app.services import (
     create_idea_report as build_idea_report,
+)
+from services.api.app.services import (
+    create_quick_idea_examples as build_quick_idea_examples,
 )
 from services.api.app.services import (
     delete_idea_report as remove_idea_report,
@@ -93,6 +97,13 @@ def idea_report_repository() -> IdeaReportRepository:
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     return HealthResponse(status="ok", service="idea-maker-api")
+
+
+@app.get("/api/quick-idea-examples", response_model=QuickIdeaExampleResponse)
+def list_quick_idea_examples(
+    count: Annotated[int, Query(ge=1, le=10)] = 5,
+) -> QuickIdeaExampleResponse:
+    return build_quick_idea_examples(count=count)
 
 
 @app.post("/api/idea-reports", response_model=IdeaReportResponse)

@@ -33,6 +33,15 @@ BUSINESS_FIELD_OPTIONS = (
 IdeaIntakeCode = Literal["Q1", "Q2", "Q3", "Q4", "Q5"]
 
 
+class QuickIdeaExample(BaseModel):
+    field: str
+    idea: str = Field(min_length=5, max_length=240)
+
+
+class QuickIdeaExampleResponse(BaseModel):
+    examples: list[QuickIdeaExample]
+
+
 class IdeaIntakeAnswerInput(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
