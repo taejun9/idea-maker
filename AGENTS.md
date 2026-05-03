@@ -46,6 +46,7 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 - 테스트나 lint를 약화시키는 변경은 실행 계획과 품질 점수 갱신 없이는 금지한다.
 - `main` 브랜치 직접 커밋은 금지한다.
 - feature/fix 작업은 worktree branch -> PR/main merge -> worktree/branch cleanup 흐름을 따른다.
+- 커밋 메시지는 `<action> plan-NNNN: <task>` 형태로 작성한다. 예: `docs plan-0002: update git workflow rules`.
 - 로컬 DB는 PostgreSQL 18 Docker 컨테이너만 사용한다.
 - 로컬 Node 런타임은 Docker 이미지 또는 Node 22를 사용한다.
 

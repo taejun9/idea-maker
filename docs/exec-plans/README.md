@@ -22,6 +22,13 @@ Small typo fixes, focused tests, and single-file docs edits do not need a plan.
 
 ## Plan Template
 
+Plan filenames must use `plan-NNNN-<task-slug>.md`.
+
+- `NNNN` must match the plan id in the document title, for example `PLAN-0001`.
+- `<task-slug>` must be lowercase kebab-case and describe the work.
+- Active plans live in `docs/exec-plans/active/`.
+- Completed plans live in `docs/exec-plans/completed/` as soon as their status changes to `completed`.
+
 ```markdown
 # [PLAN_ID] [Title]
 
@@ -66,6 +73,6 @@ When complete:
 
 1. Update status to `completed`.
 2. Add outcome and verification evidence.
-3. Move file from `active/` to `completed/`.
+3. Immediately move the file from `active/` to `completed/`.
 4. Add deferred work to `tech-debt-tracker.md`.
 5. Update `docs/quality/quality-score.md` if gates or risk changed.
