@@ -21,6 +21,7 @@ Owner: Frontend / Codex
 - Prefer dense, clear operational UI over decorative sections.
 - Components should have stable dimensions for repeated controls and result panels.
 - Error states must be specific enough for Codex to diagnose.
+- Reports that use optional research adapters show search and organization status so users can distinguish live research from fallback output.
 
 ## File Rules
 

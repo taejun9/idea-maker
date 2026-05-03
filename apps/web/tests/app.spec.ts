@@ -48,6 +48,26 @@ const sampleReport = {
     },
   ],
   next_validation_steps: ["핵심 사용자 5명을 인터뷰한다."],
+  research_status: {
+    requested: false,
+    search_provider: "not_requested",
+    search_status: "skipped",
+    organization_provider: "not_requested",
+    organization_status: "skipped",
+    notes: [],
+  },
+};
+
+const sampleResearchedReport = {
+  ...sampleReport,
+  research_status: {
+    requested: true,
+    search_provider: "fallback",
+    search_status: "fallback",
+    organization_provider: "fallback",
+    organization_status: "fallback",
+    notes: ["Using deterministic source collectors instead of Gemini CLI search."],
+  },
 };
 
 const sampleRecommendations = {
@@ -67,6 +87,9 @@ const sampleRecommendations = {
     },
   ],
 };
+
+const longerIdea =
+  "지역 기반 소상공인 리뷰와 고객 문의를 분석하고 매장 운영 개선 과제를 자동으로 정리하는 B2B SaaS 플랫폼";
 
 describe("App", () => {
   afterEach(() => {
@@ -98,19 +121,18 @@ describe("App", () => {
     expect((ideaInput.element as HTMLTextAreaElement).value).toBe(
       "동네 소상공인을 위한 AI 리뷰 분석 도구",
     );
-    expect(wrapper.find('[data-testid="idea-count"]').text()).toContain("입력 조건을 충족");
+    expect(wrapper.find('[data-testid="idea-count"]').text()).toContain("관련 아이템");
     expect(wrapper.find('[data-testid="generate-report"]').attributes("disabled")).toBeUndefined();
   });
 
-  it("announces an accessible validation error for short multi-word ideas", async () => {
+  it("announces an accessible validation error for empty ideas", async () => {
     const wrapper = mount(App);
 
-    await wrapper.find('[data-testid="idea-input"]').setValue("a b");
     await wrapper.find("form").trigger("submit");
 
     expect(wrapper.find("#idea-error").attributes("role")).toBe("alert");
     expect(wrapper.find('[data-testid="idea-input"]').attributes("aria-invalid")).toBe("true");
-    expect(wrapper.find("#idea-error").text()).toContain("더 입력");
+    expect(wrapper.find("#idea-error").text()).toContain("아이디어를");
   });
 
   it("recommends related items before reporting for single-word input", async () => {
@@ -143,7 +165,33 @@ describe("App", () => {
     expect(wrapper.find('[data-testid="report-summary"]').exists()).toBe(false);
   });
 
-  it("creates a report from the selected recommendation", async () => {
+  it("recommends related items before reporting for short sentence input", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ...sampleRecommendations, keyword: "리뷰 분석" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const wrapper = mount(App);
+
+    await wrapper.find('[data-testid="idea-input"]').setValue("리뷰 분석");
+    await wrapper.find("form").trigger("submit");
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="recommendation-list"]').exists()).toBe(true);
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/api/idea-recommendations",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          keyword: "리뷰 분석",
+          locale: "ko-KR",
+        }),
+      }),
+    );
+  });
+
+  it("creates a researched report from the selected recommendation", async () => {
     const fetchMock = vi.fn((input: string | URL | Request) => {
       const url = String(input);
       if (url.endsWith("/api/idea-recommendations")) {
@@ -155,7 +203,7 @@ describe("App", () => {
 
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve(sampleReport),
+        json: () => Promise.resolve(sampleResearchedReport),
       });
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -178,13 +226,15 @@ describe("App", () => {
         body: JSON.stringify({
           idea: "리뷰 관련 고객 리뷰와 문의를 자동으로 분석해 개선 우선순위를 제안하는 SaaS",
           locale: "ko-KR",
+          research: true,
         }),
       }),
     );
     expect(wrapper.find('[data-testid="report-summary"]').text()).toContain("국내 경쟁 서비스");
+    expect(wrapper.find('[data-testid="research-status"]').text()).toContain("fallback");
   });
 
-  it("submits an idea and renders the structured report", async () => {
+  it("submits a longer idea directly and renders the structured report", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(sampleReport),
@@ -194,7 +244,7 @@ describe("App", () => {
 
     await wrapper
       .find('[data-testid="idea-input"]')
-      .setValue("동네 소상공인을 위한 AI 리뷰 분석 도구");
+      .setValue(longerIdea);
     await wrapper.find("form").trigger("submit");
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="report-summary"]').exists()).toBe(true);
@@ -205,8 +255,9 @@ describe("App", () => {
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
-          idea: "동네 소상공인을 위한 AI 리뷰 분석 도구",
+          idea: longerIdea,
           locale: "ko-KR",
+          research: false,
         }),
       }),
     );

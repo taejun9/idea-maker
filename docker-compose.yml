@@ -22,6 +22,16 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://idea_maker:idea_maker_dev_password@db:5432/idea_maker}
       WEB_PORT: ${WEB_PORT:-5173}
+      GEMINI_CLI_COMMAND: ${GEMINI_CLI_COMMAND:-gemini}
+      GEMINI_CLI_MODEL: ${GEMINI_CLI_MODEL:-gemini-2.5-flash}
+      GEMINI_SEARCH_TIMEOUT_SECONDS: ${GEMINI_SEARCH_TIMEOUT_SECONDS:-12}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:-}
+      GOOGLE_CLOUD_PROJECT_ID: ${GOOGLE_CLOUD_PROJECT_ID:-}
+      LOCAL_GEMMA_BASE_URL: ${LOCAL_GEMMA_BASE_URL:-http://host.docker.internal:8089}
+      LOCAL_GEMMA_MODEL: ${LOCAL_GEMMA_MODEL:-gemma4}
+      LOCAL_GEMMA_TIMEOUT_SECONDS: ${LOCAL_GEMMA_TIMEOUT_SECONDS:-4}
     ports:
       - "${API_PORT:-8000}:8000"
     depends_on:

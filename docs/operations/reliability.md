@@ -53,6 +53,11 @@ Current PitchWall live collection uses one unauthenticated HTTP GET, a 3 second 
 no retry inside the request path, and deterministic fixture fallback when the endpoint
 fails or no local token match is found.
 
+Gemini CLI search and local Gemma4 organization are optional request-path adapters.
+Both have explicit timeouts and must return structured fallback status instead of
+failing the report request. Routine verification must not require Gemini
+authentication or a running llama.cpp server.
+
 ## Incident Notes
 
 Use `docs/exec-plans/active/` for incident fixes that require code changes. Completed incidents move to `docs/exec-plans/completed/` with root cause and regression test notes.

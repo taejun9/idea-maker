@@ -18,19 +18,22 @@ Idea-maker is a web service that turns a short idea into a structured business/p
 ## Core Workflow
 
 1. User enters a short idea in natural language.
-2. If the input is a single word, the system recommends related concrete item ideas first.
+2. If the input is a word or short sentence, the system recommends related concrete item ideas first.
 3. User selects one recommended item or enters a fuller idea directly.
-4. System clarifies the selected item or full idea into a concrete concept.
-5. System recommends adjacent products/startups using sources such as Product Hunt, PitchWall, and BetaList.
-6. System separates domestic Korean competitors and overseas competitors.
-7. System generates a report containing overview, clarified concept, target users, core use cases, strengths, weaknesses, differentiation opportunities, risks, MVP scope, competitor table, source references, and next validation steps.
+4. For a selected recommendation, the system searches public sources with Gemini CLI when available.
+5. The system organizes normalized source evidence with local Gemma4 on llama.cpp when available.
+6. System clarifies the selected item or full idea into a concrete concept.
+7. System recommends adjacent products/startups using sources such as Product Hunt, PitchWall, and BetaList.
+8. System separates domestic Korean competitors and overseas competitors.
+9. System generates a report containing overview, clarified concept, target users, core use cases, strengths, weaknesses, differentiation opportunities, risks, MVP scope, competitor table, source references, research status, and next validation steps.
 
 ## Input Experience
 
 - The idea input starts empty so users can enter their own concept without clearing a preset value.
 - The entry form exposes visible examples, helper copy, character feedback, and validation state for keyboard and screen reader users.
-- Single-word input with at least 1 non-space character requests related item recommendations instead of directly calling the report API.
-- Multi-word input submits directly to report generation after at least 5 non-space characters, matching the report API contract.
+- Word or short-sentence input with at least 1 non-space character requests related item recommendations instead of directly calling the report API.
+- Selecting a recommended item requests the search-and-organization report path.
+- Longer input submits directly to report generation after at least 5 non-space characters, matching the report API contract.
 
 ## MVP Report Sections
 
@@ -65,6 +68,7 @@ The current report API exposes the following MVP sections:
 - Domestic and overseas competitors: `domestic_competitors`, `overseas_competitors`
 - Startup and source references: `source_references`
 - Validation checklist: `next_validation_steps`
+- Search and organization status: `research_status`
 
 ## Data Source Rules
 
@@ -72,6 +76,7 @@ The current report API exposes the following MVP sections:
 - If a source cannot be accessed, the report must say so and continue with available sources.
 - Do not present old cached market facts as current.
 - Product Hunt, PitchWall, and BetaList are used as inspiration/reference sources, not as the only truth.
+- Gemini CLI search and local Gemma4 organization are optional adapters. Their status must be exposed in `research_status`, and deterministic fallback must complete the report when either adapter is unavailable.
 
 ## Non-Goals
 

@@ -30,25 +30,27 @@ const isIdeaTouched = ref(false);
 const normalizedIdea = computed(() => idea.value.trim());
 const ideaLength = computed(() => normalizedIdea.value.length);
 const ideaTokens = computed(() => normalizedIdea.value.split(/\s+/).filter(Boolean));
-const isSingleWordIdea = computed(() => ideaTokens.value.length === 1);
+const isRecommendationInput = computed(
+  () => ideaLength.value > 0 && (ideaTokens.value.length <= 5 || ideaLength.value <= 40),
+);
 const isIdeaValid = computed(() => {
   if (ideaLength.value === 0) {
     return false;
   }
 
-  if (isSingleWordIdea.value) {
+  if (isRecommendationInput.value) {
     return true;
   }
 
   return ideaLength.value >= minIdeaLength;
 });
-const inputMinLength = computed(() => (isSingleWordIdea.value ? 1 : minIdeaLength));
+const inputMinLength = computed(() => (isRecommendationInput.value ? 1 : minIdeaLength));
 const shouldShowIdeaError = computed(
   () => (hasTriedSubmit.value || isIdeaTouched.value) && !isIdeaValid.value,
 );
 const ideaValidationMessage = computed(() => {
-  if (isIdeaValid.value && isSingleWordIdea.value) {
-    return "관련 아이템을 추천할 수 있습니다.";
+  if (isIdeaValid.value && isRecommendationInput.value) {
+    return "관련 아이템을 추천한 뒤 검색과 자료 정리를 진행할 수 있습니다.";
   }
 
   if (isIdeaValid.value) {
@@ -74,7 +76,7 @@ const submitButtonLabel = computed(() => {
     return "보고서 생성 중";
   }
 
-  return isSingleWordIdea.value ? "아이템 추천" : "보고서 생성";
+  return isRecommendationInput.value ? "아이템 추천" : "보고서 생성";
 });
 
 const confidenceLabel: Record<SourceConfidence, string> = {
@@ -105,12 +107,12 @@ async function submitReport() {
     return;
   }
 
-  if (isSingleWordIdea.value) {
+  if (isRecommendationInput.value) {
     await loadRecommendations();
     return;
   }
 
-  await generateReport(normalizedIdea.value);
+  await generateReport(normalizedIdea.value, "", false);
 }
 
 async function loadRecommendations() {
@@ -122,7 +124,7 @@ async function loadRecommendations() {
 
   try {
     const response = await createIdeaRecommendations({
-      keyword: ideaTokens.value[0],
+      keyword: normalizedIdea.value,
       locale: "ko-KR",
     });
     recommendationKeyword.value = response.keyword;
@@ -138,10 +140,14 @@ async function loadRecommendations() {
 
 async function createReportFromRecommendation(recommendation: IdeaRecommendation) {
   selectedRecommendationTitle.value = recommendation.title;
-  await generateReport(recommendation.report_seed, recommendation.title);
+  await generateReport(recommendation.report_seed, recommendation.title, true);
 }
 
-async function generateReport(ideaForReport: string, recommendationTitle = "") {
+async function generateReport(
+  ideaForReport: string,
+  recommendationTitle = "",
+  research = false,
+) {
   isLoading.value = true;
   loadingMode.value = "report";
   errorMessage.value = "";
@@ -151,6 +157,7 @@ async function generateReport(ideaForReport: string, recommendationTitle = "") {
     report.value = await createIdeaReport({
       idea: ideaForReport,
       locale: "ko-KR",
+      research,
     });
     selectedRecommendationTitle.value = recommendationTitle;
   } catch (error) {
@@ -183,7 +190,7 @@ function competitorMarketLabel(competitor: Competitor) {
         <div class="grid gap-2">
           <label class="text-base font-semibold" for="idea">어떤 아이디어인가요?</label>
           <p id="idea-help" class="max-w-2xl text-sm leading-6 text-slate-600">
-            한 문장으로 시작하세요. 단어 하나만 입력하면 관련 아이템을 먼저 추천합니다.
+            단어 또는 짧은 문장으로 시작하면 관련 아이템을 먼저 추천합니다.
           </p>
         </div>
 
@@ -287,7 +294,7 @@ function competitorMarketLabel(competitor: Competitor) {
       >
         <div class="flex flex-wrap items-end justify-between gap-3">
           <div class="grid gap-1">
-            <p class="text-sm font-medium text-slate-500">입력 단어: {{ recommendationKeyword }}</p>
+            <p class="text-sm font-medium text-slate-500">입력: {{ recommendationKeyword }}</p>
             <h2 class="text-xl font-semibold">추천 아이템</h2>
           </div>
         </div>
@@ -319,8 +326,8 @@ function competitorMarketLabel(competitor: Competitor) {
                 isLoading &&
                 loadingMode === "report" &&
                 selectedRecommendationTitle === recommendation.title
-                  ? "보고서 생성 중"
-                  : "보고서 생성"
+                  ? "검색과 정리 진행 중"
+                  : "검색 후 보고서 생성"
               }}
             </button>
           </article>
@@ -338,6 +345,29 @@ function competitorMarketLabel(competitor: Competitor) {
           <p class="rounded border border-slate-200 bg-white p-4 leading-7 text-slate-700">
             {{ report.overview }}
           </p>
+        </section>
+
+        <section
+          v-if="report.research_status.requested"
+          data-testid="research-status"
+          class="grid gap-3"
+        >
+          <h2 class="text-lg font-semibold">검색 및 자료 정리 상태</h2>
+          <div class="rounded border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700">
+            <p>
+              검색 {{ report.research_status.search_provider }} /
+              {{ report.research_status.search_status }}
+            </p>
+            <p>
+              정리 {{ report.research_status.organization_provider }} /
+              {{ report.research_status.organization_status }}
+            </p>
+            <ul v-if="report.research_status.notes.length > 0" class="mt-2 grid gap-1">
+              <li v-for="note in report.research_status.notes" :key="note">
+                {{ note }}
+              </li>
+            </ul>
+          </div>
         </section>
 
         <section class="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
