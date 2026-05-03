@@ -51,6 +51,19 @@ export async function getIdeaReport(reportId: string): Promise<IdeaReportRespons
   return (await response.json()) as IdeaReportResponse;
 }
 
+export async function deleteIdeaReport(reportId: string): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/idea-reports/${encodeURIComponent(reportId)}`,
+    {
+      method: "DELETE",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`보고서 삭제 실패: HTTP ${response.status}`);
+  }
+}
+
 export async function createIdeaRecommendations(
   payload: IdeaRecommendationRequest,
 ): Promise<IdeaRecommendationResponse> {

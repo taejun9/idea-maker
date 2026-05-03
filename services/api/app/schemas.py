@@ -1,12 +1,104 @@
 from datetime import date, datetime
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class HealthResponse(BaseModel):
     status: Literal["ok"]
     service: str
+
+
+BUSINESS_FIELD_OPTIONS = (
+    "IT",
+    "교육",
+    "금융",
+    "운영관리",
+    "네트워킹",
+    "농축/수산업",
+    "라이프스타일",
+    "마케팅/PR",
+    "모빌리티",
+    "미디어/엔터테인먼트",
+    "바이오/의류",
+    "에너지/자원",
+    "유통/물류",
+    "임팩트",
+    "재무",
+    "프롭테크",
+    "하드웨어",
+    "기타",
+)
+
+PHOTO_PLACEMENT_GUIDANCE = (
+    "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. "
+    "사진은 3개 질문 합산 최대 5장까지 가능합니다."
+)
+
+IdeaIntakeCode = Literal["Q1", "Q2", "Q3", "Q4", "Q5"]
+REQUIRED_IDEA_INTAKE_CODES = ("Q1", "Q2", "Q3", "Q4", "Q5")
+
+
+class IdeaIntakeAnswerInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    code: IdeaIntakeCode
+    answer: str = Field(min_length=1, max_length=2000)
+
+
+class IdeaIntakeQuestion(BaseModel):
+    code: IdeaIntakeCode
+    prompt: str
+    requirement: str
+    photo_guidance: str | None = None
+    options: list[str] = Field(default_factory=list)
+    answer: str = ""
+
+
+def default_idea_intake_questions() -> list[IdeaIntakeQuestion]:
+    return idea_intake_questions_from_answers([])
+
+
+def idea_intake_questions_from_answers(
+    answers: list[IdeaIntakeAnswerInput],
+) -> list[IdeaIntakeQuestion]:
+    answers_by_code = {answer.code: answer.answer for answer in answers}
+    return [
+        IdeaIntakeQuestion(
+            code="Q1",
+            prompt="나의 아이디어를 한 줄로 소개해주세요.",
+            requirement="필수, 최소 10자 이상 입력해주세요.",
+            answer=answers_by_code.get("Q1", ""),
+        ),
+        IdeaIntakeQuestion(
+            code="Q2",
+            prompt="아이디어를 떠올린 배경 이야기를 들려주세요.",
+            requirement="필수",
+            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
+            answer=answers_by_code.get("Q2", ""),
+        ),
+        IdeaIntakeQuestion(
+            code="Q3",
+            prompt="아이디어는 누구의 어떤 문제를 해결해주나요?",
+            requirement="필수",
+            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
+            answer=answers_by_code.get("Q3", ""),
+        ),
+        IdeaIntakeQuestion(
+            code="Q4",
+            prompt="아이디어를 어떻게 실현하고 싶으신가요?",
+            requirement="필수",
+            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
+            answer=answers_by_code.get("Q4", ""),
+        ),
+        IdeaIntakeQuestion(
+            code="Q5",
+            prompt="사업 분야를 선택해주세요.",
+            requirement="필수",
+            options=list(BUSINESS_FIELD_OPTIONS),
+            answer=answers_by_code.get("Q5", ""),
+        ),
+    ]
 
 
 class IdeaReportRequest(BaseModel):
@@ -15,6 +107,24 @@ class IdeaReportRequest(BaseModel):
     idea: str = Field(min_length=5, max_length=2000)
     locale: str = Field(default="ko-KR")
     research: bool = Field(default=False)
+    idea_intake_answers: list[IdeaIntakeAnswerInput] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_idea_intake_answers(self) -> Self:
+        if not self.idea_intake_answers:
+            return self
+
+        answers_by_code = {answer.code: answer.answer for answer in self.idea_intake_answers}
+        if len(answers_by_code) != len(self.idea_intake_answers):
+            raise ValueError("idea_intake_answers must not contain duplicate question codes")
+        if set(answers_by_code) != set(REQUIRED_IDEA_INTAKE_CODES):
+            raise ValueError("idea_intake_answers must include Q1, Q2, Q3, Q4, and Q5")
+        if len(answers_by_code["Q1"]) < 10:
+            raise ValueError("Q1 answer must be at least 10 characters")
+        if answers_by_code["Q5"] not in BUSINESS_FIELD_OPTIONS:
+            raise ValueError("Q5 answer must be one of the business field options")
+        return self
+
 
 
 class IdeaRecommendationRequest(BaseModel):
@@ -72,75 +182,6 @@ class ResearchStatus(BaseModel):
     organization_provider: Literal["gemma4", "fallback", "not_requested"]
     organization_status: Literal["success", "fallback", "skipped"]
     notes: list[str]
-
-
-BUSINESS_FIELD_OPTIONS = (
-    "IT",
-    "교육",
-    "금융",
-    "운영관리",
-    "네트워킹",
-    "농축/수산업",
-    "라이프스타일",
-    "마케팅/PR",
-    "모빌리티",
-    "미디어/엔터테인먼트",
-    "바이오/의류",
-    "에너지/자원",
-    "유통/물류",
-    "임팩트",
-    "재무",
-    "프롭테크",
-    "하드웨어",
-    "기타",
-)
-
-PHOTO_PLACEMENT_GUIDANCE = (
-    "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. "
-    "사진은 3개 질문 합산 최대 5장까지 가능합니다."
-)
-
-
-class IdeaIntakeQuestion(BaseModel):
-    code: Literal["Q1", "Q2", "Q3", "Q4", "Q5"]
-    prompt: str
-    requirement: str
-    photo_guidance: str | None = None
-    options: list[str] = Field(default_factory=list)
-
-
-def default_idea_intake_questions() -> list[IdeaIntakeQuestion]:
-    return [
-        IdeaIntakeQuestion(
-            code="Q1",
-            prompt="나의 아이디어를 한 줄로 소개해주세요.",
-            requirement="필수, 최소 10자 이상 입력해주세요.",
-        ),
-        IdeaIntakeQuestion(
-            code="Q2",
-            prompt="아이디어를 떠올린 배경 이야기를 들려주세요.",
-            requirement="필수",
-            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
-        ),
-        IdeaIntakeQuestion(
-            code="Q3",
-            prompt="아이디어는 누구의 어떤 문제를 해결해주나요?",
-            requirement="필수",
-            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
-        ),
-        IdeaIntakeQuestion(
-            code="Q4",
-            prompt="아이디어를 어떻게 실현하고 싶으신가요?",
-            requirement="필수",
-            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
-        ),
-        IdeaIntakeQuestion(
-            code="Q5",
-            prompt="사업 분야를 선택해주세요.",
-            requirement="필수",
-            options=list(BUSINESS_FIELD_OPTIONS),
-        ),
-    ]
 
 
 class IdeaReportResponse(BaseModel):

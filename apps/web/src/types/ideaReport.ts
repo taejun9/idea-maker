@@ -19,10 +19,18 @@ export interface SourceReference {
   confidence: SourceConfidence;
 }
 
+export type IdeaIntakeCode = "Q1" | "Q2" | "Q3" | "Q4" | "Q5";
+
+export interface IdeaIntakeAnswerInput {
+  code: IdeaIntakeCode;
+  answer: string;
+}
+
 export interface IdeaReportRequest {
   idea: string;
   locale?: string;
   research?: boolean;
+  idea_intake_answers?: IdeaIntakeAnswerInput[];
 }
 
 export interface IdeaRecommendationRequest {
@@ -52,11 +60,12 @@ export interface ResearchStatus {
 }
 
 export interface IdeaIntakeQuestion {
-  code: "Q1" | "Q2" | "Q3" | "Q4" | "Q5";
+  code: IdeaIntakeCode;
   prompt: string;
   requirement: string;
   photo_guidance: string | null;
   options: string[];
+  answer: string;
 }
 
 export interface IdeaReportResponse {

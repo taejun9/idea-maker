@@ -14,6 +14,7 @@ Generated date: 2026-05-03
 | `POST` | `/api/idea-reports` | `IdeaReportRequest` | `IdeaReportResponse` |
 | `GET` | `/api/idea-reports` | optional `limit` query, 1-100, default 50 | `IdeaReportListResponse` |
 | `GET` | `/api/idea-reports/{report_id}` | path `report_id` | `IdeaReportResponse` |
+| `DELETE` | `/api/idea-reports/{report_id}` | path `report_id` | `204 No Content` |
 | `POST` | `/api/idea-recommendations` | `IdeaRecommendationRequest` | `IdeaRecommendationResponse` |
 
 ## `IdeaReportRequest`
@@ -23,6 +24,14 @@ Generated date: 2026-05-03
 | `idea` | string | yes | minimum 5 characters, maximum 2000 characters |
 | `locale` | string | no | defaults to `ko-KR` |
 | `research` | boolean | no | defaults to `false` |
+| `idea_intake_answers` | `IdeaIntakeAnswerInput[]` | no | when provided, must include Q1-Q5 exactly once; Q1 minimum 10 characters; Q5 must match a business-field option |
+
+## `IdeaIntakeAnswerInput`
+
+| Field | Type | Required | Rules |
+| --- | --- | --- | --- |
+| `code` | `Q1`, `Q2`, `Q3`, `Q4`, or `Q5` | yes | stable question label |
+| `answer` | string | yes | 1-2000 characters; Q1 has a 10-character minimum and Q5 must be one configured option |
 
 ## `IdeaReportResponse`
 
@@ -77,6 +86,7 @@ Generated date: 2026-05-03
 | `requirement` | string | required-state and validation copy |
 | `photo_guidance` | string or null | drag-and-drop photo placement guidance for Q2-Q4 |
 | `options` | string array | Q5 business-field options, empty for Q1-Q4 |
+| `answer` | string | saved user answer, empty for reports generated without submitted Q1-Q5 answers |
 
 ## `IdeaRecommendationRequest`
 

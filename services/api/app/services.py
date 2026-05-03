@@ -25,6 +25,7 @@ from services.api.app.schemas import (
     IdeaReportSummary,
     ResearchStatus,
     SourceReference,
+    idea_intake_questions_from_answers,
 )
 
 RECOMMENDATION_PATTERNS = (
@@ -75,6 +76,9 @@ class IdeaReportRepository(Protocol):
     def get_report(self, report_id: str) -> IdeaReportResponse | None:
         ...
 
+    def delete_report(self, report_id: str) -> bool:
+        ...
+
 
 def create_idea_report(
     payload: IdeaReportRequest,
@@ -116,6 +120,9 @@ def create_idea_report(
         locale=payload.locale,
         created_at=created_at,
         overview=report_overview(normalized_idea, payload.research, organization),
+        idea_intake_questions=idea_intake_questions_from_answers(
+            payload.idea_intake_answers
+        ),
         clarified_concept=(
             f"{normalized_idea}를 특정 고객군의 반복 업무를 줄이는 문제-해결형 "
             "SaaS 또는 운영 도구로 정의합니다."
@@ -172,6 +179,14 @@ def get_idea_report(
     report_id: str,
 ) -> IdeaReportResponse | None:
     return repository.get_report(report_id)
+
+
+def delete_idea_report(
+    repository: IdeaReportRepository,
+    *,
+    report_id: str,
+) -> bool:
+    return repository.delete_report(report_id)
 
 
 def summarize_idea_report(report: IdeaReportResponse) -> IdeaReportSummary:

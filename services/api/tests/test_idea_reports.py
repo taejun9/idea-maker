@@ -30,6 +30,16 @@ def fail_live_source_fetch(self, url: str, *, timeout_seconds: float) -> object:
     raise SourceCollectorError("network disabled in deterministic API tests")
 
 
+def sample_idea_intake_answers() -> list[dict[str, str]]:
+    return [
+        {"code": "Q1", "answer": "동네 소상공인을 위한 리뷰 개선 도구"},
+        {"code": "Q2", "answer": "지인 매장이 리뷰 대응을 놓쳐 재방문 기회를 잃는 모습을 봤다."},
+        {"code": "Q3", "answer": "소상공인의 리뷰 확인과 개선 과제 정리 문제를 해결한다."},
+        {"code": "Q4", "answer": "리뷰 수집, 이슈 분류, 쿠폰 발송을 하나의 흐름으로 만든다."},
+        {"code": "Q5", "answer": "마케팅/PR"},
+    ]
+
+
 def test_create_idea_report_returns_competitor_sections(monkeypatch) -> None:
     monkeypatch.setattr(UrlFetchingSourceClient, "fetch_json", fail_live_source_fetch)
     client = TestClient(app)
@@ -61,6 +71,7 @@ def test_create_idea_report_returns_competitor_sections(monkeypatch) -> None:
         "requirement": "필수, 최소 10자 이상 입력해주세요.",
         "photo_guidance": None,
         "options": [],
+        "answer": "",
     }
     assert body["idea_intake_questions"][1]["photo_guidance"].startswith(
         "사진은 드래그앤드랍"
@@ -95,6 +106,73 @@ def test_create_idea_report_returns_competitor_sections(monkeypatch) -> None:
     assert body["research_status"]["requested"] is False
 
 
+def test_create_idea_report_persists_intake_answers(monkeypatch) -> None:
+    monkeypatch.setattr(UrlFetchingSourceClient, "fetch_json", fail_live_source_fetch)
+    client = TestClient(app)
+    answers = sample_idea_intake_answers()
+
+    created_response = client.post(
+        "/api/idea-reports",
+        json={
+            "idea": "동네 소상공인을 위한 AI 리뷰 분석 도구",
+            "idea_intake_answers": answers,
+        },
+    )
+    created_report = created_response.json()
+    detail_response = client.get(f"/api/idea-reports/{created_report['id']}")
+
+    assert created_response.status_code == 200
+    assert detail_response.status_code == 200
+    assert created_report["idea_intake_questions"][0]["answer"] == answers[0]["answer"]
+    assert created_report["idea_intake_questions"][4]["answer"] == "마케팅/PR"
+    assert detail_response.json()["idea_intake_questions"] == created_report[
+        "idea_intake_questions"
+    ]
+
+
+@pytest.mark.parametrize(
+    ("answers", "expected_message"),
+    [
+        (
+            [
+                {"code": "Q1", "answer": "짧음"},
+                {"code": "Q2", "answer": "배경"},
+                {"code": "Q3", "answer": "문제"},
+                {"code": "Q4", "answer": "실현"},
+                {"code": "Q5", "answer": "IT"},
+            ],
+            "Q1 answer must be at least 10 characters",
+        ),
+        (
+            [
+                {"code": "Q1", "answer": "충분히 긴 한 줄 아이디어"},
+                {"code": "Q2", "answer": "배경"},
+                {"code": "Q3", "answer": "문제"},
+                {"code": "Q4", "answer": "실현"},
+                {"code": "Q5", "answer": "없는 분야"},
+            ],
+            "Q5 answer must be one of the business field options",
+        ),
+    ],
+)
+def test_create_idea_report_validates_intake_answers(
+    answers,
+    expected_message: str,
+) -> None:
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/idea-reports",
+        json={
+            "idea": "동네 소상공인을 위한 AI 리뷰 분석 도구",
+            "idea_intake_answers": answers,
+        },
+    )
+
+    assert response.status_code == 422
+    assert expected_message in str(response.json()["detail"])
+
+
 def test_create_idea_report_validates_short_idea() -> None:
     client = TestClient(app)
 
@@ -124,6 +202,33 @@ def test_list_idea_reports_returns_saved_report_summaries(monkeypatch) -> None:
     assert matching_summaries[0]["overview"] == created_report["overview"]
     assert matching_summaries[0]["domestic_competitor_count"] > 0
     assert matching_summaries[0]["source_reference_count"] > 0
+
+
+def test_delete_idea_report_removes_saved_report(monkeypatch) -> None:
+    monkeypatch.setattr(UrlFetchingSourceClient, "fetch_json", fail_live_source_fetch)
+    client = TestClient(app)
+    idea = f"보고서 삭제 테스트 {uuid4()}"
+
+    created_response = client.post("/api/idea-reports", json={"idea": idea})
+    created_report = created_response.json()
+    delete_response = client.delete(f"/api/idea-reports/{created_report['id']}")
+    detail_response = client.get(f"/api/idea-reports/{created_report['id']}")
+    list_response = client.get("/api/idea-reports")
+
+    assert delete_response.status_code == 204
+    assert detail_response.status_code == 404
+    assert created_report["id"] not in [
+        report["id"] for report in list_response.json()["reports"]
+    ]
+
+
+def test_delete_idea_report_returns_not_found_for_missing_report() -> None:
+    client = TestClient(app)
+
+    response = client.delete(f"/api/idea-reports/{uuid4()}")
+
+    assert response.status_code == 404
+    assert response.json()["detail"]["error_code"] == "idea_report_not_found"
 
 
 def test_get_idea_report_returns_saved_detail(monkeypatch) -> None:

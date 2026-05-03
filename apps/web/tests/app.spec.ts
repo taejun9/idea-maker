@@ -1,4 +1,5 @@
 import { mount } from "@vue/test-utils";
+import type { VueWrapper } from "@vue/test-utils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "../src/App.vue";
 
@@ -11,6 +12,14 @@ function apiUrl(path: string) {
   return `${expectedApiBaseUrl}${path}`;
 }
 
+const sampleIdeaIntakeAnswers = [
+  { code: "Q1", answer: "동네 소상공인을 위한 리뷰 개선 도구" },
+  { code: "Q2", answer: "지인 매장이 리뷰 대응을 놓쳐 재방문 기회를 잃는 모습을 봤다." },
+  { code: "Q3", answer: "소상공인의 리뷰 확인과 개선 과제 정리 문제를 해결한다." },
+  { code: "Q4", answer: "리뷰 수집, 이슈 분류, 쿠폰 발송을 하나의 흐름으로 만든다." },
+  { code: "Q5", answer: "마케팅/PR" },
+];
+
 const sampleIdeaIntakeQuestions = [
   {
     code: "Q1",
@@ -18,6 +27,7 @@ const sampleIdeaIntakeQuestions = [
     requirement: "필수, 최소 10자 이상 입력해주세요.",
     photo_guidance: null,
     options: [],
+    answer: sampleIdeaIntakeAnswers[0].answer,
   },
   {
     code: "Q2",
@@ -26,6 +36,7 @@ const sampleIdeaIntakeQuestions = [
     photo_guidance:
       "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. 사진은 3개 질문 합산 최대 5장까지 가능합니다.",
     options: [],
+    answer: sampleIdeaIntakeAnswers[1].answer,
   },
   {
     code: "Q3",
@@ -34,6 +45,7 @@ const sampleIdeaIntakeQuestions = [
     photo_guidance:
       "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. 사진은 3개 질문 합산 최대 5장까지 가능합니다.",
     options: [],
+    answer: sampleIdeaIntakeAnswers[2].answer,
   },
   {
     code: "Q4",
@@ -42,6 +54,7 @@ const sampleIdeaIntakeQuestions = [
     photo_guidance:
       "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. 사진은 3개 질문 합산 최대 5장까지 가능합니다.",
     options: [],
+    answer: sampleIdeaIntakeAnswers[3].answer,
   },
   {
     code: "Q5",
@@ -68,6 +81,7 @@ const sampleIdeaIntakeQuestions = [
       "하드웨어",
       "기타",
     ],
+    answer: sampleIdeaIntakeAnswers[4].answer,
   },
 ];
 
@@ -180,6 +194,14 @@ const sampleReportList = {
 const longerIdea =
   "지역 기반 소상공인 리뷰와 고객 문의를 분석하고 매장 운영 개선 과제를 자동으로 정리하는 B2B SaaS 플랫폼";
 
+async function fillIdeaIntakeAnswers(wrapper: VueWrapper) {
+  await wrapper.find('[data-testid="intake-q1"]').setValue(sampleIdeaIntakeAnswers[0].answer);
+  await wrapper.find('[data-testid="intake-q2"]').setValue(sampleIdeaIntakeAnswers[1].answer);
+  await wrapper.find('[data-testid="intake-q3"]').setValue(sampleIdeaIntakeAnswers[2].answer);
+  await wrapper.find('[data-testid="intake-q4"]').setValue(sampleIdeaIntakeAnswers[3].answer);
+  await wrapper.find('[data-testid="intake-q5"]').setValue(sampleIdeaIntakeAnswers[4].answer);
+}
+
 describe("App", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -196,6 +218,8 @@ describe("App", () => {
     expect(ideaInput.attributes("aria-describedby")).toContain("idea-help");
     expect(ideaInput.attributes("aria-invalid")).toBe("false");
     expect(wrapper.findAll('[data-testid="idea-example"]')).toHaveLength(3);
+    expect(wrapper.find('[data-testid="idea-intake-form"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="intake-validation"]').text()).toContain("Q1은 10자");
     expect(wrapper.find('[data-testid="idea-count"]').text()).toContain("0 / 2000자");
     expect(submitButton.exists()).toBe(true);
     expect(submitButton.attributes("disabled")).toBeDefined();
@@ -209,6 +233,9 @@ describe("App", () => {
     await wrapper.findAll('[data-testid="idea-example"]')[0].trigger("click");
 
     expect((ideaInput.element as HTMLTextAreaElement).value).toBe(
+      "동네 소상공인을 위한 AI 리뷰 분석 도구",
+    );
+    expect((wrapper.find('[data-testid="intake-q1"]').element as HTMLInputElement).value).toBe(
       "동네 소상공인을 위한 AI 리뷰 분석 도구",
     );
     expect(wrapper.find('[data-testid="idea-count"]').text()).toContain("관련 아이템");
@@ -304,6 +331,7 @@ describe("App", () => {
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="recommendation-list"]').exists()).toBe(true);
     });
+    await fillIdeaIntakeAnswers(wrapper);
     await wrapper.findAll('[data-testid="recommendation-report"]')[0].trigger("click");
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="report-summary"]').exists()).toBe(true);
@@ -317,6 +345,7 @@ describe("App", () => {
           idea: "리뷰 관련 고객 리뷰와 문의를 자동으로 분석해 개선 우선순위를 제안하는 SaaS",
           locale: "ko-KR",
           research: true,
+          idea_intake_answers: sampleIdeaIntakeAnswers,
         }),
       }),
     );
@@ -335,6 +364,7 @@ describe("App", () => {
     await wrapper
       .find('[data-testid="idea-input"]')
       .setValue(longerIdea);
+    await fillIdeaIntakeAnswers(wrapper);
     await wrapper.find("form").trigger("submit");
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="report-summary"]').exists()).toBe(true);
@@ -348,6 +378,7 @@ describe("App", () => {
           idea: longerIdea,
           locale: "ko-KR",
           research: false,
+          idea_intake_answers: sampleIdeaIntakeAnswers,
         }),
       }),
     );
@@ -361,6 +392,10 @@ describe("App", () => {
     expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain(
       "사업 분야를 선택해주세요.",
     );
+    expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain(
+      sampleIdeaIntakeAnswers[0].answer,
+    );
+    expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain("마케팅/PR");
     expect(wrapper.find('[data-testid="clarified-concept"]').text()).toContain("SaaS");
     expect(wrapper.find('[data-testid="core-use-cases"]').text()).toContain("제품 콘셉트");
     expect(wrapper.find('[data-testid="key-risks"]').text()).toContain("fixture-backed");
@@ -391,6 +426,39 @@ describe("App", () => {
     expect(wrapper.find('[data-testid="history-detail-link"]').attributes("href")).toBe(
       "#/reports/report-sample-1",
     );
+    expect(wrapper.find('[data-testid="history-delete-report"]').text()).toBe("삭제");
+  });
+
+  it("deletes a report from the history list", async () => {
+    window.location.hash = "#/reports";
+    const fetchMock = vi.fn((input: string | URL | Request, init?: RequestInit) => {
+      if (init?.method === "DELETE") {
+        return Promise.resolve({
+          ok: true,
+          status: 204,
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(sampleReportList),
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const wrapper = mount(App);
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="report-history-list"]').exists()).toBe(true);
+    });
+    await wrapper.find('[data-testid="history-delete-report"]').trigger("click");
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="report-history-empty"]').exists()).toBe(true);
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      apiUrl("/api/idea-reports/report-sample-1"),
+      expect.objectContaining({ method: "DELETE" }),
+    );
   });
 
   it("loads a saved report detail page", async () => {
@@ -411,5 +479,8 @@ describe("App", () => {
     expect(wrapper.find('[data-testid="clarified-concept"]').text()).toContain("SaaS");
     expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain("Q5");
     expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain("기타");
+    expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain(
+      sampleIdeaIntakeAnswers[2].answer,
+    );
   });
 });
