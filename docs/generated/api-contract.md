@@ -25,9 +25,15 @@ Generated date: 2026-05-03
 | Field | Type | Notes |
 | --- | --- | --- |
 | `overview` | string | clarified idea summary |
+| `clarified_concept` | string | concrete product concept derived from the idea |
 | `target_users` | string array | target user segments |
+| `core_use_cases` | string array | primary user workflows the idea should support |
 | `strengths` | string array | idea strengths |
 | `weaknesses` | string array | idea weaknesses |
+| `differentiation_opportunities` | string array | gaps or positioning angles against alternatives |
+| `key_risks` | string array | product, source, or validation risks to verify |
+| `build_complexity` | string | qualitative build complexity note |
+| `recommended_mvp_scope` | string array | smallest coherent MVP scope |
 | `domestic_competitors` | `Competitor[]` | Korean competitor section |
 | `overseas_competitors` | `Competitor[]` | overseas competitor section |
 | `source_references` | `SourceReference[]` | source metadata and confidence |

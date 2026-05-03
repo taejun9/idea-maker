@@ -21,7 +21,7 @@ Idea-maker is a web service that turns a short idea into a structured business/p
 2. System clarifies the idea into a concrete concept.
 3. System recommends adjacent products/startups using sources such as Product Hunt, PitchWall, and BetaList.
 4. System separates domestic Korean competitors and overseas competitors.
-5. System generates a report containing overview, target users, strengths, weaknesses, competitor table, risks, and next validation steps.
+5. System generates a report containing overview, clarified concept, target users, core use cases, strengths, weaknesses, differentiation opportunities, risks, MVP scope, competitor table, source references, and next validation steps.
 
 ## MVP Report Sections
 
@@ -35,9 +35,27 @@ Idea-maker is a web service that turns a short idea into a structured business/p
 - Strengths
 - Weaknesses
 - Differentiation opportunities
+- Key risks
 - Build complexity
 - Recommended MVP scope
 - Validation checklist
+
+## Implemented Report Contract
+
+The current report API exposes the following MVP sections:
+
+- Executive summary: `overview`
+- Clarified concept: `clarified_concept`
+- Target users: `target_users`
+- Core use cases: `core_use_cases`
+- Strengths and weaknesses: `strengths`, `weaknesses`
+- Differentiation opportunities: `differentiation_opportunities`
+- Key risks: `key_risks`
+- Build complexity: `build_complexity`
+- Recommended MVP scope: `recommended_mvp_scope`
+- Domestic and overseas competitors: `domestic_competitors`, `overseas_competitors`
+- Startup and source references: `source_references`
+- Validation checklist: `next_validation_steps`
 
 ## Data Source Rules
 
@@ -52,4 +70,3 @@ Idea-maker is a web service that turns a short idea into a structured business/p
 - financial projections as authoritative claims
 - scraping behind login walls without explicit approval
 - replacing human market validation
-

@@ -26,9 +26,15 @@ export interface IdeaReportRequest {
 
 export interface IdeaReportResponse {
   overview: string;
+  clarified_concept: string;
   target_users: string[];
+  core_use_cases: string[];
   strengths: string[];
   weaknesses: string[];
+  differentiation_opportunities: string[];
+  key_risks: string[];
+  build_complexity: string;
+  recommended_mvp_scope: string[];
   domestic_competitors: Competitor[];
   overseas_competitors: Competitor[];
   source_references: SourceReference[];

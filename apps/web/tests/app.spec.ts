@@ -4,9 +4,16 @@ import App from "../src/App.vue";
 
 const sampleReport = {
   overview: "'동네 소상공인을 위한 AI 리뷰 분석 도구' 아이디어를 초기 검증 가능한 제품 개념으로 구체화합니다.",
+  clarified_concept:
+    "동네 소상공인을 위한 AI 리뷰 분석 도구를 반복 업무를 줄이는 SaaS로 정의합니다.",
   target_users: ["초기 창업자", "소규모 제품팀"],
+  core_use_cases: ["짧은 아이디어를 검증 가능한 제품 콘셉트로 정리한다."],
   strengths: ["짧은 입력으로 구조화된 보고서를 생성"],
   weaknesses: ["초기 버전은 외부 소스 실시간 수집이 제한적"],
+  differentiation_opportunities: ["국내 사용자 업무 맥락을 우선 반영한다."],
+  key_risks: ["fixture-backed 소스는 현재 시장 사실로 주장할 수 없다."],
+  build_complexity: "중간: 최신 소스 검증과 신뢰도 관리가 필요합니다.",
+  recommended_mvp_scope: ["아이디어 입력과 구체화된 콘셉트 생성"],
   domestic_competitors: [
     {
       name: "국내 리뷰 분석 SaaS 후보군",
@@ -83,6 +90,10 @@ describe("App", () => {
       }),
     );
     expect(wrapper.find('[data-testid="report-summary"]').text()).toContain("국내 경쟁 서비스");
+    expect(wrapper.find('[data-testid="clarified-concept"]').text()).toContain("SaaS");
+    expect(wrapper.find('[data-testid="core-use-cases"]').text()).toContain("제품 콘셉트");
+    expect(wrapper.find('[data-testid="key-risks"]').text()).toContain("fixture-backed");
+    expect(wrapper.find('[data-testid="recommended-mvp-scope"]').text()).toContain("아이디어 입력");
     expect(wrapper.find('[data-testid="report-summary"]').text()).toContain("Product Hunt");
   });
 });

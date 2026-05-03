@@ -35,11 +35,16 @@ class SourceReference(BaseModel):
 
 class IdeaReportResponse(BaseModel):
     overview: str
+    clarified_concept: str
     target_users: list[str]
+    core_use_cases: list[str]
     strengths: list[str]
     weaknesses: list[str]
+    differentiation_opportunities: list[str]
+    key_risks: list[str]
+    build_complexity: str
+    recommended_mvp_scope: list[str]
     domestic_competitors: list[Competitor]
     overseas_competitors: list[Competitor]
     source_references: list[SourceReference]
     next_validation_steps: list[str]
-
