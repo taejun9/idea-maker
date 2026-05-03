@@ -12,7 +12,7 @@ defineProps<{
     class="grid gap-3"
     data-testid="idea-intake-questions"
   >
-    <h2 class="text-lg font-semibold">아이디어 입력 문항</h2>
+    <h2 class="text-lg font-semibold">아이디어 보강 문항</h2>
     <div class="grid gap-3 lg:grid-cols-2">
       <article
         v-for="question in questions"
@@ -47,7 +47,7 @@ defineProps<{
           class="grid gap-1 rounded border border-emerald-100 bg-emerald-50 p-3 text-sm"
           data-testid="idea-intake-answer"
         >
-          <dt class="font-semibold text-emerald-900">입력값</dt>
+          <dt class="font-semibold text-emerald-900">답변</dt>
           <dd class="break-words leading-6 text-slate-800">{{ question.answer }}</dd>
         </dl>
       </article>

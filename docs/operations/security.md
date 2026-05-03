@@ -35,8 +35,8 @@ Forbidden:
 ## Report History Data
 
 - Generated reports are persisted because user-facing history requires lookup after refresh.
-- Treat saved report `idea`, Q1-Q5 intake answers, and `report` payloads as
-  sensitive business intent.
+- Treat saved report `idea`, generated Q1-Q4 intake answers, Q5 business-field
+  selection, and `report` payloads as sensitive business intent.
 - Deleting a report removes the saved `idea_reports` row in the current MVP
   schema, including the JSON report payload and intake answers.
 - The current MVP has no authentication or per-user ownership. Do not expose report

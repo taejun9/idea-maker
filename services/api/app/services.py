@@ -15,7 +15,9 @@ from services.api.app.integrations.source_collectors import (
     collect_source_records,
 )
 from services.api.app.schemas import (
+    BUSINESS_FIELD_OPTIONS,
     Competitor,
+    IdeaIntakeAnswerInput,
     IdeaRecommendation,
     IdeaRecommendationRequest,
     IdeaRecommendationResponse,
@@ -63,6 +65,26 @@ RECOMMENDATION_PATTERNS = (
             "사용자 상황에 맞춰 {keyword} 관련 콘텐츠와 실행 과제를 추천하는 큐레이션 서비스"
         ),
     },
+)
+
+BUSINESS_FIELD_KEYWORDS = (
+    ("교육", ("교육", "학습", "스터디", "강의", "출석", "학교", "학생")),
+    ("금융", ("금융", "대출", "보험", "결제", "송금", "은행")),
+    ("재무", ("재무", "회계", "세금", "정산", "예산", "비용")),
+    ("마케팅/PR", ("리뷰", "마케팅", "광고", "홍보", "pr", "피드백", "고객 반응", "문의")),
+    ("유통/물류", ("쇼핑몰", "반품", "배송", "재고", "물류", "유통", "커머스")),
+    ("운영관리", ("운영", "업무", "자동화", "체크리스트", "관리", "매장", "소상공인")),
+    ("네트워킹", ("네트워킹", "커뮤니티", "모임", "매칭", "연결")),
+    ("모빌리티", ("모빌리티", "차량", "주차", "교통", "이동", "배달")),
+    ("미디어/엔터테인먼트", ("콘텐츠", "미디어", "영상", "음악", "엔터테인먼트")),
+    ("바이오/의류", ("바이오", "헬스케어", "의료", "건강", "의류", "패션")),
+    ("에너지/자원", ("에너지", "전력", "자원", "탄소", "전기")),
+    ("농축/수산업", ("농업", "축산", "수산", "농장", "어업")),
+    ("라이프스타일", ("생활", "라이프스타일", "취미", "여행", "가정")),
+    ("프롭테크", ("부동산", "임대", "주거", "건물", "프롭테크")),
+    ("하드웨어", ("하드웨어", "기기", "센서", "로봇", "디바이스")),
+    ("임팩트", ("임팩트", "환경", "기부", "복지", "사회문제")),
+    ("IT", ("ai", "인공지능", "saas", "소프트웨어", "앱", "플랫폼", "데이터", "챗봇")),
 )
 
 
@@ -113,6 +135,11 @@ def create_idea_report(
         normalized_idea,
         "Research organization was not requested.",
     )
+    idea_intake_answers = generated_idea_intake_answers(
+        idea=normalized_idea,
+        organization=organization,
+        submitted_answers=payload.idea_intake_answers,
+    )
 
     return IdeaReportResponse(
         id=str(uuid4()),
@@ -120,11 +147,9 @@ def create_idea_report(
         locale=payload.locale,
         created_at=created_at,
         overview=report_overview(normalized_idea, payload.research, organization),
-        idea_intake_questions=idea_intake_questions_from_answers(
-            payload.idea_intake_answers
-        ),
+        idea_intake_questions=idea_intake_questions_from_answers(idea_intake_answers),
         clarified_concept=(
-            f"{normalized_idea}를 특정 고객군의 반복 업무를 줄이는 문제-해결형 "
+            f"'{normalized_idea}' 아이디어를 특정 고객군의 반복 업무를 줄이는 문제-해결형 "
             "SaaS 또는 운영 도구로 정의합니다."
         ),
         target_users=list(organization.target_users),
@@ -261,6 +286,80 @@ def default_report_organization() -> OrganizationResult:
         ),
         notes=(),
     )
+
+
+def generated_idea_intake_answers(
+    *,
+    idea: str,
+    organization: OrganizationResult,
+    submitted_answers: list[IdeaIntakeAnswerInput],
+) -> list[IdeaIntakeAnswerInput]:
+    submitted_by_code = {answer.code: answer.answer for answer in submitted_answers}
+    answers = [
+        IdeaIntakeAnswerInput(code="Q1", answer=generated_one_line_idea(idea)),
+        IdeaIntakeAnswerInput(code="Q2", answer=generated_background_story(idea)),
+        IdeaIntakeAnswerInput(
+            code="Q3",
+            answer=generated_user_problem(organization),
+        ),
+        IdeaIntakeAnswerInput(
+            code="Q4",
+            answer=generated_realization_plan(organization),
+        ),
+    ]
+    q5_answer = submitted_by_code.get("Q5") or infer_business_field(idea)
+    answers.append(IdeaIntakeAnswerInput(code="Q5", answer=q5_answer))
+    return answers
+
+
+def generated_one_line_idea(idea: str) -> str:
+    if len(idea) >= 10:
+        return bounded_intake_answer(idea)
+    return bounded_intake_answer(f"{idea}를 구체화한 초기 제품 아이디어")
+
+
+def generated_background_story(idea: str) -> str:
+    return bounded_intake_answer(
+        f"'{idea}'에서 출발해 사용자가 반복적으로 겪는 불편을 빠르게 확인하고, "
+        "검증 가능한 제품 가설로 정리하기 위해 나온 아이디어입니다."
+    )
+
+
+def generated_user_problem(organization: OrganizationResult) -> str:
+    target_user = organization.target_users[0] if organization.target_users else "초기 사용자"
+    core_use_case = (
+        organization.core_use_cases[0]
+        if organization.core_use_cases
+        else "아이디어를 실행 가능한 제품 콘셉트로 정리한다"
+    )
+    return bounded_intake_answer(
+        f"{target_user}가 '{core_use_case}' 과정에서 겪는 문제와 우선순위 판단을 "
+        "도와주는 아이디어입니다."
+    )
+
+
+def generated_realization_plan(organization: OrganizationResult) -> str:
+    mvp_scope = ", ".join(organization.mvp_scope[:2])
+    if not mvp_scope:
+        mvp_scope = "아이디어 입력, 콘셉트 정리, 다음 검증 단계 제안"
+    return bounded_intake_answer(
+        f"MVP 범위는 {mvp_scope}부터 시작하고, 사용자 인터뷰와 경쟁 서비스 확인으로 "
+        "다음 기능 범위를 좁힙니다."
+    )
+
+
+def bounded_intake_answer(value: str) -> str:
+    if len(value) <= 2000:
+        return value
+    return f"{value[:1997]}..."
+
+
+def infer_business_field(idea: str) -> str:
+    normalized = idea.lower()
+    for field, keywords in BUSINESS_FIELD_KEYWORDS:
+        if any(keyword in normalized for keyword in keywords):
+            return field
+    return "기타" if "기타" in BUSINESS_FIELD_OPTIONS else BUSINESS_FIELD_OPTIONS[0]
 
 
 def merge_source_records(records: list[NormalizedSourceRecord]) -> list[NormalizedSourceRecord]:
