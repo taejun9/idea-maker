@@ -16,8 +16,12 @@ def test_create_idea_report_returns_competitor_sections() -> None:
     assert body["domestic_competitors"]
     assert body["overseas_competitors"]
     assert body["source_references"]
+    assert "[TODO" not in body["domestic_competitors"][0]["name"]
+    assert body["domestic_competitors"][0]["source_url"]
+    assert body["overseas_competitors"][0]["source_url"]
     assert body["domestic_competitors"][0]["confidence"] == "low"
     assert body["source_references"][0]["observed_date"]
+    assert "fixture-backed" in body["source_references"][0]["note"].lower()
     assert "AI 리뷰 분석 도구" in body["overview"]
 
 

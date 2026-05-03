@@ -28,11 +28,14 @@ For Product Hunt, PitchWall, BetaList, Korean competitors, and overseas competit
 | BetaList | early startup references | volatile; browse or integrate before current claims |
 | Korean search/news/directories | domestic competitors | source must be cited per report |
 
+Implementation note: current report source records are normalized through fixture-backed collectors documented in `source-collectors.md`.
+
 ## Codex Runtime References
 
 - `codex-git-workflow.md`: worktree branch, PR, merge, cleanup flow.
 - `codex-prompt-pack.md`: reusable Codex prompts.
 - `codex-extensions.md`: recommended skills, MCP/plugin capabilities, and installation policy.
+- `source-collectors.md`: source collector normalization, fixture limitations, and upgrade rules.
 
 ## Update When
 

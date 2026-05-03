@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from services.api.app.schemas import HealthResponse, IdeaReportRequest, IdeaReportResponse
-from services.api.app.services import create_placeholder_report
+from services.api.app.services import create_idea_report as build_idea_report
 
 app = FastAPI(title="Idea Maker API")
 app.add_middleware(
@@ -21,4 +21,4 @@ def health() -> HealthResponse:
 
 @app.post("/api/idea-reports", response_model=IdeaReportResponse)
 def create_idea_report(payload: IdeaReportRequest) -> IdeaReportResponse:
-    return create_placeholder_report(payload)
+    return build_idea_report(payload)

@@ -1,9 +1,10 @@
 # PLAN-0005 Source Collector
 
-Status: active
+Status: completed
 Owner: Codex
 Created: 2026-05-03
 Last updated: 2026-05-03
+Completed: 2026-05-03
 Related docs: `docs/product-specs/index.md`, `docs/architecture/backend.md`, `docs/references/README.md`, `docs/exec-plans/completed/plan-0001-idea-report-mvp.md`
 Branch: `codex/plan-0005-source-collector`
 Worktree: `.worktrees/plan-0005-source-collector`
@@ -33,13 +34,13 @@ Replace deterministic placeholder source data with normalized source collector b
 
 ## Task Breakdown
 
-- [ ] Define normalized source collector interfaces.
-- [ ] Add deterministic collector tests with fixture data.
-- [ ] Add Product Hunt, PitchWall, and BetaList collector stubs or approved integrations.
-- [ ] Add domestic/overseas competitor normalization.
-- [ ] Update API contract docs if response fields change.
-- [ ] Update tech debt tracker when placeholder-only data is removed.
-- [ ] Run `scripts/agent-task.sh verify` and `scripts/agent-task.sh docker-test`.
+- [x] Define normalized source collector interfaces.
+- [x] Add deterministic collector tests with fixture data.
+- [x] Add Product Hunt, PitchWall, and BetaList collector stubs or approved integrations.
+- [x] Add domestic/overseas competitor normalization.
+- [x] Update API contract docs if response fields change.
+- [x] Update tech debt tracker when placeholder-only data is removed.
+- [x] Run `scripts/agent-task.sh verify` and `scripts/agent-task.sh docker-test`.
 
 ## Verification
 
@@ -60,7 +61,21 @@ Replace deterministic placeholder source data with normalized source collector b
 
 ## Progress
 
-Initial follow-up plan created from PLAN-0001 completion cleanup.
+Completed fixture-backed source collector boundary and report service wiring.
+
+## Outcome
+
+- Added normalized source collector records under `services/api/app/integrations/`.
+- Added deterministic fixture collectors for Korean competitor research, Product Hunt, PitchWall, and BetaList.
+- Wired the report service to convert collector records into domestic/overseas competitors and source references.
+- Added collector normalization tests and strengthened API response tests.
+- Documented collector fixture limitations in `docs/references/source-collectors.md`.
+- Resolved DEBT-0001 by replacing placeholder-only report source data.
+
+## Verification Evidence
+
+- `scripts/agent-task.sh verify`
+- `scripts/agent-task.sh docker-test`
 
 ## Definition of Done
 
@@ -70,5 +85,6 @@ Initial follow-up plan created from PLAN-0001 completion cleanup.
 
 ## Follow-Up Cleanup
 
+- Added live source integration follow-up as `docs/exec-plans/active/plan-0006-live-source-integrations.md`.
 - Add report persistence plan.
 - Add export/share plan.
