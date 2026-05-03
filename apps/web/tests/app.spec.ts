@@ -184,6 +184,7 @@ const sampleReportList = {
       idea: sampleReport.idea,
       created_at: sampleReport.created_at,
       overview: sampleReport.overview,
+      business_field: "마케팅/PR",
       research_requested: false,
       domestic_competitor_count: 1,
       overseas_competitor_count: 1,
@@ -482,6 +483,9 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledWith(apiUrl("/api/idea-reports"));
     expect(wrapper.find('[data-testid="report-history-list"]').text()).toContain(
       sampleReport.idea,
+    );
+    expect(wrapper.find('[data-testid="history-business-field"]').text()).toContain(
+      "Q5 마케팅/PR",
     );
     expect(wrapper.find('[data-testid="history-detail-link"]').attributes("href")).toBe(
       "#/reports/report-sample-1",

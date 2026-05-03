@@ -50,6 +50,10 @@ function formatDateTime(value: string) {
     timeStyle: "short",
   }).format(new Date(value));
 }
+
+function businessFieldLabel(value: string | null | undefined) {
+  return value?.trim() || "분야 미정";
+}
 </script>
 
 <template>
@@ -123,6 +127,13 @@ function formatDateTime(value: string) {
           </div>
           <p class="text-sm leading-6 text-slate-700">{{ report.overview }}</p>
           <dl class="flex flex-wrap gap-2 text-xs text-slate-600">
+            <div
+              class="rounded bg-emerald-50 px-2 py-1 text-emerald-800"
+              data-testid="history-business-field"
+            >
+              <dt class="sr-only">사업 분야</dt>
+              <dd>Q5 {{ businessFieldLabel(report.business_field) }}</dd>
+            </div>
             <div class="rounded bg-slate-100 px-2 py-1">
               <dt class="sr-only">국내 경쟁 서비스 수</dt>
               <dd>국내 {{ report.domestic_competitor_count }}</dd>

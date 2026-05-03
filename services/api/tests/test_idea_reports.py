@@ -172,7 +172,10 @@ def test_list_idea_reports_returns_saved_report_summaries(monkeypatch) -> None:
     client = TestClient(app)
     idea = f"보고서 목록 조회 테스트 {uuid4()}"
 
-    created_response = client.post("/api/idea-reports", json={"idea": idea})
+    created_response = client.post(
+        "/api/idea-reports",
+        json={"idea": idea, "idea_intake_answers": [{"code": "Q5", "answer": "교육"}]},
+    )
     list_response = client.get("/api/idea-reports")
 
     assert created_response.status_code == 200
@@ -186,6 +189,7 @@ def test_list_idea_reports_returns_saved_report_summaries(monkeypatch) -> None:
     assert matching_summaries
     assert matching_summaries[0]["idea"] == idea
     assert matching_summaries[0]["overview"] == created_report["overview"]
+    assert matching_summaries[0]["business_field"] == "교육"
     assert matching_summaries[0]["domestic_competitor_count"] > 0
     assert matching_summaries[0]["source_reference_count"] > 0
 

@@ -220,11 +220,24 @@ def summarize_idea_report(report: IdeaReportResponse) -> IdeaReportSummary:
         idea=report.idea,
         created_at=report.created_at,
         overview=report.overview,
+        business_field=report_business_field(report),
         research_requested=report.research_status.requested,
         domestic_competitor_count=len(report.domestic_competitors),
         overseas_competitor_count=len(report.overseas_competitors),
         source_reference_count=len(report.source_references),
     )
+
+
+def report_business_field(report: IdeaReportResponse) -> str:
+    q5_answer = next(
+        (
+            question.answer.strip()
+            for question in report.idea_intake_questions
+            if question.code == "Q5"
+        ),
+        "",
+    )
+    return q5_answer
 
 
 def create_idea_recommendations(

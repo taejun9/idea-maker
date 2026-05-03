@@ -96,6 +96,7 @@ export interface IdeaReportSummary {
   idea: string;
   created_at: string;
   overview: string;
+  business_field: string;
   research_requested: boolean;
   domestic_competitor_count: number;
   overseas_competitor_count: number;

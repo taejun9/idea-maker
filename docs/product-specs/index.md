@@ -103,6 +103,10 @@ The report history API exposes:
 - `GET /api/idea-reports/{report_id}`: the full saved report detail
 - `DELETE /api/idea-reports/{report_id}`: remove a saved report from history
 
+Report summaries include the report identity, creation time, overview, Q5 business
+field, research-requested flag, competitor counts, and source-reference count so
+the history list is scannable before users open a detail page.
+
 The Docker runtime persists generated reports in PostgreSQL 18. Local tests without
 `DATABASE_URL` use an in-memory repository so routine unit tests do not require a
 database outside Docker.
