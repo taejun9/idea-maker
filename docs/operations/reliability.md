@@ -61,6 +61,11 @@ Use `docs/exec-plans/active/` for incident fixes that require code changes. Comp
 
 Codex must report at task start and task finish.
 
+Required first line:
+
+- Start: `<작업자명>: <작업내용>`
+- Finish: `<작업자명>: <보고내용>`
+
 Start report:
 
 - task id / branch

@@ -24,7 +24,7 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 
 ## Standard Codex Loop
 
-1. 요청 접수 회의를 먼저 남긴다: 목표, 범위, 비목표, 가정, 필요한 질문, 예상 변경 파일, 역할, 검증 계획, 사용할 plan id.
+1. 요청 접수 회의를 먼저 남긴다. 작업 시작 보고 첫 줄은 `<작업자명>: <작업내용>` 형식으로 쓴다. 회의에는 목표, 범위, 비목표, 가정, 필요한 질문, 예상 변경 파일, 역할, 검증 계획, 사용할 plan id를 포함한다.
 2. 정보가 부족해 plan을 정할 수 없으면 질문하고 멈춘다.
 3. `main`에서 직접 커밋하지 않는다. worktree로 `codex/<task-id>` 브랜치를 시작한다.
 4. 요청 접수 회의 결과를 바탕으로 `docs/exec-plans/active/`에 현재 작업용 plan 파일을 작성하거나 갱신한다.
@@ -34,7 +34,7 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 8. 변경한 동작, 규칙, 의사결정은 같은 PR에서 문서에 반영한다.
 9. 완료 전 `scripts/agent-task.sh verify`와 필요한 `scripts/agent-task.sh docker-test`를 통과시킨다.
 10. 검증이 끝난 작업은 별도 승인 대기 없이 `main`에 merge하고 `origin/main`에 push한다.
-11. 작업 종료 리포트를 남긴다: 변경 요약, 검증 결과, 남은 리스크, 다음 작업.
+11. 작업 종료 리포트를 남긴다. 완료 보고 첫 줄은 `<작업자명>: <보고내용>` 형식으로 쓴다. 리포트에는 변경 요약, 검증 결과, 남은 리스크, 다음 작업을 포함한다.
 
 ## Hard Rules
 
@@ -49,6 +49,7 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 - 모든 작업은 요청 접수 회의로 plan 범위를 확정한 뒤 `docs/exec-plans/active/plan-NNNN-<task>.md` 작성 또는 갱신 후 진행한다.
 - `docs/exec-plans/active/`에 plan 파일이 하나도 없으면 작업을 진행하지 말고 요청 접수 회의부터 수행해 plan을 만든다.
 - 완료나 종료 보고 시점에 누락된 plan을 소급 작성하는 것은 금지한다.
+- 작업 시작/완료 보고 형식은 각각 `<작업자명>: <작업내용>`, `<작업자명>: <보고내용>`이다.
 - `main` 브랜치 직접 커밋은 금지한다.
 - feature/fix 작업은 worktree branch -> PR/main merge -> worktree/branch cleanup 흐름을 따른다.
 - 커밋 메시지는 `<action>(plan-NNNN): <task>` 형태로 작성한다. 예: `docs(plan-0002): update git workflow rules`.

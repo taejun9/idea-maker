@@ -33,6 +33,7 @@ Owner: Platform / Codex
 ```text
 Human intent
   -> Codex reads AGENTS.md
+  -> Codex sends worker-name-prefixed task start report
   -> Codex runs request-intake planning meeting
   -> Codex creates worktree branch
   -> Codex reads docs and active exec plans
@@ -43,7 +44,7 @@ Human intent
   -> PR review checks risk and docs
   -> merge
   -> worktree and branch cleanup
-  -> Codex sends task finish report
+  -> Codex sends worker-name-prefixed task finish report
   -> completed exec plan + quality score + tech debt updates
 ```
 
@@ -232,11 +233,11 @@ Initial scripts:
 
 ## 8. Agent Workflow Harness
 
-All workflows start with a request-intake planning meeting and finish with a finish report. All implementation work uses worktree branches and avoids direct commits on `main`.
+All workflows start with a worker-name-prefixed request-intake planning meeting report and finish with a worker-name-prefixed finish report. All implementation work uses worktree branches and avoids direct commits on `main`.
 
 Bug fix:
 
-1. run request-intake planning meeting
+1. send `<작업자명>: <작업내용>` start report and run request-intake planning meeting
 2. create worktree branch
 3. create or update active exec plan from meeting output
 4. reproduce with Docker test or local command
@@ -245,7 +246,7 @@ Bug fix:
 7. add regression test
 8. update plan/debt docs if needed
 9. run verify and docker-test
-10. send finish report
+10. send `<작업자명>: <보고내용>` finish report
 
 New feature:
 

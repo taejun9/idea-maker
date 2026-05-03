@@ -20,6 +20,8 @@ source-of-record docs instead of duplicating them.
 
 ## Runtime Rules
 
+- Every task start report begins with `<작업자명>: <작업내용>`.
+- Every task finish report begins with `<작업자명>: <보고내용>`.
 - Every task report includes goal, scope, branch/worktree, active role ids, expected changed areas, and verification plan.
 - Every task starts with a short request-intake planning meeting that records goal, scope, non-goals, assumptions or open questions, role ids, expected changed areas, verification, and the selected plan id.
 - Every task uses an active plan created or updated from that meeting before implementation, documentation, test, or tooling changes.

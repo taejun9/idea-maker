@@ -10,7 +10,7 @@ This repository does not commit directly on `main`. Codex works in a dedicated w
 ## Standard Flow
 
 ```bash
-scripts/agent-task.sh start-report <task-id> "<goal>"
+scripts/agent-task.sh start-report <task-id> "<goal>" "<worker-name>"
 scripts/agent-task.sh worktree-start <task-id>
 cd .worktrees/<task-id>
 
@@ -29,7 +29,7 @@ git commit -m "<action>(plan-NNNN): <task>"
 cd ../..
 scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"
 scripts/agent-task.sh worktree-clean <task-id>
-scripts/agent-task.sh finish-report <task-id> "merged"
+scripts/agent-task.sh finish-report <task-id> "merged" "<worker-name>"
 ```
 
 `verify` is the task-branch command and requires an active plan. `ci` runs the
@@ -39,6 +39,8 @@ leave `docs/exec-plans/active/` empty except for `.gitkeep`.
 Default behavior: once work is implemented and required verification passes, Codex must merge and push immediately without waiting for a separate approval. Stop before merge only when the user explicitly asks to pause, when verification fails, or when the operation would be destructive beyond the documented merge/push flow.
 
 Plan gate: Codex must hold a request-intake planning meeting and create or update an active execution plan before task work. If `docs/exec-plans/active/` has no `plan-NNNN-<task>.md` file, stop before implementation, record the meeting output, and create the missing plan from that output. Do not create the plan retroactively at handoff.
+
+Report format gate: the first line of every start report must be `<작업자명>: <작업내용>`, and the first line of every finish report must be `<작업자명>: <보고내용>`. Use the active Korean role name from `docs/team/roster.md` or an explicitly assigned worker name.
 
 ## Branch Rules
 
@@ -86,7 +88,7 @@ Forbidden on `main`:
 5. Remove worktree.
 6. Delete local branch.
 7. Delete remote branch if it still exists.
-8. Send finish report.
+8. Send `<작업자명>: <보고내용>` finish report.
 
 ## Emergency Exception
 
