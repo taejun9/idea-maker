@@ -37,7 +37,7 @@ Generated date: 2026-05-03
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `name` | string | service or placeholder name |
+| `name` | string | normalized source record title |
 | `market` | `domestic_kr` or `overseas` | competitor market grouping |
 | `summary` | string | short positioning note |
 | `strengths` | string array | competitor strengths |
@@ -52,6 +52,6 @@ Generated date: 2026-05-03
 | --- | --- | --- |
 | `source_name` | string | source display name |
 | `source_url` | string | source URL |
-| `observed_date` | date string | date the placeholder/source was observed |
+| `observed_date` | date string | date the source or fixture record was observed |
 | `note` | string | source availability note |
 | `confidence` | `low`, `medium`, or `high` | source confidence |

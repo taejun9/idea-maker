@@ -17,7 +17,6 @@ Every intentional shortcut must have:
 
 | ID | Area | Debt | Risk | Owner | Cleanup Trigger | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| DEBT-0001 | backend | Recommendation output starts with deterministic placeholders | Reports are not market-current | Codex | source collector plan completes | open |
 | DEBT-0002 | CI | Frontend/backend dependency installation may be skipped until lockfiles exist | CI is initially partial | Codex | package lockfiles are added | open |
 | DEBT-0003 | git | Initial harness files were drafted before worktree policy was added | Working directory hygiene risk until first branch migration | Codex | first PR is created from a worktree branch | open |
 | DEBT-0004 | frontend | npm install reports 5 moderate audit findings in starter dependency tree | dependency risk needs triage before production | `platform-smith` | before public deployment or auth/user data launch | open |
@@ -28,6 +27,7 @@ Every intentional shortcut must have:
 
 | ID | Resolved Date | Resolution |
 | --- | --- | --- |
+| DEBT-0001 | 2026-05-03 | Replaced placeholder-only report source data with normalized fixture-backed collectors under `services/api/app/integrations/`; live market-current collection remains a future collector upgrade. |
 
 ## Weekly Gardening Checklist
 
