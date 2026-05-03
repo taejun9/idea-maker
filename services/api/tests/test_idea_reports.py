@@ -5,8 +5,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from services.api.app.integrations.research_adapters import (
+    BusinessContextGenerationResult,
+    LocalGemmaBusinessContextGenerator,
     OrganizationResult,
     SearchAdapterResult,
+    business_context_generation_fallback,
 )
 from services.api.app.integrations.source_collectors import (
     NormalizedSourceRecord,
@@ -16,7 +19,11 @@ from services.api.app.integrations.source_collectors import (
 from services.api.app.main import allowed_cors_origins, app
 from services.api.app.repositories.idea_reports import InMemoryIdeaReportRepository
 from services.api.app.schemas import IdeaReportRequest, IdeaReportResponse
-from services.api.app.services import create_idea_report, create_quick_idea_examples
+from services.api.app.services import (
+    create_idea_report,
+    create_quick_idea_examples,
+    quick_idea_example_for_field,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -25,6 +32,17 @@ def use_in_memory_report_repository():
     app.state.idea_report_repository = InMemoryIdeaReportRepository()
     yield
     app.state.idea_report_repository = original_repository
+
+
+@pytest.fixture(autouse=True)
+def disable_live_business_context_generation(monkeypatch):
+    def fallback_context(self, *, business_field: str) -> BusinessContextGenerationResult:
+        return business_context_generation_fallback(
+            business_field,
+            "network disabled in deterministic API tests",
+        )
+
+    monkeypatch.setattr(LocalGemmaBusinessContextGenerator, "generate", fallback_context)
 
 
 def fail_live_source_fetch(self, url: str, *, timeout_seconds: float) -> object:
@@ -261,6 +279,92 @@ def test_idea_report_response_backfills_intake_questions_for_saved_payloads(
     assert restored_report.idea_intake_questions[4].options[-1] == "기타"
 
 
+def test_create_idea_report_uses_ai_business_context_for_requested_field(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(UrlFetchingSourceClient, "fetch_json", fail_live_source_fetch)
+
+    class FakeBusinessContextGenerator:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def generate(self, *, business_field: str) -> BusinessContextGenerationResult:
+            self.calls.append(business_field)
+            return BusinessContextGenerationResult(
+                provider="gemma4",
+                status="success",
+                business_field=business_field,
+                users=("AI 마케팅 실무자", "브랜드 성장팀", "고객 경험 담당자"),
+                job="캠페인 반응을 읽고 다음 메시지를 정하는 일",
+                outcome="전환율 개선과 부정 이슈 대응 시간 단축",
+                adoption_risk="채널 데이터 권한과 브랜드 톤 검수",
+                differentiation_focus="한국어 고객 반응에서 실행 메시지를 뽑는 흐름",
+                mvp_capability="반응 수집, 감성 분류, 메시지 초안",
+                notes=("fake AI context used",),
+            )
+
+    context_generator = FakeBusinessContextGenerator()
+
+    report = create_idea_report(
+        IdeaReportRequest(
+            idea="브랜드 리뷰 반응을 분석해 캠페인 메시지를 추천하는 서비스",
+            idea_intake_answers=[{"code": "Q5", "answer": "마케팅/PR"}],
+        ),
+        context_generator=context_generator,
+    )
+
+    assert context_generator.calls == ["마케팅/PR"]
+    assert "AI 마케팅 실무자" in report.target_users[0]
+    assert "캠페인 반응" in report.core_use_cases[1]
+    assert "전환율 개선" in report.differentiation_opportunities[2]
+    assert report.recommended_mvp_scope[0] == "반응 수집, 감성 분류, 메시지 초안"
+
+
+def test_create_idea_report_does_not_call_ai_context_for_other_fields(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(UrlFetchingSourceClient, "fetch_json", fail_live_source_fetch)
+
+    class FailingBusinessContextGenerator:
+        def generate(self, *, business_field: str) -> BusinessContextGenerationResult:
+            raise AssertionError(f"unexpected AI context call for {business_field}")
+
+    report = create_idea_report(
+        IdeaReportRequest(
+            idea="매장 체크리스트와 교대 업무를 관리하는 서비스",
+            idea_intake_answers=[{"code": "Q5", "answer": "운영관리"}],
+        ),
+        context_generator=FailingBusinessContextGenerator(),
+    )
+
+    assert report.idea_intake_questions[4].answer == "운영관리"
+    assert any("현장 운영 매니저" in item for item in report.target_users)
+
+
+def test_create_idea_report_falls_back_when_ai_context_generation_fails(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(UrlFetchingSourceClient, "fetch_json", fail_live_source_fetch)
+
+    class FallbackBusinessContextGenerator:
+        def generate(self, *, business_field: str) -> BusinessContextGenerationResult:
+            return business_context_generation_fallback(
+                business_field,
+                "fake AI context failure",
+            )
+
+    report = create_idea_report(
+        IdeaReportRequest(
+            idea="생활 루틴을 추천하는 라이프스타일 앱",
+            idea_intake_answers=[{"code": "Q5", "answer": "라이프스타일"}],
+        ),
+        context_generator=FallbackBusinessContextGenerator(),
+    )
+
+    assert any("개인 생활 루틴" in item for item in report.target_users)
+    assert any("루틴 입력" in item for item in report.recommended_mvp_scope)
+
+
 def test_get_idea_report_returns_not_found_for_missing_report() -> None:
     client = TestClient(app)
 
@@ -290,6 +394,33 @@ def test_create_quick_idea_examples_randomizes_generated_output() -> None:
     assert len(first_response.examples) == 5
     assert len(second_response.examples) == 5
     assert first_response.examples != second_response.examples
+
+
+def test_quick_idea_example_uses_ai_business_context_for_requested_field() -> None:
+    class FakeBusinessContextGenerator:
+        def generate(self, *, business_field: str) -> BusinessContextGenerationResult:
+            assert business_field == "IT"
+            return BusinessContextGenerationResult(
+                provider="gemma4",
+                status="success",
+                business_field=business_field,
+                users=("AI 기반 제품팀", "데이터 운영자", "사내 자동화 담당자"),
+                job="AI 업무 흐름을 설계하고 오류를 줄이는 일",
+                outcome="반복 처리 시간 감소",
+                adoption_risk="사내 데이터 보안과 모델 품질 검수",
+                differentiation_focus="업무 맥락에 맞춘 AI 실행 흐름",
+                mvp_capability="AI 태스크 큐와 결과 검수 화면",
+                notes=("fake AI context used",),
+            )
+
+    example = quick_idea_example_for_field(
+        "IT",
+        Random(0),
+        context_generator=FakeBusinessContextGenerator(),
+    )
+
+    assert example.field == "IT"
+    assert "AI" in example.idea
 
 
 def test_create_idea_recommendations_returns_related_items() -> None:

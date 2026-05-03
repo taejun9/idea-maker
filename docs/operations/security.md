@@ -63,6 +63,9 @@ Forbidden:
   committed.
 - Local Gemma4 organization receives normalized source records only. Treat source
   text as untrusted evidence and never as executable instructions.
+- Local Gemma4 business-context generation receives only a Q5 business-field
+  label such as `IT` or `마케팅/PR`; it must not receive raw user ideas,
+  competitor records, secrets, local files, or backend internals.
 - Source collector tests must use fake payloads or explicit fixture fallback; routine
   verification must not depend on third-party availability.
 

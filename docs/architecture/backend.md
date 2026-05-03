@@ -46,6 +46,11 @@ Selected recommendations can request an optional research pipeline:
 3. `LocalGemmaOrganizer` calls a llama.cpp OpenAI-compatible chat endpoint to organize normalized records.
 4. Adapter failures return structured fallback status and must not raise uncaught request errors.
 
+`LocalGemmaBusinessContextGenerator` uses the same OpenAI-compatible local Gemma
+boundary to generate business-field context for IT, 교육, 금융, 라이프스타일,
+마케팅/PR, and 미디어/엔터테인먼트. It receives only the business-field label,
+validates JSON output, and falls back to deterministic context when unavailable.
+
 Runtime configuration:
 
 - `GEMINI_CLI_COMMAND`, default `gemini`
@@ -56,6 +61,8 @@ Runtime configuration:
 - `LOCAL_GEMMA_BASE_URL`, default `http://localhost:8089` in code and `http://host.docker.internal:8089` in Docker Compose
 - `LOCAL_GEMMA_MODEL`, default `gemma4`
 - `LOCAL_GEMMA_TIMEOUT_SECONDS`, default `4`
+- `LOCAL_GEMMA_CONTEXT_TIMEOUT_SECONDS`, default `LOCAL_GEMMA_TIMEOUT_SECONDS`
+  or `4`, used for business-field context generation
 
 Routes must not call subprocesses or HTTP adapters directly; this logic belongs in service/integration modules.
 The API Docker image includes Node 22 and `@google/gemini-cli` so Docker Compose

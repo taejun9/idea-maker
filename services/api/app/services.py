@@ -5,7 +5,9 @@ from typing import Protocol
 from uuid import uuid4
 
 from services.api.app.integrations.research_adapters import (
+    BusinessContextGenerationResult,
     GeminiCliSearchAdapter,
+    LocalGemmaBusinessContextGenerator,
     LocalGemmaOrganizer,
     OrganizationResult,
     SearchAdapterResult,
@@ -89,6 +91,17 @@ BUSINESS_FIELD_KEYWORDS = (
     ("하드웨어", ("하드웨어", "기기", "센서", "로봇", "디바이스")),
     ("임팩트", ("임팩트", "환경", "기부", "복지", "사회문제")),
     ("IT", ("ai", "인공지능", "saas", "소프트웨어", "앱", "플랫폼", "데이터", "챗봇")),
+)
+
+AI_BUSINESS_CONTEXT_FIELDS = frozenset(
+    (
+        "IT",
+        "교육",
+        "금융",
+        "라이프스타일",
+        "마케팅/PR",
+        "미디어/엔터테인먼트",
+    )
 )
 
 
@@ -319,10 +332,20 @@ class IdeaReportRepository(Protocol):
         ...
 
 
+class BusinessContextGenerator(Protocol):
+    def generate(
+        self,
+        *,
+        business_field: str,
+    ) -> BusinessContextGenerationResult:
+        ...
+
+
 def create_quick_idea_examples(
     *,
     count: int = QUICK_EXAMPLE_DEFAULT_COUNT,
     random_source: Random | SystemRandom | None = None,
+    context_generator: BusinessContextGenerator | None = None,
 ) -> QuickIdeaExampleResponse:
     randomizer = random_source or SystemRandom()
     example_fields = [field for field in BUSINESS_FIELD_OPTIONS if field != "기타"]
@@ -331,7 +354,11 @@ def create_quick_idea_examples(
 
     return QuickIdeaExampleResponse(
         examples=[
-            quick_idea_example_for_field(field, randomizer)
+            quick_idea_example_for_field(
+                field,
+                randomizer,
+                context_generator=context_generator,
+            )
             for field in selected_fields
         ],
     )
@@ -340,8 +367,10 @@ def create_quick_idea_examples(
 def quick_idea_example_for_field(
     field: str,
     randomizer: Random | SystemRandom,
+    *,
+    context_generator: BusinessContextGenerator | None = None,
 ) -> QuickIdeaExample:
-    context = business_field_context(field)
+    context = business_field_context(field, context_generator=context_generator)
     template = randomizer.choice(QUICK_EXAMPLE_TEMPLATES)
     idea = template.format(
         field=field,
@@ -361,6 +390,7 @@ def create_idea_report(
     *,
     search_adapter: GeminiCliSearchAdapter | None = None,
     organizer: LocalGemmaOrganizer | None = None,
+    context_generator: BusinessContextGenerator | None = None,
 ) -> IdeaReportResponse:
     created_at = datetime.now(tz=UTC)
     observed = created_at.date()
@@ -396,6 +426,7 @@ def create_idea_report(
         idea=normalized_idea,
         business_field=business_field,
         organization=organization,
+        context_generator=context_generator,
     )
     idea_intake_answers = generated_idea_intake_answers(
         idea=normalized_idea,
@@ -569,8 +600,12 @@ def report_sections_for_idea(
     idea: str,
     business_field: str,
     organization: OrganizationResult,
+    context_generator: BusinessContextGenerator | None = None,
 ) -> ReportSections:
-    context = business_field_context(business_field)
+    context = business_field_context(
+        business_field,
+        context_generator=context_generator,
+    )
     fallback_sections = deterministic_report_sections(
         idea=idea,
         business_field=business_field,
@@ -651,10 +686,52 @@ def deterministic_report_sections(
     )
 
 
-def business_field_context(business_field: str) -> BusinessFieldReportContext:
-    return BUSINESS_FIELD_REPORT_CONTEXTS.get(
+def business_field_context(
+    business_field: str,
+    *,
+    context_generator: BusinessContextGenerator | None = None,
+) -> BusinessFieldReportContext:
+    fallback_context = BUSINESS_FIELD_REPORT_CONTEXTS.get(
         business_field,
         BUSINESS_FIELD_REPORT_CONTEXTS["기타"],
+    )
+    if business_field not in AI_BUSINESS_CONTEXT_FIELDS:
+        return fallback_context
+
+    generator = context_generator or LocalGemmaBusinessContextGenerator()
+    generated_context = generator.generate(business_field=business_field)
+    if generated_context.status != "success":
+        return fallback_context
+
+    return business_context_from_generation_result(
+        generated_context,
+        fallback_context=fallback_context,
+    )
+
+
+def business_context_from_generation_result(
+    result: BusinessContextGenerationResult,
+    *,
+    fallback_context: BusinessFieldReportContext,
+) -> BusinessFieldReportContext:
+    users = tuple(value.strip() for value in result.users if value.strip())[:3]
+    values = {
+        "job": result.job.strip(),
+        "outcome": result.outcome.strip(),
+        "adoption_risk": result.adoption_risk.strip(),
+        "differentiation_focus": result.differentiation_focus.strip(),
+        "mvp_capability": result.mvp_capability.strip(),
+    }
+    if len(users) != 3 or any(not value for value in values.values()):
+        return fallback_context
+
+    return BusinessFieldReportContext(
+        users=(users[0], users[1], users[2]),
+        job=values["job"],
+        outcome=values["outcome"],
+        adoption_risk=values["adoption_risk"],
+        differentiation_focus=values["differentiation_focus"],
+        mvp_capability=values["mvp_capability"],
     )
 
 
