@@ -16,4 +16,29 @@ def test_create_idea_report_returns_competitor_sections() -> None:
     assert body["domestic_competitors"]
     assert body["overseas_competitors"]
     assert body["source_references"]
+    assert body["domestic_competitors"][0]["confidence"] == "low"
+    assert body["source_references"][0]["observed_date"]
+    assert "AI 리뷰 분석 도구" in body["overview"]
 
+
+def test_create_idea_report_validates_short_idea() -> None:
+    client = TestClient(app)
+
+    response = client.post("/api/idea-reports", json={"idea": "짧음"})
+
+    assert response.status_code == 422
+
+
+def test_idea_report_cors_allows_local_web_origin() -> None:
+    client = TestClient(app)
+
+    response = client.options(
+        "/api/idea-reports",
+        headers={
+            "Origin": "http://127.0.0.1:5173",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
