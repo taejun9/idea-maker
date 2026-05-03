@@ -23,7 +23,7 @@ def create_idea_report(payload: IdeaReportRequest) -> IdeaReportResponse:
         target_users=["초기 창업자", "소규모 제품팀", "시장 조사가 필요한 기획자"],
         strengths=["짧은 입력으로 구조화된 보고서를 생성", "국내/해외 경쟁 구도를 분리"],
         weaknesses=[
-            "외부 소스는 fixture-backed collector stub로 시작",
+            "외부 소스는 접근 실패 시 fixture fallback을 사용",
             "정성 판단은 추가 검증 필요",
         ],
         domestic_competitors=competitors_for_market(source_records, "domestic_kr"),
@@ -59,15 +59,26 @@ def competitors_for_market(
 def source_references_from_records(records: list[NormalizedSourceRecord]) -> list[SourceReference]:
     references: dict[str, SourceReference] = {}
     for record in records:
-        references[record.source_name] = SourceReference(
+        references[f"{record.source_name}:{record.url}"] = SourceReference(
             source_name=record.source_name,
             source_url=record.url,
             observed_date=record.observed_date,
-            note=(
-                f"{record.category} collector record. "
-                "Fixture-backed data is for deterministic workflow validation; "
-                "verify current facts before external claims."
-            ),
+            note=source_reference_note(record),
             confidence=record.confidence,
         )
     return list(references.values())
+
+
+def source_reference_note(record: NormalizedSourceRecord) -> str:
+    if record.access_method == "live_http":
+        return (
+            f"{record.category} collector record. "
+            "Live public source data was fetched without credentials or user-query forwarding; "
+            "observed date and confidence describe collection time, not market fit."
+        )
+
+    return (
+        f"{record.category} collector record. "
+        "Fixture-backed data is for deterministic workflow validation; "
+        "verify current facts before external claims."
+    )

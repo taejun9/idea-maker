@@ -49,6 +49,10 @@ Product Hunt, PitchWall, BetaList, and similar sources are volatile. Store:
 
 If current public facts are needed, Codex must browse or use an approved source-fetching integration. Stale cached facts must be labeled as stale.
 
+Current PitchWall live collection uses one unauthenticated HTTP GET, a 3 second timeout,
+no retry inside the request path, and deterministic fixture fallback when the endpoint
+fails or no local token match is found.
+
 ## Incident Notes
 
 Use `docs/exec-plans/active/` for incident fixes that require code changes. Completed incidents move to `docs/exec-plans/completed/` with root cause and regression test notes.

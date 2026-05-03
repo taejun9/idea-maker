@@ -179,7 +179,7 @@ function competitorMarketLabel(competitor: Competitor) {
           <div class="grid gap-3 md:grid-cols-3">
             <article
               v-for="source in report.source_references"
-              :key="source.source_name"
+              :key="`${source.source_name}:${source.source_url}`"
               class="rounded border border-slate-200 bg-white p-4"
             >
               <a
