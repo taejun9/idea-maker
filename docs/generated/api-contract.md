@@ -33,6 +33,7 @@ Generated date: 2026-05-03
 | `locale` | string | request locale |
 | `created_at` | date-time string | report creation timestamp |
 | `overview` | string | clarified idea summary |
+| `idea_intake_questions` | `IdeaIntakeQuestion[]` | Q1-Q5 required intake prompts, photo guidance, and business-field options |
 | `clarified_concept` | string | concrete product concept derived from the idea |
 | `target_users` | string array | target user segments |
 | `core_use_cases` | string array | primary user workflows the idea should support |
@@ -66,6 +67,16 @@ Generated date: 2026-05-03
 | `domestic_competitor_count` | integer | domestic competitor count in the saved report |
 | `overseas_competitor_count` | integer | overseas competitor count in the saved report |
 | `source_reference_count` | integer | source reference count in the saved report |
+
+## `IdeaIntakeQuestion`
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `code` | `Q1`, `Q2`, `Q3`, `Q4`, or `Q5` | stable question label |
+| `prompt` | string | question text shown in the report |
+| `requirement` | string | required-state and validation copy |
+| `photo_guidance` | string or null | drag-and-drop photo placement guidance for Q2-Q4 |
+| `options` | string array | Q5 business-field options, empty for Q1-Q4 |
 
 ## `IdeaRecommendationRequest`
 

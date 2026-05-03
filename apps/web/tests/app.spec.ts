@@ -11,12 +11,73 @@ function apiUrl(path: string) {
   return `${expectedApiBaseUrl}${path}`;
 }
 
+const sampleIdeaIntakeQuestions = [
+  {
+    code: "Q1",
+    prompt: "나의 아이디어를 한 줄로 소개해주세요.",
+    requirement: "필수, 최소 10자 이상 입력해주세요.",
+    photo_guidance: null,
+    options: [],
+  },
+  {
+    code: "Q2",
+    prompt: "아이디어를 떠올린 배경 이야기를 들려주세요.",
+    requirement: "필수",
+    photo_guidance:
+      "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. 사진은 3개 질문 합산 최대 5장까지 가능합니다.",
+    options: [],
+  },
+  {
+    code: "Q3",
+    prompt: "아이디어는 누구의 어떤 문제를 해결해주나요?",
+    requirement: "필수",
+    photo_guidance:
+      "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. 사진은 3개 질문 합산 최대 5장까지 가능합니다.",
+    options: [],
+  },
+  {
+    code: "Q4",
+    prompt: "아이디어를 어떻게 실현하고 싶으신가요?",
+    requirement: "필수",
+    photo_guidance:
+      "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. 사진은 3개 질문 합산 최대 5장까지 가능합니다.",
+    options: [],
+  },
+  {
+    code: "Q5",
+    prompt: "사업 분야를 선택해주세요.",
+    requirement: "필수",
+    photo_guidance: null,
+    options: [
+      "IT",
+      "교육",
+      "금융",
+      "운영관리",
+      "네트워킹",
+      "농축/수산업",
+      "라이프스타일",
+      "마케팅/PR",
+      "모빌리티",
+      "미디어/엔터테인먼트",
+      "바이오/의류",
+      "에너지/자원",
+      "유통/물류",
+      "임팩트",
+      "재무",
+      "프롭테크",
+      "하드웨어",
+      "기타",
+    ],
+  },
+];
+
 const sampleReport = {
   id: "report-sample-1",
   idea: "동네 소상공인을 위한 AI 리뷰 분석 도구",
   locale: "ko-KR",
   created_at: "2026-05-03T00:00:00Z",
   overview: "'동네 소상공인을 위한 AI 리뷰 분석 도구' 아이디어를 초기 검증 가능한 제품 개념으로 구체화합니다.",
+  idea_intake_questions: sampleIdeaIntakeQuestions,
   clarified_concept:
     "동네 소상공인을 위한 AI 리뷰 분석 도구를 반복 업무를 줄이는 SaaS로 정의합니다.",
   target_users: ["초기 창업자", "소규모 제품팀"],
@@ -291,6 +352,15 @@ describe("App", () => {
       }),
     );
     expect(wrapper.find('[data-testid="report-summary"]').text()).toContain("국내 경쟁 서비스");
+    expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain(
+      "나의 아이디어를 한 줄로 소개해주세요.",
+    );
+    expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain(
+      "사진은 드래그앤드랍",
+    );
+    expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain(
+      "사업 분야를 선택해주세요.",
+    );
     expect(wrapper.find('[data-testid="clarified-concept"]').text()).toContain("SaaS");
     expect(wrapper.find('[data-testid="core-use-cases"]').text()).toContain("제품 콘셉트");
     expect(wrapper.find('[data-testid="key-risks"]').text()).toContain("fixture-backed");
@@ -339,5 +409,7 @@ describe("App", () => {
     expect(fetchMock).toHaveBeenCalledWith(apiUrl("/api/idea-reports/report-sample-1"));
     expect(wrapper.find('[data-testid="report-summary"]').text()).toContain(sampleReport.idea);
     expect(wrapper.find('[data-testid="clarified-concept"]').text()).toContain("SaaS");
+    expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain("Q5");
+    expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain("기타");
   });
 });

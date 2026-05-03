@@ -39,6 +39,8 @@ Idea-maker is a web service that turns a short idea into a structured business/p
 ## MVP Report Sections
 
 - Executive summary
+- Idea intake questions: Q1 one-line idea, Q2 background story, Q3 user/problem,
+  Q4 realization plan, Q5 business field selection
 - Clarified concept
 - Target users
 - Core use cases
@@ -59,6 +61,7 @@ The current report API exposes the following MVP sections:
 
 - Report identity and history metadata: `id`, `idea`, `locale`, `created_at`
 - Executive summary: `overview`
+- Idea intake questions and business-field options: `idea_intake_questions`
 - Clarified concept: `clarified_concept`
 - Target users: `target_users`
 - Core use cases: `core_use_cases`
@@ -71,6 +74,17 @@ The current report API exposes the following MVP sections:
 - Startup and source references: `source_references`
 - Validation checklist: `next_validation_steps`
 - Search and organization status: `research_status`
+
+`idea_intake_questions` contains the required Q1-Q5 prompts:
+
+- Q1 asks for a one-line idea introduction and requires at least 10 characters.
+- Q2-Q4 ask for background story, solved user/problem, and realization plan.
+  These questions include copy noting that photos can be freely placed by
+  drag-and-drop, with up to 5 photos total across the 3 questions.
+- Q5 asks for one business field from IT, 교육, 금융, 운영관리, 네트워킹,
+  농축/수산업, 라이프스타일, 마케팅/PR, 모빌리티, 미디어/엔터테인먼트,
+  바이오/의류, 에너지/자원, 유통/물류, 임팩트, 재무, 프롭테크,
+  하드웨어, 기타.
 
 The report history API exposes:
 
