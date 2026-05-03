@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Protocol
 from uuid import uuid4
@@ -88,6 +89,200 @@ BUSINESS_FIELD_KEYWORDS = (
 )
 
 
+@dataclass(frozen=True)
+class BusinessFieldReportContext:
+    users: tuple[str, str, str]
+    job: str
+    outcome: str
+    adoption_risk: str
+    differentiation_focus: str
+    mvp_capability: str
+
+
+@dataclass(frozen=True)
+class ReportSections:
+    target_users: tuple[str, ...]
+    core_use_cases: tuple[str, ...]
+    strengths: tuple[str, ...]
+    weaknesses: tuple[str, ...]
+    differentiation_opportunities: tuple[str, ...]
+    key_risks: tuple[str, ...]
+    recommended_mvp_scope: tuple[str, ...]
+    next_validation_steps: tuple[str, ...]
+
+
+BUSINESS_FIELD_REPORT_CONTEXTS = {
+    "IT": BusinessFieldReportContext(
+        users=(
+            "개발자와 데이터 실무자",
+            "사내 소프트웨어 도입 담당자",
+            "반복 업무 자동화를 원하는 운영팀",
+        ),
+        job="데이터와 워크플로우를 연결해 반복 판단을 줄이는 일",
+        outcome="업무 처리 시간과 오류 감소",
+        adoption_risk="기존 시스템 연동, 데이터 품질, 보안 검토",
+        differentiation_focus="빠른 설정, 기존 SaaS 연동, 한국어 업무 맥락",
+        mvp_capability="핵심 워크플로우 자동화와 상태 대시보드",
+    ),
+    "교육": BusinessFieldReportContext(
+        users=("학습자와 보호자", "강사와 학원 운영자", "교육 콘텐츠 기획자"),
+        job="학습 상태를 파악하고 다음 학습 행동을 정하는 일",
+        outcome="학습 지속률과 성취도 개선",
+        adoption_risk="학습 데이터 신뢰도, 보호자 설득, 학교/학원 운영 방식 적합성",
+        differentiation_focus="개인별 학습 맥락과 실행 루틴까지 연결하는 경험",
+        mvp_capability="학습 기록 수집, 진단, 다음 학습 추천",
+    ),
+    "금융": BusinessFieldReportContext(
+        users=("금융 상품을 비교하는 개인", "소상공인 자금 담당자", "금융 상담 실무자"),
+        job="조건과 리스크를 비교해 안전한 금융 결정을 내리는 일",
+        outcome="비용 절감과 의사결정 시간 단축",
+        adoption_risk="규제 준수, 설명 책임, 최신 상품 조건 반영",
+        differentiation_focus="이해하기 쉬운 조건 비교와 행동 가능한 안내",
+        mvp_capability="상품 조건 입력, 비교표, 알림",
+    ),
+    "운영관리": BusinessFieldReportContext(
+        users=("현장 운영 매니저", "소상공인과 점장", "반복 업무를 관리하는 팀 리더"),
+        job="매일 반복되는 운영 업무를 누락 없이 관리하는 일",
+        outcome="운영 누락 감소와 처리 속도 개선",
+        adoption_risk="현장 사용 습관, 모바일 접근성, 기존 업무표와의 중복",
+        differentiation_focus="현장 언어로 정리된 체크리스트와 실행 알림",
+        mvp_capability="업무 체크리스트, 담당자 배정, 완료 기록",
+    ),
+    "네트워킹": BusinessFieldReportContext(
+        users=("커뮤니티 운영자", "행사 참가자", "관심사 기반 연결이 필요한 전문가"),
+        job="적절한 사람을 발견하고 관계 형성의 첫 행동을 만드는 일",
+        outcome="유효 연결 수와 후속 대화율 증가",
+        adoption_risk="프로필 신뢰도, 매칭 품질, 커뮤니티 안전 관리",
+        differentiation_focus="관심사와 목적을 반영한 고신뢰 매칭",
+        mvp_capability="프로필 수집, 관심사 태깅, 추천 연결",
+    ),
+    "농축/수산업": BusinessFieldReportContext(
+        users=(
+            "농장과 양식장 운영자",
+            "농축수산 유통 담당자",
+            "현장 데이터를 기록하는 작업자",
+        ),
+        job="생산 현장의 상태를 기록하고 이상 징후를 빠르게 판단하는 일",
+        outcome="손실 감소와 생산 예측 정확도 개선",
+        adoption_risk="현장 입력 부담, 센서/통신 환경, 계절성 데이터 편차",
+        differentiation_focus="현장 친화적인 기록 방식과 조기 경보",
+        mvp_capability="현장 기록, 이상 알림, 간단한 추세표",
+    ),
+    "라이프스타일": BusinessFieldReportContext(
+        users=(
+            "개인 생활 루틴을 관리하는 사용자",
+            "가정과 취미 일정을 조율하는 사람",
+            "맞춤 추천을 원하는 소비자",
+        ),
+        job="일상 선택과 루틴을 가볍게 관리하는 일",
+        outcome="루틴 지속률과 만족도 개선",
+        adoption_risk="사용 빈도 유지, 개인정보 민감도, 추천 피로도",
+        differentiation_focus="생활 맥락에 맞춘 작은 행동 추천",
+        mvp_capability="루틴 입력, 추천, 알림",
+    ),
+    "마케팅/PR": BusinessFieldReportContext(
+        users=("마케팅 담당자", "브랜드 운영자", "고객 반응을 관리하는 소상공인"),
+        job="고객 반응을 읽고 다음 커뮤니케이션을 정하는 일",
+        outcome="반응률, 전환율, 부정 이슈 대응 속도 개선",
+        adoption_risk="채널별 데이터 접근, 브랜드 톤 일관성, 성과 측정",
+        differentiation_focus="고객 반응을 실행 가능한 메시지와 캠페인으로 연결",
+        mvp_capability="반응 수집, 이슈 분류, 메시지 초안",
+    ),
+    "모빌리티": BusinessFieldReportContext(
+        users=(
+            "이동 서비스를 이용하는 사용자",
+            "차량/주차 운영자",
+            "배송과 이동 경로를 관리하는 팀",
+        ),
+        job="이동 자원과 경로를 더 효율적으로 배분하는 일",
+        outcome="대기 시간, 이동 비용, 운영 공백 감소",
+        adoption_risk="위치 데이터 정확도, 실시간성, 안전 책임",
+        differentiation_focus="지역별 이동 맥락과 운영 제약을 반영한 추천",
+        mvp_capability="위치 입력, 경로/자원 추천, 상태 알림",
+    ),
+    "미디어/엔터테인먼트": BusinessFieldReportContext(
+        users=("콘텐츠 크리에이터", "팬 커뮤니티 운영자", "공연/미디어 기획자"),
+        job="콘텐츠 반응을 읽고 다음 제작 또는 배포 결정을 내리는 일",
+        outcome="콘텐츠 참여율과 재방문율 개선",
+        adoption_risk="플랫폼 데이터 접근, 저작권, 팬덤 반응 변동성",
+        differentiation_focus="팬 반응과 제작 루틴을 함께 보는 운영 경험",
+        mvp_capability="콘텐츠 일정, 반응 수집, 다음 액션 추천",
+    ),
+    "바이오/의류": BusinessFieldReportContext(
+        users=("건강 또는 패션 소비자", "브랜드 운영자", "상담과 추천을 제공하는 실무자"),
+        job="개인 특성과 기록을 바탕으로 적합한 선택을 돕는 일",
+        outcome="추천 만족도와 교환/재상담 감소",
+        adoption_risk="개인정보 보호, 전문성 검증, 신뢰 형성",
+        differentiation_focus="개인 상태와 취향을 함께 반영한 추천",
+        mvp_capability="개인 프로필 입력, 추천, 결과 피드백",
+    ),
+    "에너지/자원": BusinessFieldReportContext(
+        users=("건물 에너지 관리자", "상가 운영자", "자원 절감 목표를 가진 조직"),
+        job="사용량을 파악하고 절감 행동을 우선순위화하는 일",
+        outcome="비용 절감과 탄소 저감",
+        adoption_risk="계량 데이터 접근, 설비 편차, 절감 효과 검증",
+        differentiation_focus="비전문가도 이해하는 절감 행동 추천",
+        mvp_capability="사용량 입력, 절감 포인트, 효과 추적",
+    ),
+    "유통/물류": BusinessFieldReportContext(
+        users=("커머스 운영자", "물류 담당자", "재고와 배송을 관리하는 소규모 팀"),
+        job="재고, 주문, 배송 흐름을 예측하고 병목을 줄이는 일",
+        outcome="재고 부족, 배송 지연, 반품 비용 감소",
+        adoption_risk="주문 데이터 연동, 예측 정확도, 예외 상황 처리",
+        differentiation_focus="소규모 운영자가 바로 쓰는 예측과 알림",
+        mvp_capability="주문/재고 입력, 위험 알림, 처리 우선순위",
+    ),
+    "임팩트": BusinessFieldReportContext(
+        users=(
+            "비영리 운영자",
+            "사회문제 해결 프로젝트 팀",
+            "임팩트 지표를 관리하는 기관",
+        ),
+        job="활동 결과를 측정하고 이해관계자에게 설명하는 일",
+        outcome="참여율, 자원 배분 효율, 임팩트 설명력 개선",
+        adoption_risk="성과 측정 기준 합의, 개인정보, 현장 입력 부담",
+        differentiation_focus="사회적 성과와 실행 데이터를 함께 보여주는 방식",
+        mvp_capability="활동 기록, 수혜/참여 지표, 리포트",
+    ),
+    "재무": BusinessFieldReportContext(
+        users=("프리랜서와 소상공인", "팀 예산 담당자", "회계/정산 실무자"),
+        job="돈의 흐름을 기록하고 다음 정산·예산 결정을 내리는 일",
+        outcome="정산 누락, 비용 초과, 세무 준비 시간 감소",
+        adoption_risk="거래 데이터 정확도, 회계 규칙, 책임 소재",
+        differentiation_focus="비전문가도 이해하는 정산 흐름과 알림",
+        mvp_capability="거래 입력, 분류, 정산 일정 알림",
+    ),
+    "프롭테크": BusinessFieldReportContext(
+        users=("임대인과 건물 관리자", "부동산 중개팀", "주거/상업 공간 운영자"),
+        job="공간 상태와 거래 정보를 최신으로 관리하는 일",
+        outcome="공실 기간, 민원 처리 시간, 정보 누락 감소",
+        adoption_risk="매물 정보 정확도, 현장 업데이트, 이해관계자 권한",
+        differentiation_focus="현장 상태와 의사결정을 연결하는 공간 운영 경험",
+        mvp_capability="매물/공간 상태 입력, 알림, 요약",
+    ),
+    "하드웨어": BusinessFieldReportContext(
+        users=("기기 운영자", "제조/정비 담당자", "센서 데이터를 확인하는 현장팀"),
+        job="장비 상태를 확인하고 고장을 예방하는 일",
+        outcome="다운타임과 정비 비용 감소",
+        adoption_risk="센서 신뢰도, 설치 비용, 현장 유지보수",
+        differentiation_focus="설치와 해석이 쉬운 상태 진단",
+        mvp_capability="기기 상태 입력, 이상 감지, 정비 로그",
+    ),
+    "기타": BusinessFieldReportContext(
+        users=(
+            "초기 문제를 직접 겪는 사용자",
+            "문제 해결을 검토하는 운영자",
+            "검증할 시장을 찾는 창업자",
+        ),
+        job="문제를 구체화하고 첫 실행 범위를 정하는 일",
+        outcome="검증 속도와 문제 정의 선명도 개선",
+        adoption_risk="대상 사용자 정의, 지불 의사, 반복 사용성",
+        differentiation_focus="특정 사용자 맥락에 깊게 맞춘 문제 해결",
+        mvp_capability="문제 입력, 우선순위 정리, 검증 체크리스트",
+    ),
+}
+
+
 class IdeaReportRepository(Protocol):
     def save_report(self, report: IdeaReportResponse) -> None:
         ...
@@ -135,10 +330,18 @@ def create_idea_report(
         normalized_idea,
         "Research organization was not requested.",
     )
+    business_field = submitted_business_field(payload.idea_intake_answers) or infer_business_field(
+        normalized_idea
+    )
+    sections = report_sections_for_idea(
+        idea=normalized_idea,
+        business_field=business_field,
+        organization=organization,
+    )
     idea_intake_answers = generated_idea_intake_answers(
         idea=normalized_idea,
-        organization=organization,
-        submitted_answers=payload.idea_intake_answers,
+        business_field=business_field,
+        sections=sections,
     )
 
     return IdeaReportResponse(
@@ -149,34 +352,24 @@ def create_idea_report(
         overview=report_overview(normalized_idea, payload.research, organization),
         idea_intake_questions=idea_intake_questions_from_answers(idea_intake_answers),
         clarified_concept=(
-            f"'{normalized_idea}' 아이디어를 특정 고객군의 반복 업무를 줄이는 문제-해결형 "
-            "SaaS 또는 운영 도구로 정의합니다."
+            f"'{normalized_idea}' 아이디어를 {business_field} 영역에서 "
+            f"{sections.target_users[0]}의 문제를 해결하는 초기 제품으로 정의합니다."
         ),
-        target_users=list(organization.target_users),
-        core_use_cases=list(organization.core_use_cases),
-        strengths=[
-            "추천 아이템을 검색 가능한 제품 콘셉트로 확장",
-            "국내/해외 경쟁 구도를 분리",
-        ],
-        weaknesses=[
-            "외부 검색 또는 로컬 정리 adapter 실패 시 fallback을 사용",
-            "정성 판단은 추가 검증 필요",
-        ],
-        differentiation_opportunities=list(organization.opportunities),
-        key_risks=list(organization.risks),
+        target_users=list(sections.target_users),
+        core_use_cases=list(sections.core_use_cases),
+        strengths=list(sections.strengths),
+        weaknesses=list(sections.weaknesses),
+        differentiation_opportunities=list(sections.differentiation_opportunities),
+        key_risks=list(sections.key_risks),
         build_complexity=(
             "중간: 핵심 보고서 생성은 단순하지만 "
             "최신 소스 검증과 신뢰도 관리는 별도 경계가 필요합니다."
         ),
-        recommended_mvp_scope=list(organization.mvp_scope),
+        recommended_mvp_scope=list(sections.recommended_mvp_scope),
         domestic_competitors=competitors_for_market(source_records, "domestic_kr"),
         overseas_competitors=competitors_for_market(source_records, "overseas"),
         source_references=source_references_from_records(source_records),
-        next_validation_steps=[
-            "핵심 사용자 5명을 인터뷰한다.",
-            "국내/해외 경쟁사 각각 5개 이상을 최신 source로 확인한다.",
-            "가장 작은 MVP 기능 1개를 정의한다.",
-        ],
+        next_validation_steps=list(sections.next_validation_steps),
         research_status=research_status_from_results(
             requested=payload.research,
             search_result=search_result,
@@ -301,27 +494,144 @@ def default_report_organization() -> OrganizationResult:
     )
 
 
+def submitted_business_field(submitted_answers: list[IdeaIntakeAnswerInput]) -> str:
+    return next(
+        (
+            answer.answer.strip()
+            for answer in submitted_answers
+            if answer.code == "Q5" and answer.answer.strip()
+        ),
+        "",
+    )
+
+
+def report_sections_for_idea(
+    *,
+    idea: str,
+    business_field: str,
+    organization: OrganizationResult,
+) -> ReportSections:
+    context = business_field_context(business_field)
+    fallback_sections = deterministic_report_sections(
+        idea=idea,
+        business_field=business_field,
+        context=context,
+    )
+
+    if organization.status != "success":
+        return fallback_sections
+
+    return ReportSections(
+        target_users=tuple(organization.target_users) or fallback_sections.target_users,
+        core_use_cases=tuple(organization.core_use_cases) or fallback_sections.core_use_cases,
+        strengths=fallback_sections.strengths,
+        weaknesses=fallback_sections.weaknesses,
+        differentiation_opportunities=(
+            tuple(organization.opportunities)
+            or fallback_sections.differentiation_opportunities
+        ),
+        key_risks=tuple(organization.risks) or fallback_sections.key_risks,
+        recommended_mvp_scope=tuple(organization.mvp_scope)
+        or fallback_sections.recommended_mvp_scope,
+        next_validation_steps=fallback_sections.next_validation_steps,
+    )
+
+
+def deterministic_report_sections(
+    *,
+    idea: str,
+    business_field: str,
+    context: BusinessFieldReportContext,
+) -> ReportSections:
+    return ReportSections(
+        target_users=(
+            f"{context.users[0]} 중 '{idea}'를 가장 먼저 써볼 사용자",
+            f"{context.users[1]} 중 {context.job}을 맡는 의사결정자",
+            f"{context.users[2]} 중 {context.outcome}을 성과로 확인해야 하는 초기 도입자",
+        ),
+        core_use_cases=(
+            f"'{idea}' 관련 입력을 모아 현재 문제와 우선순위를 정리한다.",
+            f"{business_field} 맥락에서 {context.job}을 더 빠르고 일관되게 처리한다.",
+            f"{context.outcome}을 확인할 수 있는 요약과 다음 행동을 제공한다.",
+        ),
+        strengths=(
+            f"'{idea}'처럼 구체적인 문제 문장에서 시작해 "
+            f"{business_field} 사용자 맥락을 바로 반영할 수 있다.",
+            f"{context.job}을 하나의 흐름으로 묶어 초기 MVP 가치가 명확하다.",
+            f"{context.outcome}을 검증 지표로 삼아 인터뷰와 실험 결과를 비교하기 쉽다.",
+        ),
+        weaknesses=(
+            f"초기에는 {context.adoption_risk} 때문에 도입 장벽이 생길 수 있다.",
+            f"{business_field} 현장의 실제 데이터와 업무 방식이 충분히 "
+            "반영되지 않으면 결과 품질이 흔들릴 수 있다.",
+            "자동 추천이나 정리 결과는 사용자 검증 전까지 가설로 다뤄야 한다.",
+        ),
+        differentiation_opportunities=(
+            f"{context.differentiation_focus}에 집중하면 범용 도구와 구분된다.",
+            f"'{idea}'의 핵심 사용자를 좁혀 첫 워크플로우 완성도를 높인다.",
+            f"경쟁 서비스 비교보다 {context.outcome} 검증 지표를 제품 안에 내장한다.",
+        ),
+        key_risks=(
+            f"{context.adoption_risk} 검증이 늦어지면 MVP 사용성이 낮아질 수 있다.",
+            f"사용자가 '{idea}' 문제를 자주 겪지 않거나 비용을 지불하지 않으면 "
+            "시장성이 제한된다.",
+            f"{business_field} 영역의 규정, 데이터 접근, 운영 책임 범위를 "
+            "초기에 확인해야 한다.",
+        ),
+        recommended_mvp_scope=(
+            context.mvp_capability,
+            f"'{idea}'에 필요한 최소 입력 폼과 결과 요약",
+            f"{context.outcome}을 확인하는 간단한 지표와 피드백 수집",
+        ),
+        next_validation_steps=(
+            f"{context.users[0]} 5명에게 '{idea}' 문제 빈도와 현재 해결 방식을 인터뷰한다.",
+            f"{business_field} 현장에서 {context.adoption_risk} 관련 도입 제약을 확인한다.",
+            f"{context.mvp_capability}만 담은 클릭 가능한 시제품으로 "
+            f"{context.outcome} 기대치를 검증한다.",
+        ),
+    )
+
+
+def business_field_context(business_field: str) -> BusinessFieldReportContext:
+    return BUSINESS_FIELD_REPORT_CONTEXTS.get(
+        business_field,
+        BUSINESS_FIELD_REPORT_CONTEXTS["기타"],
+    )
+
+
 def generated_idea_intake_answers(
     *,
     idea: str,
-    organization: OrganizationResult,
-    submitted_answers: list[IdeaIntakeAnswerInput],
+    business_field: str,
+    sections: ReportSections,
 ) -> list[IdeaIntakeAnswerInput]:
-    submitted_by_code = {answer.code: answer.answer for answer in submitted_answers}
     answers = [
         IdeaIntakeAnswerInput(code="Q1", answer=generated_one_line_idea(idea)),
-        IdeaIntakeAnswerInput(code="Q2", answer=generated_background_story(idea)),
+        IdeaIntakeAnswerInput(
+            code="Q2",
+            answer=generated_background_story(
+                idea=idea,
+                business_field=business_field,
+                sections=sections,
+            ),
+        ),
         IdeaIntakeAnswerInput(
             code="Q3",
-            answer=generated_user_problem(organization),
+            answer=generated_user_problem(
+                idea=idea,
+                business_field=business_field,
+                sections=sections,
+            ),
         ),
         IdeaIntakeAnswerInput(
             code="Q4",
-            answer=generated_realization_plan(organization),
+            answer=generated_realization_plan(
+                idea=idea,
+                sections=sections,
+            ),
         ),
     ]
-    q5_answer = submitted_by_code.get("Q5") or infer_business_field(idea)
-    answers.append(IdeaIntakeAnswerInput(code="Q5", answer=q5_answer))
+    answers.append(IdeaIntakeAnswerInput(code="Q5", answer=business_field))
     return answers
 
 
@@ -331,34 +641,76 @@ def generated_one_line_idea(idea: str) -> str:
     return bounded_intake_answer(f"{idea}를 구체화한 초기 제품 아이디어")
 
 
-def generated_background_story(idea: str) -> str:
-    return bounded_intake_answer(
-        f"'{idea}'에서 출발해 사용자가 반복적으로 겪는 불편을 빠르게 확인하고, "
-        "검증 가능한 제품 가설로 정리하기 위해 나온 아이디어입니다."
-    )
-
-
-def generated_user_problem(organization: OrganizationResult) -> str:
-    target_user = organization.target_users[0] if organization.target_users else "초기 사용자"
-    core_use_case = (
-        organization.core_use_cases[0]
-        if organization.core_use_cases
-        else "아이디어를 실행 가능한 제품 콘셉트로 정리한다"
+def generated_background_story(
+    *,
+    idea: str,
+    business_field: str,
+    sections: ReportSections,
+) -> str:
+    target_user = section_item(sections.target_users, 0, "초기 사용자")
+    mvp_capability = section_item(
+        sections.recommended_mvp_scope,
+        0,
+        "핵심 문제를 해결하는 최소 기능",
     )
     return bounded_intake_answer(
-        f"{target_user}가 '{core_use_case}' 과정에서 겪는 문제와 우선순위 판단을 "
-        "도와주는 아이디어입니다."
+        f"'{idea}'는 {business_field} 영역에서 {target_user}가 겪는 "
+        f"반복 문제를 줄이기 위해 출발한 아이디어입니다. "
+        f"특히 {mvp_capability}이 실제 불편을 줄이는지 "
+        "초기 제품 가설로 검증합니다."
     )
 
 
-def generated_realization_plan(organization: OrganizationResult) -> str:
-    mvp_scope = ", ".join(organization.mvp_scope[:2])
+def generated_user_problem(
+    *,
+    idea: str,
+    business_field: str,
+    sections: ReportSections,
+) -> str:
+    target_user = section_item(sections.target_users, 0, "초기 사용자")
+    core_use_case = section_item(
+        sections.core_use_cases,
+        1,
+        section_item(sections.core_use_cases, 0, "핵심 업무를 더 빠르게 처리한다."),
+    )
+    return bounded_intake_answer(
+        f"핵심 사용자는 {target_user}입니다. "
+        f"'{idea}'는 {sentence_fragment(core_use_case)} 과정의 "
+        "시간 낭비, 누락, 우선순위 판단 부담을 줄이는 문제를 해결합니다."
+    )
+
+
+def generated_realization_plan(
+    *,
+    idea: str,
+    sections: ReportSections,
+) -> str:
+    mvp_scope = ", ".join(sections.recommended_mvp_scope[:2])
     if not mvp_scope:
-        mvp_scope = "아이디어 입력, 콘셉트 정리, 다음 검증 단계 제안"
+        mvp_scope = f"'{idea}'의 핵심 입력, 결과 요약, 다음 검증 단계 제안"
+    first_validation_step = section_item(
+        sections.next_validation_steps,
+        0,
+        "핵심 사용자 인터뷰를 진행한다.",
+    )
     return bounded_intake_answer(
-        f"MVP 범위는 {mvp_scope}부터 시작하고, 사용자 인터뷰와 경쟁 서비스 확인으로 "
+        f"MVP는 {mvp_scope}부터 시작합니다. 이후 {first_validation_step} "
+        "그 결과를 기준으로 실제 사용 빈도와 지불 의사를 확인하고 "
         "다음 기능 범위를 좁힙니다."
     )
+
+
+def section_item(values: tuple[str, ...], index: int, fallback: str) -> str:
+    if len(values) > index and values[index].strip():
+        return values[index]
+    return fallback
+
+
+def sentence_fragment(value: str) -> str:
+    stripped = value.strip().rstrip(".。")
+    if stripped.endswith("한다"):
+        return f"{stripped[:-2]}하는"
+    return stripped
 
 
 def bounded_intake_answer(value: str) -> str:

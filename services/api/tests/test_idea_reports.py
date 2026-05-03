@@ -66,6 +66,10 @@ def test_create_idea_report_returns_competitor_sections(monkeypatch) -> None:
     assert body["idea_intake_questions"][1]["requirement"] == "자동 생성"
     assert body["idea_intake_questions"][1]["photo_guidance"] is None
     assert body["idea_intake_questions"][1]["answer"]
+    assert "동네 소상공인" in body["idea_intake_questions"][1]["answer"]
+    assert "마케팅/PR" in body["idea_intake_questions"][1]["answer"]
+    assert "마케팅/PR" in body["idea_intake_questions"][2]["answer"]
+    assert "반응 수집" in body["idea_intake_questions"][3]["answer"]
     assert body["idea_intake_questions"][4]["prompt"] == "사업 분야를 선택해주세요."
     assert body["idea_intake_questions"][4]["answer"] == "마케팅/PR"
     assert body["idea_intake_questions"][4]["options"] == [
@@ -88,12 +92,16 @@ def test_create_idea_report_returns_competitor_sections(monkeypatch) -> None:
         "하드웨어",
         "기타",
     ]
-    assert "SaaS" in body["clarified_concept"]
-    assert body["core_use_cases"]
-    assert body["differentiation_opportunities"]
-    assert body["key_risks"]
+    assert "마케팅/PR" in body["clarified_concept"]
+    assert any("동네 소상공인" in item for item in body["target_users"])
+    assert any("마케팅/PR" in item for item in body["core_use_cases"])
+    assert any("동네 소상공인" in item for item in body["strengths"])
+    assert any("마케팅/PR" in item for item in body["weaknesses"])
+    assert any("고객 반응" in item for item in body["differentiation_opportunities"])
+    assert any("마케팅/PR" in item for item in body["key_risks"])
     assert body["build_complexity"].startswith("중간")
-    assert body["recommended_mvp_scope"]
+    assert any("반응 수집" in item for item in body["recommended_mvp_scope"])
+    assert any("마케팅 담당자" in item for item in body["next_validation_steps"])
     assert body["research_status"]["requested"] is False
 
 
@@ -354,6 +362,10 @@ def test_create_researched_idea_report_uses_search_and_organization_adapters() -
     assert "fake gemini search used" in report.research_status.notes
     assert "ReviewPulse" in [competitor.name for competitor in report.overseas_competitors]
     assert report.target_users == ["리뷰 담당 운영자"]
+    assert report.core_use_cases == ["리뷰 이슈를 모아 우선순위를 정한다."]
+    assert "리뷰 담당 운영자" in report.idea_intake_questions[1].answer
+    assert "리뷰 담당 운영자" in report.idea_intake_questions[2].answer
+    assert "고객 반응" in " ".join(report.strengths)
 
 
 def test_idea_report_cors_allows_local_web_origin() -> None:
