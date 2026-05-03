@@ -21,6 +21,7 @@ services:
       dockerfile: services/api/Dockerfile
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://idea_maker:idea_maker_dev_password@db:5432/idea_maker}
+      WEB_PORT: ${WEB_PORT:-5173}
     ports:
       - "${API_PORT:-8000}:8000"
     depends_on:

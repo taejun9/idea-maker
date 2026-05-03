@@ -18,16 +18,19 @@ Idea-maker is a web service that turns a short idea into a structured business/p
 ## Core Workflow
 
 1. User enters a short idea in natural language.
-2. System clarifies the idea into a concrete concept.
-3. System recommends adjacent products/startups using sources such as Product Hunt, PitchWall, and BetaList.
-4. System separates domestic Korean competitors and overseas competitors.
-5. System generates a report containing overview, clarified concept, target users, core use cases, strengths, weaknesses, differentiation opportunities, risks, MVP scope, competitor table, source references, and next validation steps.
+2. If the input is a single word, the system recommends related concrete item ideas first.
+3. User selects one recommended item or enters a fuller idea directly.
+4. System clarifies the selected item or full idea into a concrete concept.
+5. System recommends adjacent products/startups using sources such as Product Hunt, PitchWall, and BetaList.
+6. System separates domestic Korean competitors and overseas competitors.
+7. System generates a report containing overview, clarified concept, target users, core use cases, strengths, weaknesses, differentiation opportunities, risks, MVP scope, competitor table, source references, and next validation steps.
 
 ## Input Experience
 
 - The idea input starts empty so users can enter their own concept without clearing a preset value.
 - The entry form exposes visible examples, helper copy, character feedback, and validation state for keyboard and screen reader users.
-- The submit action remains unavailable until the idea has at least 5 non-space characters, matching the API contract.
+- Single-word input with at least 1 non-space character requests related item recommendations instead of directly calling the report API.
+- Multi-word input submits directly to report generation after at least 5 non-space characters, matching the report API contract.
 
 ## MVP Report Sections
 

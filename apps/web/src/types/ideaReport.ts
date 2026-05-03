@@ -24,6 +24,23 @@ export interface IdeaReportRequest {
   locale?: string;
 }
 
+export interface IdeaRecommendationRequest {
+  keyword: string;
+  locale?: string;
+}
+
+export interface IdeaRecommendation {
+  title: string;
+  summary: string;
+  rationale: string;
+  report_seed: string;
+}
+
+export interface IdeaRecommendationResponse {
+  keyword: string;
+  recommendations: IdeaRecommendation[];
+}
+
 export interface IdeaReportResponse {
   overview: string;
   clarified_concept: string;

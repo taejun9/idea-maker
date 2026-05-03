@@ -4,7 +4,7 @@ from services.api.app.integrations.source_collectors import (
     SourceCollectorError,
     UrlFetchingSourceClient,
 )
-from services.api.app.main import app
+from services.api.app.main import allowed_cors_origins, app
 
 
 def fail_live_source_fetch(self, url: str, *, timeout_seconds: float) -> object:
@@ -48,6 +48,29 @@ def test_create_idea_report_validates_short_idea() -> None:
     assert response.status_code == 422
 
 
+def test_create_idea_recommendations_returns_related_items() -> None:
+    client = TestClient(app)
+
+    response = client.post("/api/idea-recommendations", json={"keyword": "리뷰"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["keyword"] == "리뷰"
+    assert len(body["recommendations"]) == 4
+    assert body["recommendations"][0]["title"] == "리뷰 고객 반응 분석 도구"
+    assert "리뷰" in body["recommendations"][0]["report_seed"]
+    assert len(body["recommendations"][0]["report_seed"]) >= 5
+    assert body["recommendations"][0]["rationale"]
+
+
+def test_create_idea_recommendations_requires_single_keyword() -> None:
+    client = TestClient(app)
+
+    response = client.post("/api/idea-recommendations", json={"keyword": "리뷰 분석"})
+
+    assert response.status_code == 422
+
+
 def test_idea_report_cors_allows_local_web_origin() -> None:
     client = TestClient(app)
 
@@ -61,3 +84,10 @@ def test_idea_report_cors_allows_local_web_origin() -> None:
 
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:5173"
+
+
+def test_cors_origins_include_configured_web_port() -> None:
+    origins = allowed_cors_origins({"WEB_PORT": "15173"})
+
+    assert "http://127.0.0.1:15173" in origins
+    assert "http://localhost:15173" in origins

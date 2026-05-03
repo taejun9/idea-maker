@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { createIdeaReport } from "../../api/ideaReports";
-import type { Competitor, IdeaReportResponse, SourceConfidence } from "../../types/ideaReport";
+import { computed, ref, watch } from "vue";
+import { createIdeaRecommendations, createIdeaReport } from "../../api/ideaReports";
+import type {
+  Competitor,
+  IdeaRecommendation,
+  IdeaReportResponse,
+  SourceConfidence,
+} from "../../types/ideaReport";
 
 const minIdeaLength = 5;
 const maxIdeaLength = 2000;
@@ -12,19 +17,41 @@ const ideaExamples = [
 ];
 
 const idea = ref("");
+const recommendations = ref<IdeaRecommendation[]>([]);
+const recommendationKeyword = ref("");
+const selectedRecommendationTitle = ref("");
 const report = ref<IdeaReportResponse | null>(null);
 const isLoading = ref(false);
+const loadingMode = ref<"idle" | "recommendations" | "report">("idle");
 const errorMessage = ref("");
 const hasTriedSubmit = ref(false);
 const isIdeaTouched = ref(false);
 
 const normalizedIdea = computed(() => idea.value.trim());
 const ideaLength = computed(() => normalizedIdea.value.length);
+const ideaTokens = computed(() => normalizedIdea.value.split(/\s+/).filter(Boolean));
+const isSingleWordIdea = computed(() => ideaTokens.value.length === 1);
+const isIdeaValid = computed(() => {
+  if (ideaLength.value === 0) {
+    return false;
+  }
+
+  if (isSingleWordIdea.value) {
+    return true;
+  }
+
+  return ideaLength.value >= minIdeaLength;
+});
+const inputMinLength = computed(() => (isSingleWordIdea.value ? 1 : minIdeaLength));
 const shouldShowIdeaError = computed(
-  () => (hasTriedSubmit.value || isIdeaTouched.value) && ideaLength.value < minIdeaLength,
+  () => (hasTriedSubmit.value || isIdeaTouched.value) && !isIdeaValid.value,
 );
 const ideaValidationMessage = computed(() => {
-  if (ideaLength.value >= minIdeaLength) {
+  if (isIdeaValid.value && isSingleWordIdea.value) {
+    return "관련 아이템을 추천할 수 있습니다.";
+  }
+
+  if (isIdeaValid.value) {
     return "입력 조건을 충족했습니다.";
   }
 
@@ -37,7 +64,18 @@ const ideaValidationMessage = computed(() => {
 const ideaDescriptionIds = computed(() =>
   shouldShowIdeaError.value ? "idea-help idea-count idea-error" : "idea-help idea-count",
 );
-const canSubmit = computed(() => ideaLength.value >= minIdeaLength && !isLoading.value);
+const canSubmit = computed(() => isIdeaValid.value && !isLoading.value);
+const submitButtonLabel = computed(() => {
+  if (loadingMode.value === "recommendations") {
+    return "추천 찾는 중";
+  }
+
+  if (loadingMode.value === "report") {
+    return "보고서 생성 중";
+  }
+
+  return isSingleWordIdea.value ? "아이템 추천" : "보고서 생성";
+});
 
 const confidenceLabel: Record<SourceConfidence, string> = {
   low: "낮음",
@@ -52,6 +90,13 @@ function selectIdeaExample(example: string) {
   isIdeaTouched.value = true;
 }
 
+watch(normalizedIdea, () => {
+  recommendations.value = [];
+  recommendationKeyword.value = "";
+  selectedRecommendationTitle.value = "";
+  errorMessage.value = "";
+});
+
 async function submitReport() {
   hasTriedSubmit.value = true;
   isIdeaTouched.value = true;
@@ -60,19 +105,60 @@ async function submitReport() {
     return;
   }
 
+  if (isSingleWordIdea.value) {
+    await loadRecommendations();
+    return;
+  }
+
+  await generateReport(normalizedIdea.value);
+}
+
+async function loadRecommendations() {
   isLoading.value = true;
+  loadingMode.value = "recommendations";
   errorMessage.value = "";
+  report.value = null;
+  selectedRecommendationTitle.value = "";
+
+  try {
+    const response = await createIdeaRecommendations({
+      keyword: ideaTokens.value[0],
+      locale: "ko-KR",
+    });
+    recommendationKeyword.value = response.keyword;
+    recommendations.value = response.recommendations;
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : "추천 아이템을 생성하지 못했습니다.";
+  } finally {
+    isLoading.value = false;
+    loadingMode.value = "idle";
+  }
+}
+
+async function createReportFromRecommendation(recommendation: IdeaRecommendation) {
+  selectedRecommendationTitle.value = recommendation.title;
+  await generateReport(recommendation.report_seed, recommendation.title);
+}
+
+async function generateReport(ideaForReport: string, recommendationTitle = "") {
+  isLoading.value = true;
+  loadingMode.value = "report";
+  errorMessage.value = "";
+  report.value = null;
 
   try {
     report.value = await createIdeaReport({
-      idea: normalizedIdea.value,
+      idea: ideaForReport,
       locale: "ko-KR",
     });
+    selectedRecommendationTitle.value = recommendationTitle;
   } catch (error) {
     errorMessage.value =
       error instanceof Error ? error.message : "보고서를 생성하지 못했습니다.";
   } finally {
     isLoading.value = false;
+    loadingMode.value = "idle";
   }
 }
 
@@ -97,7 +183,7 @@ function competitorMarketLabel(competitor: Competitor) {
         <div class="grid gap-2">
           <label class="text-base font-semibold" for="idea">어떤 아이디어인가요?</label>
           <p id="idea-help" class="max-w-2xl text-sm leading-6 text-slate-600">
-            한 문장으로 시작하세요. 고객, 문제, 해결책 중 떠오르는 내용만 적어도 됩니다.
+            한 문장으로 시작하세요. 단어 하나만 입력하면 관련 아이템을 먼저 추천합니다.
           </p>
         </div>
 
@@ -131,7 +217,7 @@ function competitorMarketLabel(competitor: Competitor) {
             :aria-describedby="ideaDescriptionIds"
             :aria-invalid="shouldShowIdeaError ? 'true' : 'false'"
             :maxlength="maxIdeaLength"
-            :minlength="minIdeaLength"
+            :minlength="inputMinLength"
             placeholder="예: 동네 소상공인을 위한 AI 리뷰 분석 도구"
             required
             @blur="isIdeaTouched = true"
@@ -164,10 +250,23 @@ function competitorMarketLabel(competitor: Competitor) {
             :aria-describedby="canSubmit ? undefined : 'idea-count'"
             :disabled="!canSubmit"
           >
-            {{ isLoading ? "보고서 생성 중" : "보고서 생성" }}
+            {{ submitButtonLabel }}
           </button>
-          <p v-if="isLoading" class="text-sm text-slate-600" role="status" aria-live="polite">
+          <p
+            v-if="isLoading && loadingMode === 'report'"
+            class="text-sm text-slate-600"
+            role="status"
+            aria-live="polite"
+          >
             보고서를 준비하고 있습니다.
+          </p>
+          <p
+            v-if="isLoading && loadingMode === 'recommendations'"
+            class="text-sm text-slate-600"
+            role="status"
+            aria-live="polite"
+          >
+            추천 아이템을 찾고 있습니다.
           </p>
           <p
             v-if="errorMessage"
@@ -179,6 +278,54 @@ function competitorMarketLabel(competitor: Competitor) {
           </p>
         </div>
       </form>
+
+      <section
+        v-if="recommendations.length > 0"
+        data-testid="recommendation-list"
+        class="grid gap-4 border-b border-slate-200 pb-6"
+        aria-live="polite"
+      >
+        <div class="flex flex-wrap items-end justify-between gap-3">
+          <div class="grid gap-1">
+            <p class="text-sm font-medium text-slate-500">입력 단어: {{ recommendationKeyword }}</p>
+            <h2 class="text-xl font-semibold">추천 아이템</h2>
+          </div>
+        </div>
+
+        <div class="grid gap-3 md:grid-cols-2">
+          <article
+            v-for="recommendation in recommendations"
+            :key="recommendation.title"
+            class="grid gap-3 rounded border bg-white p-4"
+            :class="
+              selectedRecommendationTitle === recommendation.title
+                ? 'border-emerald-500 ring-2 ring-emerald-100'
+                : 'border-slate-200'
+            "
+          >
+            <div class="grid gap-2">
+              <h3 class="font-semibold leading-6 text-slate-950">{{ recommendation.title }}</h3>
+              <p class="text-sm leading-6 text-slate-700">{{ recommendation.summary }}</p>
+              <p class="text-sm leading-6 text-slate-600">{{ recommendation.rationale }}</p>
+            </div>
+            <button
+              class="min-h-10 justify-self-start rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 disabled:cursor-not-allowed disabled:bg-slate-300"
+              data-testid="recommendation-report"
+              type="button"
+              :disabled="isLoading"
+              @click="createReportFromRecommendation(recommendation)"
+            >
+              {{
+                isLoading &&
+                loadingMode === "report" &&
+                selectedRecommendationTitle === recommendation.title
+                  ? "보고서 생성 중"
+                  : "보고서 생성"
+              }}
+            </button>
+          </article>
+        </div>
+      </section>
 
       <section
         v-if="report"

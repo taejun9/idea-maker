@@ -21,6 +21,8 @@ Owner: Backend / Codex
 - Schemas define every request and response boundary.
 - Errors have stable `error_code` values.
 - PostgreSQL access belongs in repository modules, not route handlers.
+- Local CORS origins include the default Vite origin and any Docker Compose `WEB_PORT`
+  or explicit `WEB_ORIGINS` values used for local verification.
 
 ## Source Recommendation Boundary
 
