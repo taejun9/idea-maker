@@ -9,34 +9,15 @@ import type {
   SourceConfidence,
 } from "../../types/ideaReport";
 import IdeaIntakeQuestions from "./IdeaIntakeQuestions.vue";
+import {
+  createRandomQuickIdeaExamples,
+  quickExampleBusinessFields,
+  type QuickIdeaExample,
+} from "./quickExamples";
 
 const minIdeaLength = 5;
 const maxIdeaLength = 2000;
-const ideaExamples = [
-  "동네 소상공인을 위한 AI 리뷰 분석 도구",
-  "1인 쇼핑몰의 반품 문의를 줄이는 챗봇",
-  "스터디 모임 출석과 과제를 자동 정리하는 서비스",
-];
-const businessFieldOptions = [
-  "IT",
-  "교육",
-  "금융",
-  "운영관리",
-  "네트워킹",
-  "농축/수산업",
-  "라이프스타일",
-  "마케팅/PR",
-  "모빌리티",
-  "미디어/엔터테인먼트",
-  "바이오/의류",
-  "에너지/자원",
-  "유통/물류",
-  "임팩트",
-  "재무",
-  "프롭테크",
-  "하드웨어",
-  "기타",
-];
+const businessFieldOptions: string[] = [...quickExampleBusinessFields, "기타"];
 const businessFieldKeywordPatterns: Array<{ field: string; keywords: string[] }> = [
   { field: "교육", keywords: ["교육", "학습", "스터디", "강의", "출석", "학교", "학생"] },
   { field: "금융", keywords: ["금융", "대출", "보험", "결제", "송금", "은행"] },
@@ -75,6 +56,7 @@ const loadingMode = ref<"idle" | "recommendations" | "report">("idle");
 const errorMessage = ref("");
 const hasTriedSubmit = ref(false);
 const isIdeaTouched = ref(false);
+const ideaExamples = ref(createRandomQuickIdeaExamples());
 
 const normalizedIdea = computed(() => idea.value.trim());
 const ideaLength = computed(() => normalizedIdea.value.length);
@@ -165,9 +147,9 @@ const confidenceLabel: Record<SourceConfidence, string> = {
   high: "높음",
 };
 
-function selectIdeaExample(example: string) {
-  idea.value = example;
-  applyInferredBusinessField(example, true);
+function selectIdeaExample(example: QuickIdeaExample) {
+  idea.value = example.idea;
+  applyInferredBusinessField(example.idea, true);
   errorMessage.value = "";
   hasTriedSubmit.value = false;
   isIdeaTouched.value = true;
@@ -339,13 +321,15 @@ function formatDateTime(value: string) {
           <div class="flex flex-wrap gap-2">
             <button
               v-for="example in ideaExamples"
-              :key="example"
-              class="rounded border border-slate-300 bg-white px-3 py-2 text-left text-sm leading-5 text-slate-700 transition hover:border-emerald-500 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              :key="`${example.field}-${example.idea}`"
+              class="grid gap-1 rounded border border-slate-300 bg-white px-3 py-2 text-left text-sm leading-5 text-slate-700 transition hover:border-emerald-500 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              :data-business-field="example.field"
               data-testid="idea-example"
               type="button"
               @click="selectIdeaExample(example)"
             >
-              {{ example }}
+              <span class="text-xs font-semibold text-emerald-700">{{ example.field }}</span>
+              <span>{{ example.idea }}</span>
             </button>
           </div>
         </fieldset>
