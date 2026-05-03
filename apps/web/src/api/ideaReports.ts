@@ -4,6 +4,7 @@ import type {
   IdeaRecommendationResponse,
   IdeaReportRequest,
   IdeaReportResponse,
+  QuickIdeaExampleResponse,
 } from "../types/ideaReport";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000").replace(
@@ -80,4 +81,14 @@ export async function createIdeaRecommendations(
   }
 
   return (await response.json()) as IdeaRecommendationResponse;
+}
+
+export async function listQuickIdeaExamples(): Promise<QuickIdeaExampleResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/quick-idea-examples`);
+
+  if (!response.ok) {
+    throw new Error(`빠른 예시 조회 실패: HTTP ${response.status}`);
+  }
+
+  return (await response.json()) as QuickIdeaExampleResponse;
 }

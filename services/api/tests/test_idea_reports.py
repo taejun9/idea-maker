@@ -1,3 +1,4 @@
+from random import Random
 from uuid import uuid4
 
 import pytest
@@ -15,7 +16,7 @@ from services.api.app.integrations.source_collectors import (
 from services.api.app.main import allowed_cors_origins, app
 from services.api.app.repositories.idea_reports import InMemoryIdeaReportRepository
 from services.api.app.schemas import IdeaReportRequest, IdeaReportResponse
-from services.api.app.services import create_idea_report
+from services.api.app.services import create_idea_report, create_quick_idea_examples
 
 
 @pytest.fixture(autouse=True)
@@ -267,6 +268,28 @@ def test_get_idea_report_returns_not_found_for_missing_report() -> None:
 
     assert response.status_code == 404
     assert response.json()["detail"]["error_code"] == "idea_report_not_found"
+
+
+def test_get_quick_idea_examples_returns_five_business_field_examples() -> None:
+    client = TestClient(app)
+
+    response = client.get("/api/quick-idea-examples")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["examples"]) == 5
+    assert len({example["field"] for example in body["examples"]}) == 5
+    assert all(example["field"] != "기타" for example in body["examples"])
+    assert all(example["idea"] for example in body["examples"])
+
+
+def test_create_quick_idea_examples_randomizes_generated_output() -> None:
+    first_response = create_quick_idea_examples(random_source=Random(1))
+    second_response = create_quick_idea_examples(random_source=Random(2))
+
+    assert len(first_response.examples) == 5
+    assert len(second_response.examples) == 5
+    assert first_response.examples != second_response.examples
 
 
 def test_create_idea_recommendations_returns_related_items() -> None:

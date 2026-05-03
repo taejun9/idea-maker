@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from random import Random, SystemRandom
 from typing import Protocol
 from uuid import uuid4
 
@@ -26,6 +27,8 @@ from services.api.app.schemas import (
     IdeaReportRequest,
     IdeaReportResponse,
     IdeaReportSummary,
+    QuickIdeaExample,
+    QuickIdeaExampleResponse,
     ResearchStatus,
     SourceReference,
     idea_intake_questions_from_answers,
@@ -282,6 +285,25 @@ BUSINESS_FIELD_REPORT_CONTEXTS = {
     ),
 }
 
+QUICK_EXAMPLE_TEMPLATES = (
+    "{user} 대상 {mvp_capability} 기능을 바로 쓰는 {product_type}",
+    "{field} 현장에서 {job}을 빠르게 처리하는 {product_type}",
+    "{user} 대상 {outcome} 성과를 확인하는 {product_type}",
+    "{field} 팀을 위한 {differentiation_focus} 중심 {product_type}",
+    "도입 전 {adoption_risk} 항목을 점검하는 {field} {product_type}",
+)
+
+QUICK_EXAMPLE_PRODUCT_TYPES = (
+    "SaaS",
+    "앱",
+    "대시보드",
+    "워크플로우 도구",
+    "알림 서비스",
+    "리포트 자동화 도구",
+)
+
+QUICK_EXAMPLE_DEFAULT_COUNT = 5
+
 
 class IdeaReportRepository(Protocol):
     def save_report(self, report: IdeaReportResponse) -> None:
@@ -295,6 +317,43 @@ class IdeaReportRepository(Protocol):
 
     def delete_report(self, report_id: str) -> bool:
         ...
+
+
+def create_quick_idea_examples(
+    *,
+    count: int = QUICK_EXAMPLE_DEFAULT_COUNT,
+    random_source: Random | SystemRandom | None = None,
+) -> QuickIdeaExampleResponse:
+    randomizer = random_source or SystemRandom()
+    example_fields = [field for field in BUSINESS_FIELD_OPTIONS if field != "기타"]
+    randomizer.shuffle(example_fields)
+    selected_fields = example_fields[: max(0, min(count, len(example_fields)))]
+
+    return QuickIdeaExampleResponse(
+        examples=[
+            quick_idea_example_for_field(field, randomizer)
+            for field in selected_fields
+        ],
+    )
+
+
+def quick_idea_example_for_field(
+    field: str,
+    randomizer: Random | SystemRandom,
+) -> QuickIdeaExample:
+    context = business_field_context(field)
+    template = randomizer.choice(QUICK_EXAMPLE_TEMPLATES)
+    idea = template.format(
+        field=field,
+        user=randomizer.choice(context.users),
+        job=context.job,
+        outcome=context.outcome,
+        adoption_risk=context.adoption_risk,
+        differentiation_focus=context.differentiation_focus,
+        mvp_capability=context.mvp_capability,
+        product_type=randomizer.choice(QUICK_EXAMPLE_PRODUCT_TYPES),
+    )
+    return QuickIdeaExample(field=field, idea=idea)
 
 
 def create_idea_report(

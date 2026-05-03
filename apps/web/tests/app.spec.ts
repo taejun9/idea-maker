@@ -1,10 +1,7 @@
 import { mount } from "@vue/test-utils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "../src/App.vue";
-import {
-  createRandomQuickIdeaExamples,
-  quickIdeaExampleGroups,
-} from "../src/features/idea-report/quickExamples";
+import { quickExampleBusinessFields } from "../src/features/idea-report/quickExamples";
 
 const expectedApiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000").replace(
   /\/$/,
@@ -13,6 +10,13 @@ const expectedApiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0
 
 function apiUrl(path: string) {
   return `${expectedApiBaseUrl}${path}`;
+}
+
+function quickExamplesResponse() {
+  return {
+    ok: true,
+    json: () => Promise.resolve(sampleQuickExamples),
+  };
 }
 
 const sampleIdeaIntakeAnswers = [
@@ -177,6 +181,31 @@ const sampleRecommendations = {
   ],
 };
 
+const sampleQuickExamples = {
+  examples: [
+    {
+      field: "IT",
+      idea: "개발자와 데이터 실무자를 위한 핵심 워크플로우 자동화 SaaS",
+    },
+    {
+      field: "교육",
+      idea: "학습자를 위한 오답 진단과 다음 학습 추천 앱",
+    },
+    {
+      field: "마케팅/PR",
+      idea: "브랜드 운영자를 위한 고객 반응 메시지 초안 도구",
+    },
+    {
+      field: "유통/물류",
+      idea: "커머스 운영자를 위한 재고 위험 알림 대시보드",
+    },
+    {
+      field: "프롭테크",
+      idea: "건물 관리자를 위한 공실 상태 요약 서비스",
+    },
+  ],
+};
+
 const sampleReportList = {
   reports: [
     {
@@ -204,7 +233,7 @@ describe("App", () => {
   });
 
   it("keeps quick examples aligned to every supported business field", () => {
-    expect(quickIdeaExampleGroups.map((group) => group.field)).toEqual([
+    expect(quickExampleBusinessFields).toEqual([
       "IT",
       "교육",
       "금융",
@@ -223,30 +252,24 @@ describe("App", () => {
       "프롭테크",
       "하드웨어",
     ]);
-    expect(quickIdeaExampleGroups.every((group) => group.ideas.length >= 2)).toBe(true);
   });
 
-  it("randomizes the visible quick example fields", () => {
-    const randomValues = [0.99, ...Array(16).fill(0), 0, 0, 0];
-    const random = () => randomValues.shift() ?? 0;
-
-    expect(createRandomQuickIdeaExamples({ random }).map((example) => example.field)).toEqual([
-      "교육",
-      "금융",
-      "운영관리",
-    ]);
-  });
-
-  it("renders the idea report entry workflow", () => {
+  it("renders the idea report entry workflow", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(quickExamplesResponse());
+    vi.stubGlobal("fetch", fetchMock);
     const wrapper = mount(App);
     const ideaInput = wrapper.find('[data-testid="idea-input"]');
     const submitButton = wrapper.find('[data-testid="generate-report"]');
+
+    await vi.waitFor(() => {
+      expect(wrapper.findAll('[data-testid="idea-example"]')).toHaveLength(5);
+    });
 
     expect(ideaInput.exists()).toBe(true);
     expect((ideaInput.element as HTMLTextAreaElement).value).toBe("");
     expect(ideaInput.attributes("aria-describedby")).toContain("idea-help");
     expect(ideaInput.attributes("aria-invalid")).toBe("false");
-    expect(wrapper.findAll('[data-testid="idea-example"]')).toHaveLength(3);
+    expect(fetchMock).toHaveBeenCalledWith(apiUrl("/api/quick-idea-examples"));
     expect(wrapper.find('[data-testid="idea-intake-form"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="auto-intake-note"]').text()).toContain("Q1~Q4");
     expect(wrapper.find('[data-testid="intake-validation"]').text()).toContain("사업 분야");
@@ -258,9 +281,13 @@ describe("App", () => {
   });
 
   it("fills the idea input from a quick example", async () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(quickExamplesResponse()));
     const wrapper = mount(App);
     const ideaInput = wrapper.find('[data-testid="idea-input"]');
+
+    await vi.waitFor(() => {
+      expect(wrapper.findAll('[data-testid="idea-example"]')).toHaveLength(5);
+    });
     const firstExample = wrapper.findAll('[data-testid="idea-example"]')[0];
 
     expect(firstExample.attributes("data-business-field")).toBe("IT");
@@ -268,7 +295,7 @@ describe("App", () => {
     await firstExample.trigger("click");
 
     expect((ideaInput.element as HTMLTextAreaElement).value).toBe(
-      "개발자를 위한 AI 코드 품질 점검 플랫폼",
+      sampleQuickExamples.examples[0].idea,
     );
     expect((wrapper.find('[data-testid="intake-q5"]').element as HTMLSelectElement).value).toBe(
       "IT",

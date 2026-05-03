@@ -50,6 +50,15 @@ export interface IdeaRecommendationResponse {
   recommendations: IdeaRecommendation[];
 }
 
+export interface QuickIdeaExample {
+  field: string;
+  idea: string;
+}
+
+export interface QuickIdeaExampleResponse {
+  examples: QuickIdeaExample[];
+}
+
 export interface ResearchStatus {
   requested: boolean;
   search_provider: "gemini_cli" | "fallback" | "not_requested";
