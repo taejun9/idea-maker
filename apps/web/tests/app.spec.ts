@@ -2,6 +2,15 @@ import { mount } from "@vue/test-utils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "../src/App.vue";
 
+const expectedApiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000").replace(
+  /\/$/,
+  "",
+);
+
+function apiUrl(path: string) {
+  return `${expectedApiBaseUrl}${path}`;
+}
+
 const sampleReport = {
   overview: "'동네 소상공인을 위한 AI 리뷰 분석 도구' 아이디어를 초기 검증 가능한 제품 개념으로 구체화합니다.",
   clarified_concept:
@@ -150,7 +159,7 @@ describe("App", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://127.0.0.1:8000/api/idea-recommendations",
+      apiUrl("/api/idea-recommendations"),
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
@@ -180,7 +189,7 @@ describe("App", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://127.0.0.1:8000/api/idea-recommendations",
+      apiUrl("/api/idea-recommendations"),
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
@@ -220,7 +229,7 @@ describe("App", () => {
     });
 
     expect(fetchMock).toHaveBeenLastCalledWith(
-      "http://127.0.0.1:8000/api/idea-reports",
+      apiUrl("/api/idea-reports"),
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
@@ -251,7 +260,7 @@ describe("App", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://127.0.0.1:8000/api/idea-reports",
+      apiUrl("/api/idea-reports"),
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
