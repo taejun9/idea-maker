@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_DOCS = [
+    "RTK.md",
     "docs/architecture/README.md",
     "docs/architecture/backend.md",
     "docs/architecture/frontend.md",

@@ -21,6 +21,20 @@ run_python_check() {
   "$PYTHON_BIN" "$1"
 }
 
+run_doctor_checks() {
+  run_python_check tools/agent_doctor.py
+  run_python_check tools/structure_guard.py
+}
+
+run_layer_checks() {
+  "$0" docs
+  "$0" architecture
+  "$0" exec-plans
+  "$0" quality
+  if [ -f pyproject.toml ]; then "$0" backend; fi
+  "$0" frontend
+}
+
 require_active_plan() {
   local active_plans
   active_plans="$(find docs/exec-plans/active -maxdepth 1 -type f -name 'plan-[0-9][0-9][0-9][0-9]-*.md' -print -quit 2>/dev/null || true)"
@@ -41,6 +55,7 @@ Task start report
 - goal: $goal
 - branch: codex/$task_id
 - worktree: .worktrees/$task_id
+- roles: [ROLE_IDS]
 - verification: scripts/agent-task.sh verify; scripts/agent-task.sh docker-test when runtime changed
 EOF
     ;;
@@ -116,8 +131,7 @@ EOF
     ;;
   doctor)
     require_active_plan
-    run_python_check tools/agent_doctor.py
-    run_python_check tools/structure_guard.py
+    run_doctor_checks
     ;;
   docs)
     run_python_check tools/docs_freshness.py
@@ -125,6 +139,9 @@ EOF
     ;;
   architecture)
     run_python_check tools/architecture_scan.py
+    ;;
+  exec-plans)
+    run_python_check tools/exec_plan_guard.py
     ;;
   quality)
     run_python_check tools/quality_score.py
@@ -151,12 +168,12 @@ EOF
     ;;
   verify)
     "$0" active-plan
-    "$0" doctor
-    "$0" docs
-    "$0" architecture
-    "$0" quality
-    if [ -f pyproject.toml ]; then "$0" backend; fi
-    "$0" frontend
+    run_doctor_checks
+    run_layer_checks
+    ;;
+  ci)
+    run_doctor_checks
+    run_layer_checks
     ;;
   docker-up)
     docker compose up -d --build
@@ -185,10 +202,12 @@ Commands:
   active-plan  Require at least one active execution plan
   docs          Check docs freshness and local markdown links
   architecture  Run architecture boundary scan
+  exec-plans   Validate execution plan placement and required sections
   quality       Check docs/quality/quality-score.md
   backend       Run backend lint/tests
   frontend      Run frontend build/tests
-  verify        Run the standard Codex verification loop
+  verify        Run the task-branch Codex verification loop with active-plan gate
+  ci            Run the main/CI-safe verification loop without active-plan gate
   docker-up     Start local Docker runtime
   docker-down   Stop local Docker runtime
   docker-test   Run Docker-based backend/frontend tests

@@ -23,7 +23,7 @@ Owner: Platform / Codex
 핵심 레버리지는 세 가지다.
 
 - 작업 전 읽어야 할 문서와 실행 계획을 고정한다.
-- Codex가 수정 후 반드시 돌리는 `scripts/agent-task.sh verify`를 둔다.
+- Codex가 수정 후 반드시 돌리는 `scripts/agent-task.sh verify`와 CI/main용 `scripts/agent-task.sh ci`를 둔다.
 - 품질, 문서 신선도, 아키텍처 위반을 CI에서 반복 측정한다.
 
 장점은 반복 가능한 개발, 낮은 온보딩 비용, 작은 PR, 명확한 롤백이다. 한계는 초기 문서/규칙 유지비와 과도한 규칙화 위험이다. 그래서 모든 규칙은 `docs/quality/quality-score.md`와 tech debt tracker에서 주기적으로 조정한다.
@@ -195,7 +195,8 @@ Machine-testable statements:
 - files under `apps/web/src/components` must not call `fetch`.
 - backend route modules must not import `sqlite3`, `psycopg`, `sqlalchemy`, or external source clients directly.
 - all required source-of-record docs must include `Last reviewed:`.
-- active exec plans must include `Rollback Strategy`, `Verification`, and `Decision Log`.
+- active exec plans must include `Roles`, `Rollback Strategy`, `Verification`, and `Decision Log`.
+- completed exec plans must include outcome, verification, and follow-up cleanup sections.
 
 ## 7. Mechanical Enforcement
 
@@ -204,7 +205,11 @@ Local:
 ```bash
 scripts/agent-task.sh doctor
 scripts/agent-task.sh verify
+scripts/agent-task.sh ci
 ```
+
+`verify` is for task branches with an active plan. `ci` is for clean `main` and
+CI runs after active plans have been completed and moved.
 
 CI stages:
 
@@ -213,7 +218,8 @@ CI stages:
 3. architecture rules
 4. backend lint/test
 5. frontend install/build/test
-6. quality score smoke check
+6. execution plan placement and required sections
+7. quality score smoke check
 
 Initial scripts:
 
@@ -221,6 +227,7 @@ Initial scripts:
 - `tools/docs_freshness.py`
 - `tools/link_check.py`
 - `tools/architecture_scan.py`
+- `tools/exec_plan_guard.py`
 - `tools/quality_score.py`
 
 ## 8. Agent Workflow Harness

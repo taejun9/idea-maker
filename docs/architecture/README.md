@@ -88,8 +88,8 @@ The following rules must be enforced by CI over time:
 4. Frontend files must not import from `services/api`.
 5. Files under `apps/web/src/components` must not call `fetch` directly.
 6. New external integrations must have a doc entry under `docs/references/`.
-7. Exec plans in `active/` must include status, verification, rollback, and decision log sections.
-8. Completed plans must move to `completed/` and include outcome and follow-up items.
+7. Exec plans in `active/` must include status, roles, verification, rollback, and decision log sections.
+8. Completed plans must move to `completed/` and include outcome, verification, and follow-up items.
 9. Every new API route must have a schema and at least one test or documented test gap.
 10. Shared utilities must include a comment explaining the second caller or a link to the exec plan that created them.
 
