@@ -28,7 +28,7 @@ def normalize(source: Path, target: str) -> Path:
 def main() -> int:
     failures: list[str] = []
     for path in ROOT.rglob("*.md"):
-        if ".git" in path.parts:
+        if ".git" in path.parts or ".worktrees" in path.parts:
             continue
         text = path.read_text(encoding="utf-8")
         for match in LINK_RE.finditer(text):
@@ -51,4 +51,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

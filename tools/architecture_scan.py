@@ -30,7 +30,14 @@ RULES = [
         "id": "no-secret-ish-values",
         "base": ".",
         "patterns": ["sk-live-", "ghp_", "xoxb-"],
-        "ignore_parts": {".git", "node_modules", ".venv", "__pycache__", "lint-rules"},
+        "ignore_parts": {
+            ".git",
+            ".worktrees",
+            "node_modules",
+            ".venv",
+            "__pycache__",
+            "lint-rules",
+        },
         "ignore_paths": {"tools/architecture_scan.py"},
     },
 ]
