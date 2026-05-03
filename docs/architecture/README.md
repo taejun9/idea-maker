@@ -102,7 +102,7 @@ For a normal feature, Codex may change:
 - focused tests
 - relevant docs and exec plan
 
-Codex should create a plan before touching broad cross-cutting areas such as auth, database schema, logging format, CI, or architecture rules.
+Codex should run the request-intake planning meeting and create a plan before touching broad cross-cutting areas such as auth, database schema, logging format, CI, or architecture rules.
 
 ## Runtime Baseline
 

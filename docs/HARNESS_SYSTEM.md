@@ -33,10 +33,10 @@ Owner: Platform / Codex
 ```text
 Human intent
   -> Codex reads AGENTS.md
-  -> Codex sends task start report
+  -> Codex runs request-intake planning meeting
   -> Codex creates worktree branch
   -> Codex reads docs and active exec plans
-  -> Codex creates or updates an execution plan
+  -> Codex creates or updates an execution plan from meeting output
   -> Codex implements a small change
   -> scripts/agent-task.sh verify
   -> CI repeats mechanical checks
@@ -68,8 +68,8 @@ services/api/                Python backend
 
 Lifecycle:
 
-1. Prompt: user states intent; Codex extracts scope and assumptions.
-2. Execution plan: every task gets or updates a plan in `docs/exec-plans/active/` before task work.
+1. Prompt and planning meeting: user states intent; Codex records goal, scope, non-goals, assumptions or open questions, role ids, expected changed areas, verification, and selected plan id.
+2. Execution plan: every task gets or updates a plan in `docs/exec-plans/active/` from that meeting before task work.
 3. Implementation: Codex changes the smallest coherent slice.
 4. Verification: local harness and tests run.
 5. PR: short PR, checklist, docs update notes.
@@ -232,28 +232,30 @@ Initial scripts:
 
 ## 8. Agent Workflow Harness
 
-All workflows start with a start report and finish with a finish report. All implementation work uses worktree branches and avoids direct commits on `main`.
+All workflows start with a request-intake planning meeting and finish with a finish report. All implementation work uses worktree branches and avoids direct commits on `main`.
 
 Bug fix:
 
-1. send start report
+1. run request-intake planning meeting
 2. create worktree branch
-3. reproduce with Docker test or local command
-4. inspect logs/errors
-5. patch smallest layer
-6. add regression test
-7. update plan/debt docs if needed
-8. run verify and docker-test
-9. send finish report
+3. create or update active exec plan from meeting output
+4. reproduce with Docker test or local command
+5. inspect logs/errors
+6. patch smallest layer
+7. add regression test
+8. update plan/debt docs if needed
+9. run verify and docker-test
+10. send finish report
 
 New feature:
 
-1. create active exec plan
-2. update product spec first
-3. add backend schema/service/API slice
-4. add frontend feature slice
-5. add tests and UI verification
-6. complete plan
+1. run request-intake planning meeting
+2. create active exec plan from meeting output
+3. update product spec first
+4. add backend schema/service/API slice
+5. add frontend feature slice
+6. add tests and UI verification
+7. complete plan
 
 Refactoring:
 
@@ -309,13 +311,14 @@ Git flow:
 
 1. create worktree from `main`
 2. branch name `codex/<task-id>`
-3. create or update an active plan before task work
-4. commit only in that worktree
-5. commit message format `<action>(plan-NNNN): <task>`
-6. PR into `main`
-7. merge after gates with `scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"`
-8. push `origin/main` immediately without separate approval unless the user explicitly requested a pause
-9. delete branch and worktree
+3. run request-intake planning meeting
+4. create or update an active plan from meeting output before task work
+5. commit only in that worktree
+6. commit message format `<action>(plan-NNNN): <task>`
+7. PR into `main`
+8. merge after gates with `scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"`
+9. push `origin/main` immediately without separate approval unless the user explicitly requested a pause
+10. delete branch and worktree
 
 ## 12. Entropy Control / Garbage Collection
 

@@ -21,7 +21,9 @@ source-of-record docs instead of duplicating them.
 ## Runtime Rules
 
 - Every task report includes goal, scope, branch/worktree, active role ids, expected changed areas, and verification plan.
-- Every task uses an active plan before implementation, documentation, test, or tooling changes.
+- Every task starts with a short request-intake planning meeting that records goal, scope, non-goals, assumptions or open questions, role ids, expected changed areas, verification, and the selected plan id.
+- Every task uses an active plan created or updated from that meeting before implementation, documentation, test, or tooling changes.
+- If the plan is missing or ambiguous, ask the user the blocking planning questions and stop; do not backfill a plan at finish-report time.
 - `scripts/agent-task.sh verify` is the task-branch verification command and enforces the active-plan gate.
 - `scripts/agent-task.sh ci` is the main/CI-safe verification command and does not require an active task plan.
 - Completed plans move to `docs/exec-plans/completed/`; `docs/exec-plans/active/.gitkeep` keeps the active plan directory present in fresh checkouts.

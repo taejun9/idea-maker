@@ -39,7 +39,7 @@ require_active_plan() {
   local active_plans
   active_plans="$(find docs/exec-plans/active -maxdepth 1 -type f -name 'plan-[0-9][0-9][0-9][0-9]-*.md' -print -quit 2>/dev/null || true)"
   if [ -z "$active_plans" ]; then
-    echo "No active execution plan found. Create docs/exec-plans/active/plan-NNNN-<task>.md before task work." >&2
+    echo "No active execution plan found. Run the request-intake planning meeting, then create docs/exec-plans/active/plan-NNNN-<task>.md before task work." >&2
     exit 2
   fi
 }
@@ -49,13 +49,18 @@ case "$cmd" in
     task_id="${2:-[TASK_ID]}"
     goal="${3:-[GOAL]}"
     cat <<EOF
-Task start report
+Task intake planning meeting
 - team: 개미군단 (ant-legion)
 - task: $task_id
 - goal: $goal
+- scope: [SCOPE]
+- non-goals: [NON_GOALS]
+- assumptions_or_questions: [ASSUMPTIONS_OR_QUESTIONS]
+- plan: docs/exec-plans/active/$task_id.md
 - branch: codex/$task_id
 - worktree: .worktrees/$task_id
 - roles: [ROLE_IDS]
+- expected_changed_areas: [PATHS_OR_MODULES]
 - verification: scripts/agent-task.sh verify; scripts/agent-task.sh docker-test when runtime changed
 EOF
     ;;
@@ -194,7 +199,7 @@ Usage: scripts/agent-task.sh <command>
 
 Commands:
   doctor        Show local environment and required harness files
-  start-report  Print a task start report template
+  start-report  Print a request-intake planning meeting template
   finish-report Print a task finish report template
   worktree-start Create .worktrees/<task-id> on codex/<task-id>
   worktree-clean Remove .worktrees/<task-id> and delete codex/<task-id>

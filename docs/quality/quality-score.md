@@ -16,7 +16,7 @@ Quality score is the compact operating dashboard for this repository. Codex upda
 | Docs freshness | 85 | block on missing root review dates | Source-of-record docs established. |
 | Reliability | 65 | warn | Basic logging and health contract drafted. |
 | Security | 65 | block on secret leakage | Baseline policy drafted. |
-| Agent operability | 88 | block on harness failure | `verify` covers task branches; `ci` covers clean main/CI and execution-plan structure. |
+| Agent operability | 88 | block on harness failure | `verify` covers task branches; `ci` covers clean main/CI, execution-plan structure, and request-intake planning meeting guidance. |
 
 Overall: 73 / 100
 
