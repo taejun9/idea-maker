@@ -62,6 +62,45 @@ EOF
     git branch -d "$branch"
     echo "Removed worktree $worktree and branch $branch"
     ;;
+  main-merge-push)
+    task_id="${2:?task id required, e.g. plan-0001-idea-report-mvp}"
+    action="${3:-chore}"
+    if [[ ! "$task_id" =~ ^(plan-[0-9]{4})-(.+)$ ]]; then
+      echo "task id must use plan-NNNN-<task>, got: $task_id" >&2
+      exit 2
+    fi
+    plan_id="${BASH_REMATCH[1]}"
+    task_slug="${BASH_REMATCH[2]}"
+    if [[ ! "$action" =~ ^(feat|fix|docs|test|refactor|chore|ci|perf)$ ]]; then
+      echo "action must be one of: feat, fix, docs, test, refactor, chore, ci, perf" >&2
+      exit 2
+    fi
+    if [ "$#" -ge 4 ]; then
+      shift 3
+      task_summary="$*"
+    else
+      task_summary="${task_slug//-/ }"
+    fi
+    branch="codex/$task_id"
+    current_branch="$(git branch --show-current)"
+    if [ "$current_branch" != "main" ]; then
+      echo "main-merge-push must run from the main worktree; current branch: $current_branch" >&2
+      exit 2
+    fi
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+      echo "main-merge-push requires a clean main worktree" >&2
+      exit 2
+    fi
+    if ! git show-ref --verify --quiet "refs/heads/$branch"; then
+      echo "Branch not found: $branch" >&2
+      exit 2
+    fi
+    git fetch origin main
+    git merge --ff-only origin/main
+    git merge --no-ff "$branch" -m "$action $plan_id: $task_summary"
+    git push origin main
+    echo "Merged $branch into main and pushed origin/main"
+    ;;
   doctor)
     run_python_check tools/agent_doctor.py
     run_python_check tools/structure_guard.py
@@ -127,6 +166,7 @@ Commands:
   finish-report Print a task finish report template
   worktree-start Create .worktrees/<task-id> on codex/<task-id>
   worktree-clean Remove .worktrees/<task-id> and delete codex/<task-id>
+  main-merge-push Merge codex/<task-id> into main and push origin/main
   docs          Check docs freshness and local markdown links
   architecture  Run architecture boundary scan
   quality       Check docs/quality/quality-score.md

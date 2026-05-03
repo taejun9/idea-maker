@@ -183,7 +183,7 @@ Every complex task plan includes:
 - definition of done
 - follow-up cleanup
 
-Sample plan exists at `docs/exec-plans/active/sample-idea-report-mvp.md`.
+Sample plan exists at `docs/exec-plans/active/plan-0001-idea-report-mvp.md`.
 
 ## 6. Architecture Rules
 
@@ -303,9 +303,10 @@ Git flow:
 1. create worktree from `main`
 2. branch name `codex/<task-id>`
 3. commit only in that worktree
-4. PR into `main`
-5. merge after gates
-6. delete branch and worktree
+4. commit message format `<action> plan-NNNN: <task>`
+5. PR into `main`
+6. merge after gates with `scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"`
+7. delete branch and worktree
 
 ## 12. Entropy Control / Garbage Collection
 
