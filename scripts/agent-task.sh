@@ -48,7 +48,9 @@ case "$cmd" in
   start-report)
     task_id="${2:-[TASK_ID]}"
     goal="${3:-[GOAL]}"
+    worker_name="${4:-작업자명}"
     cat <<EOF
+$worker_name: $goal
 Task intake planning meeting
 - team: 개미군단 (ant-legion)
 - task: $task_id
@@ -62,17 +64,21 @@ Task intake planning meeting
 - roles: [ROLE_IDS]
 - expected_changed_areas: [PATHS_OR_MODULES]
 - verification: scripts/agent-task.sh verify; scripts/agent-task.sh docker-test when runtime changed
+- required_start_report_format: <작업자명>: <작업내용>
 EOF
     ;;
   finish-report)
     task_id="${2:-[TASK_ID]}"
     status="${3:-[STATUS]}"
+    worker_name="${4:-작업자명}"
     cat <<EOF
+$worker_name: $status
 Task finish report
 - team: 개미군단 (ant-legion)
 - task: $task_id
 - status: $status
 - required summary: changed files, commands run, pass/fail, docs updated, remaining risks
+- required_finish_report_format: <작업자명>: <보고내용>
 EOF
     ;;
   worktree-start)
@@ -199,8 +205,8 @@ Usage: scripts/agent-task.sh <command>
 
 Commands:
   doctor        Show local environment and required harness files
-  start-report  Print a request-intake planning meeting template
-  finish-report Print a task finish report template
+  start-report  Print a worker-prefixed request-intake planning meeting template
+  finish-report Print a worker-prefixed task finish report template
   worktree-start Create .worktrees/<task-id> on codex/<task-id>
   worktree-clean Remove .worktrees/<task-id> and delete codex/<task-id>
   main-merge-push Merge codex/<task-id> into main and push origin/main

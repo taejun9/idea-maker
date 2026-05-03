@@ -47,6 +47,13 @@ codex/api-crafter-report-schema
 
 ## Report Convention
 
+Every start or finish report starts with a worker-name line:
+
+- Start: `<작업자명>: <작업내용>`
+- Finish: `<작업자명>: <보고내용>`
+
+Use the active Korean role name, or the explicit worker name assigned by the user. Delegated agents use the worker name assigned to that subtask.
+
 Start report includes:
 
 - team: 개미군단 (`ant-legion`)
@@ -65,4 +72,3 @@ Finish report includes:
 - docs updated
 - remaining risk
 - follow-up owner id
-

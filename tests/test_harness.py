@@ -17,6 +17,8 @@ def test_runtime_task_kernel_exists() -> None:
 
     assert "Last reviewed:" in text
     assert "scripts/agent-task.sh ci" in text
+    assert "<작업자명>: <작업내용>" in text
+    assert "<작업자명>: <보고내용>" in text
 
 
 def test_exec_plan_guard_passes_current_tree() -> None:
@@ -25,3 +27,35 @@ def test_exec_plan_guard_passes_current_tree() -> None:
         cwd=ROOT,
         check=True,
     )
+
+
+def test_agent_task_reports_start_with_worker_prefix() -> None:
+    start = subprocess.run(
+        [
+            "scripts/agent-task.sh",
+            "start-report",
+            "plan-9999-example",
+            "Do the work",
+            "기록관",
+        ],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    finish = subprocess.run(
+        [
+            "scripts/agent-task.sh",
+            "finish-report",
+            "plan-9999-example",
+            "Done",
+            "기록관",
+        ],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert start.stdout.splitlines()[0] == "기록관: Do the work"
+    assert finish.stdout.splitlines()[0] == "기록관: Done"
