@@ -40,33 +40,43 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50">
-    <nav class="border-b border-slate-200 bg-white">
-      <div class="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-2 px-5 py-3 sm:px-6 lg:px-8">
-        <a
-          class="rounded px-3 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-200"
-          :class="
-            currentPage === 'create'
-              ? 'bg-emerald-700 text-white'
-              : 'text-slate-700 hover:bg-slate-100'
-          "
-          data-testid="nav-create-report"
-          href="#/"
-        >
-          보고서 생성
-        </a>
-        <a
-          class="rounded px-3 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-200"
-          :class="
-            currentPage === 'history' || currentPage === 'detail'
-              ? 'bg-emerald-700 text-white'
-              : 'text-slate-700 hover:bg-slate-100'
-          "
-          data-testid="nav-report-history"
-          href="#/reports"
-        >
-          조회한 보고서
-        </a>
+  <div class="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-emerald-200 selection:text-emerald-900">
+    <nav class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
+      <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-3 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-2">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
+            </div>
+            <span class="text-lg font-bold tracking-tight text-slate-900">Idea Maker</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <a
+              class="rounded-lg px-4 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              :class="
+                currentPage === 'create'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              "
+              data-testid="nav-create-report"
+              href="#/"
+            >
+              보고서 생성
+            </a>
+            <a
+              class="rounded-lg px-4 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              :class="
+                currentPage === 'history' || currentPage === 'detail'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              "
+              data-testid="nav-report-history"
+              href="#/reports"
+            >
+              조회한 보고서
+            </a>
+          </div>
+        </div>
       </div>
     </nav>
 

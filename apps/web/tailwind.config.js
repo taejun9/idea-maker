@@ -2,7 +2,11 @@
 export default {
   content: ["./index.html", "./src/**/*.{vue,ts}"],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['"Noto Sans KR"', "sans-serif"],
+      },
+    },
   },
   plugins: [],
 };
