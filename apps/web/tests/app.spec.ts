@@ -1,5 +1,4 @@
 import { mount } from "@vue/test-utils";
-import type { VueWrapper } from "@vue/test-utils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "../src/App.vue";
 
@@ -19,12 +18,13 @@ const sampleIdeaIntakeAnswers = [
   { code: "Q4", answer: "리뷰 수집, 이슈 분류, 쿠폰 발송을 하나의 흐름으로 만든다." },
   { code: "Q5", answer: "마케팅/PR" },
 ];
+const sampleIdeaIntakePayload = [{ code: "Q5", answer: "마케팅/PR" }];
 
 const sampleIdeaIntakeQuestions = [
   {
     code: "Q1",
     prompt: "나의 아이디어를 한 줄로 소개해주세요.",
-    requirement: "필수, 최소 10자 이상 입력해주세요.",
+    requirement: "자동 생성",
     photo_guidance: null,
     options: [],
     answer: sampleIdeaIntakeAnswers[0].answer,
@@ -32,27 +32,24 @@ const sampleIdeaIntakeQuestions = [
   {
     code: "Q2",
     prompt: "아이디어를 떠올린 배경 이야기를 들려주세요.",
-    requirement: "필수",
-    photo_guidance:
-      "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. 사진은 3개 질문 합산 최대 5장까지 가능합니다.",
+    requirement: "자동 생성",
+    photo_guidance: null,
     options: [],
     answer: sampleIdeaIntakeAnswers[1].answer,
   },
   {
     code: "Q3",
     prompt: "아이디어는 누구의 어떤 문제를 해결해주나요?",
-    requirement: "필수",
-    photo_guidance:
-      "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. 사진은 3개 질문 합산 최대 5장까지 가능합니다.",
+    requirement: "자동 생성",
+    photo_guidance: null,
     options: [],
     answer: sampleIdeaIntakeAnswers[2].answer,
   },
   {
     code: "Q4",
     prompt: "아이디어를 어떻게 실현하고 싶으신가요?",
-    requirement: "필수",
-    photo_guidance:
-      "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. 사진은 3개 질문 합산 최대 5장까지 가능합니다.",
+    requirement: "자동 생성",
+    photo_guidance: null,
     options: [],
     answer: sampleIdeaIntakeAnswers[3].answer,
   },
@@ -194,14 +191,6 @@ const sampleReportList = {
 const longerIdea =
   "지역 기반 소상공인 리뷰와 고객 문의를 분석하고 매장 운영 개선 과제를 자동으로 정리하는 B2B SaaS 플랫폼";
 
-async function fillIdeaIntakeAnswers(wrapper: VueWrapper) {
-  await wrapper.find('[data-testid="intake-q1"]').setValue(sampleIdeaIntakeAnswers[0].answer);
-  await wrapper.find('[data-testid="intake-q2"]').setValue(sampleIdeaIntakeAnswers[1].answer);
-  await wrapper.find('[data-testid="intake-q3"]').setValue(sampleIdeaIntakeAnswers[2].answer);
-  await wrapper.find('[data-testid="intake-q4"]').setValue(sampleIdeaIntakeAnswers[3].answer);
-  await wrapper.find('[data-testid="intake-q5"]').setValue(sampleIdeaIntakeAnswers[4].answer);
-}
-
 describe("App", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -219,7 +208,9 @@ describe("App", () => {
     expect(ideaInput.attributes("aria-invalid")).toBe("false");
     expect(wrapper.findAll('[data-testid="idea-example"]')).toHaveLength(3);
     expect(wrapper.find('[data-testid="idea-intake-form"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="intake-validation"]').text()).toContain("Q1은 10자");
+    expect(wrapper.find('[data-testid="auto-intake-note"]').text()).toContain("Q1~Q4");
+    expect(wrapper.find('[data-testid="intake-validation"]').text()).toContain("사업 분야");
+    expect(wrapper.find('[data-testid="intake-q1"]').exists()).toBe(false);
     expect(wrapper.find('[data-testid="idea-count"]').text()).toContain("0 / 2000자");
     expect(submitButton.exists()).toBe(true);
     expect(submitButton.attributes("disabled")).toBeDefined();
@@ -235,11 +226,41 @@ describe("App", () => {
     expect((ideaInput.element as HTMLTextAreaElement).value).toBe(
       "동네 소상공인을 위한 AI 리뷰 분석 도구",
     );
-    expect((wrapper.find('[data-testid="intake-q1"]').element as HTMLInputElement).value).toBe(
-      "동네 소상공인을 위한 AI 리뷰 분석 도구",
+    expect((wrapper.find('[data-testid="intake-q5"]').element as HTMLSelectElement).value).toBe(
+      "마케팅/PR",
     );
     expect(wrapper.find('[data-testid="idea-count"]').text()).toContain("관련 아이템");
     expect(wrapper.find('[data-testid="generate-report"]').attributes("disabled")).toBeUndefined();
+  });
+
+  it("keeps the inferred business field editable", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(sampleReport),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const wrapper = mount(App);
+
+    await wrapper.find('[data-testid="idea-input"]').setValue(longerIdea);
+    expect((wrapper.find('[data-testid="intake-q5"]').element as HTMLSelectElement).value).toBe(
+      "마케팅/PR",
+    );
+    await wrapper.find('[data-testid="intake-q5"]').setValue("IT");
+    await wrapper.find("form").trigger("submit");
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        apiUrl("/api/idea-reports"),
+        expect.objectContaining({
+          body: JSON.stringify({
+            idea: longerIdea,
+            locale: "ko-KR",
+            research: false,
+            idea_intake_answers: [{ code: "Q5", answer: "IT" }],
+          }),
+        }),
+      );
+    });
   });
 
   it("announces an accessible validation error for empty ideas", async () => {
@@ -331,7 +352,6 @@ describe("App", () => {
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="recommendation-list"]').exists()).toBe(true);
     });
-    await fillIdeaIntakeAnswers(wrapper);
     await wrapper.findAll('[data-testid="recommendation-report"]')[0].trigger("click");
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="report-summary"]').exists()).toBe(true);
@@ -345,7 +365,7 @@ describe("App", () => {
           idea: "리뷰 관련 고객 리뷰와 문의를 자동으로 분석해 개선 우선순위를 제안하는 SaaS",
           locale: "ko-KR",
           research: true,
-          idea_intake_answers: sampleIdeaIntakeAnswers,
+          idea_intake_answers: sampleIdeaIntakePayload,
         }),
       }),
     );
@@ -364,7 +384,6 @@ describe("App", () => {
     await wrapper
       .find('[data-testid="idea-input"]')
       .setValue(longerIdea);
-    await fillIdeaIntakeAnswers(wrapper);
     await wrapper.find("form").trigger("submit");
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="report-summary"]').exists()).toBe(true);
@@ -378,7 +397,7 @@ describe("App", () => {
           idea: longerIdea,
           locale: "ko-KR",
           research: false,
-          idea_intake_answers: sampleIdeaIntakeAnswers,
+          idea_intake_answers: sampleIdeaIntakePayload,
         }),
       }),
     );
@@ -386,9 +405,7 @@ describe("App", () => {
     expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain(
       "나의 아이디어를 한 줄로 소개해주세요.",
     );
-    expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain(
-      "사진은 드래그앤드랍",
-    );
+    expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain("자동 생성");
     expect(wrapper.find('[data-testid="idea-intake-questions"]').text()).toContain(
       "사업 분야를 선택해주세요.",
     );

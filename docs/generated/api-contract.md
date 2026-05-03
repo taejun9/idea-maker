@@ -24,14 +24,14 @@ Generated date: 2026-05-03
 | `idea` | string | yes | minimum 5 characters, maximum 2000 characters |
 | `locale` | string | no | defaults to `ko-KR` |
 | `research` | boolean | no | defaults to `false` |
-| `idea_intake_answers` | `IdeaIntakeAnswerInput[]` | no | when provided, must include Q1-Q5 exactly once; Q1 minimum 10 characters; Q5 must match a business-field option |
+| `idea_intake_answers` | `IdeaIntakeAnswerInput[]` | no | optional Q5 override; duplicate codes are rejected; Q5 must match a business-field option |
 
 ## `IdeaIntakeAnswerInput`
 
 | Field | Type | Required | Rules |
 | --- | --- | --- | --- |
 | `code` | `Q1`, `Q2`, `Q3`, `Q4`, or `Q5` | yes | stable question label |
-| `answer` | string | yes | 1-2000 characters; Q1 has a 10-character minimum and Q5 must be one configured option |
+| `answer` | string | yes | 1-2000 characters; Q5 must be one configured option when `code` is `Q5` |
 
 ## `IdeaReportResponse`
 
@@ -42,7 +42,7 @@ Generated date: 2026-05-03
 | `locale` | string | request locale |
 | `created_at` | date-time string | report creation timestamp |
 | `overview` | string | clarified idea summary |
-| `idea_intake_questions` | `IdeaIntakeQuestion[]` | Q1-Q5 required intake prompts, photo guidance, and business-field options |
+| `idea_intake_questions` | `IdeaIntakeQuestion[]` | Q1-Q4 generated answers plus Q5 business-field options and inferred or selected answer |
 | `clarified_concept` | string | concrete product concept derived from the idea |
 | `target_users` | string array | target user segments |
 | `core_use_cases` | string array | primary user workflows the idea should support |
@@ -84,9 +84,9 @@ Generated date: 2026-05-03
 | `code` | `Q1`, `Q2`, `Q3`, `Q4`, or `Q5` | stable question label |
 | `prompt` | string | question text shown in the report |
 | `requirement` | string | required-state and validation copy |
-| `photo_guidance` | string or null | drag-and-drop photo placement guidance for Q2-Q4 |
+| `photo_guidance` | string or null | currently null; retained for backward-compatible report payloads |
 | `options` | string array | Q5 business-field options, empty for Q1-Q4 |
-| `answer` | string | saved user answer, empty for reports generated without submitted Q1-Q5 answers |
+| `answer` | string | generated Q1-Q4 answer and inferred or user-selected Q5 answer; older saved reports may contain empty values |
 
 ## `IdeaRecommendationRequest`
 

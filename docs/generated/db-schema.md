@@ -27,7 +27,7 @@ when the Docker runtime starts or a report repository operation runs.
 | `locale` | `text` | request locale, default `ko-KR` |
 | `research_requested` | `boolean` | true when the report used the search-and-organization path |
 | `created_at` | `timestamptz` | report creation time; indexed descending for newest-first history |
-| `report` | `jsonb` | full `IdeaReportResponse` payload used by the detail page, including Q1-Q5 intake prompts and submitted answer values |
+| `report` | `jsonb` | full `IdeaReportResponse` payload used by the detail page, including generated Q1-Q4 intake answers and inferred or submitted Q5 answer |
 
 Indexes:
 

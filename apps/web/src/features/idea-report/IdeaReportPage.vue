@@ -4,7 +4,6 @@ import { createIdeaRecommendations, createIdeaReport } from "../../api/ideaRepor
 import type {
   Competitor,
   IdeaIntakeAnswerInput,
-  IdeaIntakeCode,
   IdeaRecommendation,
   IdeaReportResponse,
   SourceConfidence,
@@ -38,15 +37,35 @@ const businessFieldOptions = [
   "하드웨어",
   "기타",
 ];
+const businessFieldKeywordPatterns: Array<{ field: string; keywords: string[] }> = [
+  { field: "교육", keywords: ["교육", "학습", "스터디", "강의", "출석", "학교", "학생"] },
+  { field: "금융", keywords: ["금융", "대출", "보험", "결제", "송금", "은행"] },
+  { field: "재무", keywords: ["재무", "회계", "세금", "정산", "예산", "비용"] },
+  {
+    field: "마케팅/PR",
+    keywords: ["리뷰", "마케팅", "광고", "홍보", "pr", "피드백", "고객 반응", "문의"],
+  },
+  { field: "유통/물류", keywords: ["쇼핑몰", "반품", "배송", "재고", "물류", "유통", "커머스"] },
+  { field: "운영관리", keywords: ["운영", "업무", "자동화", "체크리스트", "관리", "매장", "소상공인"] },
+  { field: "네트워킹", keywords: ["네트워킹", "커뮤니티", "모임", "매칭", "연결"] },
+  { field: "모빌리티", keywords: ["모빌리티", "차량", "주차", "교통", "이동", "배달"] },
+  {
+    field: "미디어/엔터테인먼트",
+    keywords: ["콘텐츠", "미디어", "영상", "음악", "엔터테인먼트"],
+  },
+  { field: "바이오/의류", keywords: ["바이오", "헬스케어", "의료", "건강", "의류", "패션"] },
+  { field: "에너지/자원", keywords: ["에너지", "전력", "자원", "탄소", "전기"] },
+  { field: "농축/수산업", keywords: ["농업", "축산", "수산", "농장", "어업"] },
+  { field: "라이프스타일", keywords: ["생활", "라이프스타일", "취미", "여행", "가정"] },
+  { field: "프롭테크", keywords: ["부동산", "임대", "주거", "건물", "프롭테크"] },
+  { field: "하드웨어", keywords: ["하드웨어", "기기", "센서", "로봇", "디바이스"] },
+  { field: "임팩트", keywords: ["임팩트", "환경", "기부", "복지", "사회문제"] },
+  { field: "IT", keywords: ["ai", "인공지능", "saas", "소프트웨어", "앱", "플랫폼", "데이터", "챗봇"] },
+];
 
 const idea = ref("");
-const intakeAnswers = ref<Record<IdeaIntakeCode, string>>({
-  Q1: "",
-  Q2: "",
-  Q3: "",
-  Q4: "",
-  Q5: "",
-});
+const selectedBusinessField = ref("");
+const lastAutoBusinessField = ref("");
 const recommendations = ref<IdeaRecommendation[]>([]);
 const recommendationKeyword = ref("");
 const selectedRecommendationTitle = ref("");
@@ -60,13 +79,7 @@ const isIdeaTouched = ref(false);
 const normalizedIdea = computed(() => idea.value.trim());
 const ideaLength = computed(() => normalizedIdea.value.length);
 const ideaTokens = computed(() => normalizedIdea.value.split(/\s+/).filter(Boolean));
-const normalizedIntakeAnswers = computed<Record<IdeaIntakeCode, string>>(() => ({
-  Q1: intakeAnswers.value.Q1.trim(),
-  Q2: intakeAnswers.value.Q2.trim(),
-  Q3: intakeAnswers.value.Q3.trim(),
-  Q4: intakeAnswers.value.Q4.trim(),
-  Q5: intakeAnswers.value.Q5.trim(),
-}));
+const normalizedBusinessField = computed(() => selectedBusinessField.value.trim());
 const isRecommendationInput = computed(
   () => ideaLength.value > 0 && (ideaTokens.value.length <= 5 || ideaLength.value <= 40),
 );
@@ -103,30 +116,36 @@ const ideaValidationMessage = computed(() => {
 const ideaDescriptionIds = computed(() =>
   shouldShowIdeaError.value ? "idea-help idea-count idea-error" : "idea-help idea-count",
 );
-const areIntakeAnswersValid = computed(
-  () =>
-    normalizedIntakeAnswers.value.Q1.length >= 10 &&
-    normalizedIntakeAnswers.value.Q2.length > 0 &&
-    normalizedIntakeAnswers.value.Q3.length > 0 &&
-    normalizedIntakeAnswers.value.Q4.length > 0 &&
-    businessFieldOptions.includes(normalizedIntakeAnswers.value.Q5),
+const isBusinessFieldValid = computed(() =>
+  businessFieldOptions.includes(normalizedBusinessField.value),
 );
-const shouldShowIntakeError = computed(() => hasTriedSubmit.value && !areIntakeAnswersValid.value);
-const intakeValidationMessage = computed(() => {
-  if (areIntakeAnswersValid.value) {
-    return "Q1~Q5 입력 조건을 충족했습니다.";
+const shouldShowIntakeError = computed(() => hasTriedSubmit.value && !isBusinessFieldValid.value);
+const submitDisabledDescription = computed(() => {
+  if (canSubmit.value) {
+    return undefined;
   }
 
-  return "Q1은 10자 이상, Q2~Q4와 사업 분야는 필수입니다.";
+  if (isIdeaValid.value && !isRecommendationInput.value && !isBusinessFieldValid.value) {
+    return "intake-validation";
+  }
+
+  return "idea-count";
+});
+const intakeValidationMessage = computed(() => {
+  if (isBusinessFieldValid.value) {
+    return "사업 분야 선택이 완료되었습니다.";
+  }
+
+  return "사업 분야를 선택해주세요.";
 });
 const canSubmit = computed(
   () =>
     isIdeaValid.value &&
     !isLoading.value &&
-    (isRecommendationInput.value || areIntakeAnswersValid.value),
+    (isRecommendationInput.value || isBusinessFieldValid.value),
 );
 const canCreateReportFromRecommendation = computed(
-  () => !isLoading.value && areIntakeAnswersValid.value,
+  () => !isLoading.value && isBusinessFieldValid.value,
 );
 const submitButtonLabel = computed(() => {
   if (loadingMode.value === "recommendations") {
@@ -148,15 +167,14 @@ const confidenceLabel: Record<SourceConfidence, string> = {
 
 function selectIdeaExample(example: string) {
   idea.value = example;
-  if (!intakeAnswers.value.Q1.trim()) {
-    intakeAnswers.value.Q1 = example;
-  }
+  applyInferredBusinessField(example, true);
   errorMessage.value = "";
   hasTriedSubmit.value = false;
   isIdeaTouched.value = true;
 }
 
 watch(normalizedIdea, () => {
+  applyInferredBusinessField(normalizedIdea.value);
   recommendations.value = [];
   recommendationKeyword.value = "";
   selectedRecommendationTitle.value = "";
@@ -171,7 +189,7 @@ async function submitReport() {
     return;
   }
 
-  if (!isRecommendationInput.value && !areIntakeAnswersValid.value) {
+  if (!isRecommendationInput.value && !isBusinessFieldValid.value) {
     return;
   }
 
@@ -208,7 +226,8 @@ async function loadRecommendations() {
 
 async function createReportFromRecommendation(recommendation: IdeaRecommendation) {
   hasTriedSubmit.value = true;
-  if (!areIntakeAnswersValid.value) {
+  applyInferredBusinessField(recommendation.report_seed);
+  if (!isBusinessFieldValid.value) {
     return;
   }
 
@@ -244,13 +263,43 @@ async function generateReport(
 }
 
 function ideaIntakeAnswerPayload(): IdeaIntakeAnswerInput[] {
-  return [
-    { code: "Q1", answer: normalizedIntakeAnswers.value.Q1 },
-    { code: "Q2", answer: normalizedIntakeAnswers.value.Q2 },
-    { code: "Q3", answer: normalizedIntakeAnswers.value.Q3 },
-    { code: "Q4", answer: normalizedIntakeAnswers.value.Q4 },
-    { code: "Q5", answer: normalizedIntakeAnswers.value.Q5 },
-  ];
+  if (!normalizedBusinessField.value) {
+    return [];
+  }
+
+  return [{ code: "Q5", answer: normalizedBusinessField.value }];
+}
+
+function applyInferredBusinessField(value: string, force = false) {
+  const inferredField = inferBusinessField(value);
+  if (!inferredField) {
+    if (force) {
+      selectedBusinessField.value = "";
+      lastAutoBusinessField.value = "";
+    }
+    return;
+  }
+
+  if (
+    force ||
+    !selectedBusinessField.value ||
+    selectedBusinessField.value === lastAutoBusinessField.value
+  ) {
+    selectedBusinessField.value = inferredField;
+    lastAutoBusinessField.value = inferredField;
+  }
+}
+
+function inferBusinessField(value: string) {
+  const normalizedValue = value.trim().toLowerCase();
+  if (!normalizedValue) {
+    return "";
+  }
+
+  const matchedPattern = businessFieldKeywordPatterns.find((pattern) =>
+    pattern.keywords.some((keyword) => normalizedValue.includes(keyword)),
+  );
+  return matchedPattern?.field ?? "기타";
 }
 
 function competitorMarketLabel(competitor: Competitor) {
@@ -341,83 +390,21 @@ function formatDateTime(value: string) {
         </div>
 
         <fieldset class="grid gap-4" data-testid="idea-intake-form">
-          <legend class="text-base font-semibold">아이디어 입력 문항</legend>
-          <div class="grid gap-2">
-            <label class="text-sm font-medium text-slate-700" for="intake-q1">
-              Q1. 나의 아이디어를 한 줄로 소개해주세요.
-            </label>
-            <input
-              id="intake-q1"
-              v-model="intakeAnswers.Q1"
-              class="rounded border border-slate-300 bg-white p-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-              data-testid="intake-q1"
-              maxlength="200"
-              type="text"
-            />
-            <p class="text-xs text-slate-500">필수, 최소 10자 이상 입력해주세요.</p>
-          </div>
-
-          <div class="grid gap-3 md:grid-cols-3">
-            <div class="grid gap-2">
-              <label class="text-sm font-medium text-slate-700" for="intake-q2">
-                Q2. 아이디어를 떠올린 배경 이야기를 들려주세요.
-              </label>
-              <textarea
-                id="intake-q2"
-                v-model="intakeAnswers.Q2"
-                class="min-h-32 resize-y rounded border border-slate-300 bg-white p-3 text-sm leading-6 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                data-testid="intake-q2"
-                maxlength="2000"
-              />
-              <p class="text-xs leading-5 text-slate-500">
-                사진은 3개 질문 합산 최대 5장까지 가능합니다.
-              </p>
-            </div>
-
-            <div class="grid gap-2">
-              <label class="text-sm font-medium text-slate-700" for="intake-q3">
-                Q3. 아이디어는 누구의 어떤 문제를 해결해주나요?
-              </label>
-              <textarea
-                id="intake-q3"
-                v-model="intakeAnswers.Q3"
-                class="min-h-32 resize-y rounded border border-slate-300 bg-white p-3 text-sm leading-6 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                data-testid="intake-q3"
-                maxlength="2000"
-              />
-              <p class="text-xs leading-5 text-slate-500">
-                사진은 3개 질문 합산 최대 5장까지 가능합니다.
-              </p>
-            </div>
-
-            <div class="grid gap-2">
-              <label class="text-sm font-medium text-slate-700" for="intake-q4">
-                Q4. 아이디어를 어떻게 실현하고 싶으신가요?
-              </label>
-              <textarea
-                id="intake-q4"
-                v-model="intakeAnswers.Q4"
-                class="min-h-32 resize-y rounded border border-slate-300 bg-white p-3 text-sm leading-6 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                data-testid="intake-q4"
-                maxlength="2000"
-              />
-              <p class="text-xs leading-5 text-slate-500">
-                사진은 3개 질문 합산 최대 5장까지 가능합니다.
-              </p>
-            </div>
-          </div>
+          <legend class="text-base font-semibold">아이디어 보강 정보</legend>
 
           <div class="grid gap-2">
             <label class="text-sm font-medium text-slate-700" for="intake-q5">
-              Q5. 사업 분야를 선택해주세요.
+              Q5. 사업 분야
             </label>
             <select
               id="intake-q5"
-              v-model="intakeAnswers.Q5"
+              v-model="selectedBusinessField"
               class="rounded border border-slate-300 bg-white p-3 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
               data-testid="intake-q5"
+              aria-describedby="intake-field-help intake-validation"
+              :aria-invalid="shouldShowIntakeError ? 'true' : 'false'"
             >
-              <option value="">선택</option>
+              <option value="">자동 선택 대기</option>
               <option
                 v-for="fieldOption in businessFieldOptions"
                 :key="fieldOption"
@@ -426,11 +413,23 @@ function formatDateTime(value: string) {
                 {{ fieldOption }}
               </option>
             </select>
+            <p id="intake-field-help" class="text-xs leading-5 text-slate-500">
+              입력한 아이디어에 맞춰 자동 선택되며, 필요하면 변경할 수 있습니다.
+            </p>
+          </div>
+
+          <div
+            class="rounded border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700"
+            data-testid="auto-intake-note"
+          >
+            Q1~Q4 답변은 보고서 생성 시 아이디어 내용에 맞춰 자동 작성됩니다.
+            이미지는 없어도 보고서를 생성할 수 있습니다.
           </div>
 
           <p
+            id="intake-validation"
             class="text-sm"
-            :class="areIntakeAnswersValid ? 'text-slate-600' : 'font-medium text-red-700'"
+            :class="isBusinessFieldValid ? 'text-slate-600' : 'font-medium text-red-700'"
             data-testid="intake-validation"
             :role="shouldShowIntakeError ? 'alert' : undefined"
           >
@@ -443,7 +442,7 @@ function formatDateTime(value: string) {
             data-testid="generate-report"
             class="min-h-11 rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:bg-slate-300"
             type="submit"
-            :aria-describedby="canSubmit ? undefined : 'idea-count'"
+            :aria-describedby="submitDisabledDescription"
             :disabled="!canSubmit"
           >
             {{ submitButtonLabel }}

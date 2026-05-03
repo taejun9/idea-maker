@@ -30,13 +30,7 @@ BUSINESS_FIELD_OPTIONS = (
     "기타",
 )
 
-PHOTO_PLACEMENT_GUIDANCE = (
-    "사진은 드래그앤드랍으로 사진의 위치를 자유롭게 정할 수 있습니다. "
-    "사진은 3개 질문 합산 최대 5장까지 가능합니다."
-)
-
 IdeaIntakeCode = Literal["Q1", "Q2", "Q3", "Q4", "Q5"]
-REQUIRED_IDEA_INTAKE_CODES = ("Q1", "Q2", "Q3", "Q4", "Q5")
 
 
 class IdeaIntakeAnswerInput(BaseModel):
@@ -67,28 +61,25 @@ def idea_intake_questions_from_answers(
         IdeaIntakeQuestion(
             code="Q1",
             prompt="나의 아이디어를 한 줄로 소개해주세요.",
-            requirement="필수, 최소 10자 이상 입력해주세요.",
+            requirement="자동 생성",
             answer=answers_by_code.get("Q1", ""),
         ),
         IdeaIntakeQuestion(
             code="Q2",
             prompt="아이디어를 떠올린 배경 이야기를 들려주세요.",
-            requirement="필수",
-            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
+            requirement="자동 생성",
             answer=answers_by_code.get("Q2", ""),
         ),
         IdeaIntakeQuestion(
             code="Q3",
             prompt="아이디어는 누구의 어떤 문제를 해결해주나요?",
-            requirement="필수",
-            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
+            requirement="자동 생성",
             answer=answers_by_code.get("Q3", ""),
         ),
         IdeaIntakeQuestion(
             code="Q4",
             prompt="아이디어를 어떻게 실현하고 싶으신가요?",
-            requirement="필수",
-            photo_guidance=PHOTO_PLACEMENT_GUIDANCE,
+            requirement="자동 생성",
             answer=answers_by_code.get("Q4", ""),
         ),
         IdeaIntakeQuestion(
@@ -117,14 +108,10 @@ class IdeaReportRequest(BaseModel):
         answers_by_code = {answer.code: answer.answer for answer in self.idea_intake_answers}
         if len(answers_by_code) != len(self.idea_intake_answers):
             raise ValueError("idea_intake_answers must not contain duplicate question codes")
-        if set(answers_by_code) != set(REQUIRED_IDEA_INTAKE_CODES):
-            raise ValueError("idea_intake_answers must include Q1, Q2, Q3, Q4, and Q5")
-        if len(answers_by_code["Q1"]) < 10:
-            raise ValueError("Q1 answer must be at least 10 characters")
-        if answers_by_code["Q5"] not in BUSINESS_FIELD_OPTIONS:
+        q5_answer = answers_by_code.get("Q5")
+        if q5_answer is not None and q5_answer not in BUSINESS_FIELD_OPTIONS:
             raise ValueError("Q5 answer must be one of the business field options")
         return self
-
 
 
 class IdeaRecommendationRequest(BaseModel):
