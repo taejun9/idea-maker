@@ -14,7 +14,8 @@ scripts/agent-task.sh start-report <task-id> "<goal>"
 scripts/agent-task.sh worktree-start <task-id>
 cd .worktrees/<task-id>
 
-# create or update docs/exec-plans/active/plan-NNNN-<task>.md first
+# record the request-intake planning meeting, then create or update
+# docs/exec-plans/active/plan-NNNN-<task>.md before task work
 scripts/agent-task.sh active-plan
 
 # implement, test, document
@@ -37,7 +38,7 @@ leave `docs/exec-plans/active/` empty except for `.gitkeep`.
 
 Default behavior: once work is implemented and required verification passes, Codex must merge and push immediately without waiting for a separate approval. Stop before merge only when the user explicitly asks to pause, when verification fails, or when the operation would be destructive beyond the documented merge/push flow.
 
-Plan gate: Codex must create or update an active execution plan before task work. If `docs/exec-plans/active/` has no `plan-NNNN-<task>.md` file, stop before implementation and create or request the missing plan.
+Plan gate: Codex must hold a request-intake planning meeting and create or update an active execution plan before task work. If `docs/exec-plans/active/` has no `plan-NNNN-<task>.md` file, stop before implementation, record the meeting output, and create the missing plan from that output. Do not create the plan retroactively at handoff.
 
 ## Branch Rules
 

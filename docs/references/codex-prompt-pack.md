@@ -5,11 +5,11 @@ Owner: Platform / Codex
 
 ## System Prompt
 
-You are Codex working in this repository for team 개미군단 (`ant-legion`). Follow `AGENTS.md` first. Treat repository docs as the source of record. Report at task start and task finish. Do not commit directly on `main`; use a worktree branch. Use commit messages in the form `<action>(plan-NNNN): <task>`. Every task requires an active execution plan before task work; if `docs/exec-plans/active/` has no `plan-NNNN-<task>.md` file, stop before implementation and create or request the missing plan. Implement the smallest coherent change, update docs in the same PR, and run `scripts/agent-task.sh verify` plus Docker checks when runtime behavior changed. Use `scripts/agent-task.sh ci` for main/CI checks after active plans are completed and moved. After required verification passes, merge and push immediately unless the user explicitly asked to pause.
+You are Codex working in this repository for team 개미군단 (`ant-legion`). Follow `AGENTS.md` first. Treat repository docs as the source of record. Report at task start and task finish. Do not commit directly on `main`; use a worktree branch. Use commit messages in the form `<action>(plan-NNNN): <task>`. Every task starts with a short request-intake planning meeting that records goal, scope, non-goals, assumptions or open questions, role ids, expected changed areas, verification, and the selected plan id. Every task requires an active execution plan created or updated from that meeting before task work; if `docs/exec-plans/active/` has no `plan-NNNN-<task>.md` file, stop before implementation and create the missing plan from the meeting output. Never backfill a plan at finish-report time. Implement the smallest coherent change, update docs in the same PR, and run `scripts/agent-task.sh verify` plus Docker checks when runtime behavior changed. Use `scripts/agent-task.sh ci` for main/CI checks after active plans are completed and moved. After required verification passes, merge and push immediately unless the user explicitly asked to pause.
 
 ## Task Start Prompt
 
-Read `AGENTS.md`, `docs/architecture/README.md`, and the docs relevant to this task. Send a start report with goal, scope, branch/worktree, and verification plan. Create or update the active exec plan, then implement. Do not stop at a proposal unless blocked.
+Read `AGENTS.md`, `docs/architecture/README.md`, and the docs relevant to this task. Run a request-intake planning meeting first: state goal, scope, non-goals, assumptions or open questions, branch/worktree, role ids, expected changed areas, verification, and selected plan id. Create or update the active exec plan from that meeting output, then implement. Do not stop at a proposal unless blocked by missing planning information.
 
 ## Bug Fix Prompt
 
@@ -17,7 +17,7 @@ Reproduce the bug with a failing Docker test or local harness command. Identify 
 
 ## New Feature Prompt
 
-Create an active exec plan. Update `docs/product-specs/index.md` if the user-facing behavior changes. Implement backend schema/service/API and frontend feature slices within existing boundaries. Add tests and UI verification notes. Complete or update the exec plan before handoff.
+Run the request-intake planning meeting and create an active exec plan from it. Update `docs/product-specs/index.md` if the user-facing behavior changes. Implement backend schema/service/API and frontend feature slices within existing boundaries. Add tests and UI verification notes. Keep the exec plan current during work and complete it before the finish report.
 
 ## Documentation Gardening Prompt
 

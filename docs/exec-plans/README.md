@@ -9,7 +9,9 @@ Execution plans make complex Codex work repeatable. A plan records the goal, con
 
 ## Mandatory Plan Gate
 
-Every Codex task requires an active execution plan before task work starts. If `docs/exec-plans/active/` has no `plan-NNNN-<task-slug>.md` file, Codex must stop and create or request an active plan before making implementation, documentation, test, or tooling changes.
+Every Codex task requires an active execution plan before task work starts. The plan must come from a short request-intake planning meeting, not from a retroactive handoff cleanup.
+
+If `docs/exec-plans/active/` has no `plan-NNNN-<task-slug>.md` file, Codex must stop before implementation, documentation, test, or tooling changes and run the planning meeting first. The meeting output can be brief, but it must record goal, scope, non-goals, assumptions or open questions, role ids, expected changed areas, verification, and the selected plan id. If that information is not clear enough, Codex asks the user the blocking questions and waits.
 
 Small tasks still need a lightweight plan. Large tasks need a fuller plan with explicit constraints, verification, rollback, and definition of done.
 

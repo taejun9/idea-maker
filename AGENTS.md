@@ -24,16 +24,17 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 
 ## Standard Codex Loop
 
-1. 작업 시작 리포트를 남긴다: 목표, 범위, 예상 변경 파일, 검증 계획.
-2. `main`에서 직접 커밋하지 않는다. worktree로 `codex/<task-id>` 브랜치를 시작한다.
-3. `docs/exec-plans/active/`에 현재 작업용 plan 파일을 작성하거나 갱신한다.
-4. 작업 범위를 확인하고 관련 문서를 읽는다.
-5. 구현 전 `scripts/agent-task.sh doctor`를 실행한다.
-6. 작게 구현하고 Docker 기반 테스트, 구조 검사, 문서 검사를 실행한다.
-7. 변경한 동작, 규칙, 의사결정은 같은 PR에서 문서에 반영한다.
-8. 완료 전 `scripts/agent-task.sh verify`와 필요한 `scripts/agent-task.sh docker-test`를 통과시킨다.
-9. 검증이 끝난 작업은 별도 승인 대기 없이 `main`에 merge하고 `origin/main`에 push한다.
-10. 작업 종료 리포트를 남긴다: 변경 요약, 검증 결과, 남은 리스크, 다음 작업.
+1. 요청 접수 회의를 먼저 남긴다: 목표, 범위, 비목표, 가정, 필요한 질문, 예상 변경 파일, 역할, 검증 계획, 사용할 plan id.
+2. 정보가 부족해 plan을 정할 수 없으면 질문하고 멈춘다.
+3. `main`에서 직접 커밋하지 않는다. worktree로 `codex/<task-id>` 브랜치를 시작한다.
+4. 요청 접수 회의 결과를 바탕으로 `docs/exec-plans/active/`에 현재 작업용 plan 파일을 작성하거나 갱신한다.
+5. 작업 범위를 확인하고 관련 문서를 읽는다.
+6. 구현 전 `scripts/agent-task.sh doctor`를 실행한다.
+7. 작게 구현하고 Docker 기반 테스트, 구조 검사, 문서 검사를 실행한다.
+8. 변경한 동작, 규칙, 의사결정은 같은 PR에서 문서에 반영한다.
+9. 완료 전 `scripts/agent-task.sh verify`와 필요한 `scripts/agent-task.sh docker-test`를 통과시킨다.
+10. 검증이 끝난 작업은 별도 승인 대기 없이 `main`에 merge하고 `origin/main`에 push한다.
+11. 작업 종료 리포트를 남긴다: 변경 요약, 검증 결과, 남은 리스크, 다음 작업.
 
 ## Hard Rules
 
@@ -45,8 +46,9 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 - backend route에서 외부 API 호출, DB 쿼리, 복잡한 비즈니스 로직을 직접 작성하지 않는다.
 - shared utility는 두 곳 이상에서 실제로 필요할 때만 만든다.
 - 테스트나 lint를 약화시키는 변경은 실행 계획과 품질 점수 갱신 없이는 금지한다.
-- 모든 작업은 `docs/exec-plans/active/plan-NNNN-<task>.md` 작성 또는 갱신 후 진행한다.
-- `docs/exec-plans/active/`에 plan 파일이 하나도 없으면 작업을 진행하지 않는다.
+- 모든 작업은 요청 접수 회의로 plan 범위를 확정한 뒤 `docs/exec-plans/active/plan-NNNN-<task>.md` 작성 또는 갱신 후 진행한다.
+- `docs/exec-plans/active/`에 plan 파일이 하나도 없으면 작업을 진행하지 말고 요청 접수 회의부터 수행해 plan을 만든다.
+- 완료나 종료 보고 시점에 누락된 plan을 소급 작성하는 것은 금지한다.
 - `main` 브랜치 직접 커밋은 금지한다.
 - feature/fix 작업은 worktree branch -> PR/main merge -> worktree/branch cleanup 흐름을 따른다.
 - 커밋 메시지는 `<action>(plan-NNNN): <task>` 형태로 작성한다. 예: `docs(plan-0002): update git workflow rules`.
