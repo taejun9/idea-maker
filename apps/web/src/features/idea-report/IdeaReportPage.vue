@@ -90,6 +90,51 @@ function competitorMarketLabel(competitor: Competitor) {
           </p>
         </section>
 
+        <section class="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
+          <div class="grid gap-3">
+            <h2 class="text-lg font-semibold">구체화된 콘셉트</h2>
+            <p
+              data-testid="clarified-concept"
+              class="rounded border border-slate-200 bg-white p-4 leading-7 text-slate-700"
+            >
+              {{ report.clarified_concept }}
+            </p>
+          </div>
+          <div class="grid gap-3">
+            <h2 class="text-lg font-semibold">빌드 난이도</h2>
+            <p class="rounded border border-slate-200 bg-white p-4 leading-7 text-slate-700">
+              {{ report.build_complexity }}
+            </p>
+          </div>
+        </section>
+
+        <section class="grid gap-4 md:grid-cols-2">
+          <div class="grid gap-3">
+            <h2 class="text-lg font-semibold">대상 사용자</h2>
+            <ul class="flex flex-wrap gap-2">
+              <li
+                v-for="user in report.target_users"
+                :key="user"
+                class="rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+              >
+                {{ user }}
+              </li>
+            </ul>
+          </div>
+          <div class="grid gap-3">
+            <h2 class="text-lg font-semibold">핵심 사용 사례</h2>
+            <ul data-testid="core-use-cases" class="grid gap-2">
+              <li
+                v-for="useCase in report.core_use_cases"
+                :key="useCase"
+                class="rounded border border-slate-200 bg-white p-3 text-sm text-slate-700"
+              >
+                {{ useCase }}
+              </li>
+            </ul>
+          </div>
+        </section>
+
         <section class="grid gap-4 md:grid-cols-2">
           <div class="grid gap-3">
             <h2 class="text-lg font-semibold">강점</h2>
@@ -117,17 +162,31 @@ function competitorMarketLabel(competitor: Competitor) {
           </div>
         </section>
 
-        <section class="grid gap-3">
-          <h2 class="text-lg font-semibold">대상 사용자</h2>
-          <ul class="flex flex-wrap gap-2">
-            <li
-              v-for="user in report.target_users"
-              :key="user"
-              class="rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
-            >
-              {{ user }}
-            </li>
-          </ul>
+        <section class="grid gap-4 md:grid-cols-2">
+          <div class="grid gap-3">
+            <h2 class="text-lg font-semibold">차별화 기회</h2>
+            <ul data-testid="differentiation-opportunities" class="grid gap-2">
+              <li
+                v-for="opportunity in report.differentiation_opportunities"
+                :key="opportunity"
+                class="rounded border border-cyan-200 bg-white p-3 text-sm text-slate-700"
+              >
+                {{ opportunity }}
+              </li>
+            </ul>
+          </div>
+          <div class="grid gap-3">
+            <h2 class="text-lg font-semibold">주요 리스크</h2>
+            <ul data-testid="key-risks" class="grid gap-2">
+              <li
+                v-for="risk in report.key_risks"
+                :key="risk"
+                class="rounded border border-red-200 bg-white p-3 text-sm text-slate-700"
+              >
+                {{ risk }}
+              </li>
+            </ul>
+          </div>
         </section>
 
         <section class="grid gap-4 lg:grid-cols-2">
@@ -196,6 +255,19 @@ function competitorMarketLabel(competitor: Competitor) {
               </p>
             </article>
           </div>
+        </section>
+
+        <section class="grid gap-3">
+          <h2 class="text-lg font-semibold">추천 MVP 범위</h2>
+          <ul data-testid="recommended-mvp-scope" class="grid gap-2 md:grid-cols-3">
+            <li
+              v-for="scopeItem in report.recommended_mvp_scope"
+              :key="scopeItem"
+              class="rounded border border-slate-200 bg-white p-3 text-sm text-slate-700"
+            >
+              {{ scopeItem }}
+            </li>
+          </ul>
         </section>
 
         <section class="grid gap-3">

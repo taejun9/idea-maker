@@ -32,6 +32,12 @@ def test_create_idea_report_returns_competitor_sections(monkeypatch) -> None:
     assert body["source_references"][0]["observed_date"]
     assert "fixture-backed" in body["source_references"][0]["note"].lower()
     assert "AI 리뷰 분석 도구" in body["overview"]
+    assert "SaaS" in body["clarified_concept"]
+    assert body["core_use_cases"]
+    assert body["differentiation_opportunities"]
+    assert body["key_risks"]
+    assert body["build_complexity"].startswith("중간")
+    assert body["recommended_mvp_scope"]
 
 
 def test_create_idea_report_validates_short_idea() -> None:

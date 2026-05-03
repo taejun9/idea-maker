@@ -6,7 +6,7 @@ Owner: Product / Platform / Codex
 ## Product Beliefs
 
 - Users come with vague ideas and need a concrete report, not a blank canvas.
-- A useful report combines idea clarification, target users, advantages, disadvantages, domestic competitors, overseas competitors, and adjacent startup references.
+- A useful report combines idea clarification, target users, core use cases, advantages, disadvantages, differentiation opportunities, risks, recommended MVP scope, domestic competitors, overseas competitors, and adjacent startup references.
 - Recommendations must identify source, retrieval date, and confidence because startup directories change quickly.
 - Domestic and overseas competitor analysis must be separated; the user needs market context, not a single generic list.
 
@@ -24,4 +24,3 @@ Owner: Product / Platform / Codex
 - The happy path and failure path must both be scriptable.
 - UI state, backend logs, and test output should be readable without tribal knowledge.
 - Repeated human review comments should graduate into lint rules, templates, or docs.
-
