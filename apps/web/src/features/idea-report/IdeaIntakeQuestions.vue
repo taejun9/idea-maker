@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { IdeaIntakeQuestion } from "../../types/ideaReport";
+import type { IdeaIntakeQuestion } from '../../types/ideaReport';
 
 defineProps<{
   questions: IdeaIntakeQuestion[];
@@ -20,7 +20,9 @@ defineProps<{
         class="grid gap-3 rounded border border-slate-200 bg-white p-4"
       >
         <div class="flex flex-wrap items-start gap-3">
-          <span class="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+          <span
+            class="rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700"
+          >
             {{ question.code }}
           </span>
           <div class="grid min-w-0 flex-1 gap-1">
@@ -36,19 +38,34 @@ defineProps<{
         >
           {{ question.photo_guidance }}
         </p>
-        <p
+        <select
+          v-if="question.options.length > 0"
+          class="break-words text-sm leading-6 text-slate-700"
+        >
+          <option value="">선택하세요</option>
+          <option
+            v-for="option in question.options"
+            :key="option"
+            :value="option"
+          >
+            {{ option }}
+          </option>
+        </select>
+        <!-- <p
           v-if="question.options.length > 0"
           class="break-words text-sm leading-6 text-slate-700"
         >
           선택지: {{ question.options.join(" | ") }}
-        </p>
+        </p> -->
         <dl
           v-if="question.answer"
           class="grid gap-1 rounded border border-emerald-100 bg-emerald-50 p-3 text-sm"
           data-testid="idea-intake-answer"
         >
           <dt class="font-semibold text-emerald-900">답변</dt>
-          <dd class="break-words leading-6 text-slate-800">{{ question.answer }}</dd>
+          <dd class="break-words leading-6 text-slate-800">
+            {{ question.answer }}
+          </dd>
         </dl>
       </article>
     </div>

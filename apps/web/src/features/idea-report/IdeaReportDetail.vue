@@ -3,27 +3,27 @@ import type {
   Competitor,
   IdeaReportResponse,
   SourceConfidence,
-} from "../../types/ideaReport";
-import IdeaIntakeQuestions from "./IdeaIntakeQuestions.vue";
+} from '../../types/ideaReport';
+import IdeaIntakeQuestions from './IdeaIntakeQuestions.vue';
 
 defineProps<{
   report: IdeaReportResponse;
 }>();
 
 const confidenceLabel: Record<SourceConfidence, string> = {
-  low: "낮음",
-  medium: "보통",
-  high: "높음",
+  low: '낮음',
+  medium: '보통',
+  high: '높음',
 };
 
 function competitorMarketLabel(competitor: Competitor) {
-  return competitor.market === "domestic_kr" ? "국내" : "해외";
+  return competitor.market === 'domestic_kr' ? '국내' : '해외';
 }
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    dateStyle: "medium",
-    timeStyle: "short",
+  return new Intl.DateTimeFormat('ko-KR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
   }).format(new Date(value));
 }
 </script>
@@ -35,19 +35,23 @@ function formatDateTime(value: string) {
       <h2 class="text-2xl font-semibold leading-tight text-slate-950">
         {{ report.idea }}
       </h2>
-      <p class="text-sm text-slate-600">생성 {{ formatDateTime(report.created_at) }}</p>
+      <p class="text-sm text-slate-600">
+        생성 {{ formatDateTime(report.created_at) }}
+      </p>
     </header>
 
     <section class="grid gap-3">
       <h2 class="text-xl font-semibold">요약</h2>
-      <p class="rounded border border-slate-200 bg-white p-4 leading-7 text-slate-700">
+      <p
+        class="rounded border border-slate-200 bg-white p-4 leading-7 text-slate-700"
+      >
         {{ report.overview }}
       </p>
     </section>
 
     <IdeaIntakeQuestions :questions="report.idea_intake_questions" />
 
-    <section
+    <!-- <section
       v-if="report.research_status.requested"
       data-testid="research-status"
       class="grid gap-3"
@@ -68,7 +72,7 @@ function formatDateTime(value: string) {
           </li>
         </ul>
       </div>
-    </section>
+    </section> -->
 
     <section class="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
       <div class="grid gap-3">
@@ -82,7 +86,9 @@ function formatDateTime(value: string) {
       </div>
       <div class="grid gap-3">
         <h2 class="text-lg font-semibold">빌드 난이도</h2>
-        <p class="rounded border border-slate-200 bg-white p-4 leading-7 text-slate-700">
+        <p
+          class="rounded border border-slate-200 bg-white p-4 leading-7 text-slate-700"
+        >
           {{ report.build_complexity }}
         </p>
       </div>
@@ -179,11 +185,15 @@ function formatDateTime(value: string) {
         >
           <div class="flex items-start justify-between gap-3">
             <h3 class="font-semibold">{{ competitor.name }}</h3>
-            <span class="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">
+            <span
+              class="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs text-slate-600"
+            >
               {{ competitorMarketLabel(competitor) }}
             </span>
           </div>
-          <p class="mt-2 text-sm leading-6 text-slate-700">{{ competitor.summary }}</p>
+          <p class="mt-2 text-sm leading-6 text-slate-700">
+            {{ competitor.summary }}
+          </p>
           <p class="mt-3 text-xs text-slate-500">
             관찰일 {{ competitor.observed_date }} · 신뢰도
             {{ confidenceLabel[competitor.confidence] }}
@@ -200,11 +210,15 @@ function formatDateTime(value: string) {
         >
           <div class="flex items-start justify-between gap-3">
             <h3 class="font-semibold">{{ competitor.name }}</h3>
-            <span class="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">
+            <span
+              class="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs text-slate-600"
+            >
               {{ competitorMarketLabel(competitor) }}
             </span>
           </div>
-          <p class="mt-2 text-sm leading-6 text-slate-700">{{ competitor.summary }}</p>
+          <p class="mt-2 text-sm leading-6 text-slate-700">
+            {{ competitor.summary }}
+          </p>
           <p class="mt-3 text-xs text-slate-500">
             관찰일 {{ competitor.observed_date }} · 신뢰도
             {{ confidenceLabel[competitor.confidence] }}
@@ -231,7 +245,8 @@ function formatDateTime(value: string) {
           </a>
           <p class="mt-2 text-sm leading-6 text-slate-700">{{ source.note }}</p>
           <p class="mt-3 text-xs text-slate-500">
-            {{ source.observed_date }} · 신뢰도 {{ confidenceLabel[source.confidence] }}
+            {{ source.observed_date }} · 신뢰도
+            {{ confidenceLabel[source.confidence] }}
           </p>
         </article>
       </div>
