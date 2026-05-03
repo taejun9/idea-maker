@@ -7,18 +7,13 @@ Owner: Platform / Codex
 
 Execution plans make complex Codex work repeatable. A plan records the goal, constraints, steps, verification, rollback, decisions, and completion status.
 
-## When To Create A Plan
+## Mandatory Plan Gate
 
-Create an active plan for:
+Every Codex task requires an active execution plan before task work starts. If `docs/exec-plans/active/` has no `plan-NNNN-<task-slug>.md` file, Codex must stop and create or request an active plan before making implementation, documentation, test, or tooling changes.
 
-- changes touching frontend and backend together
-- architecture or CI changes
-- external source integration
-- database schema changes
-- reliability/security behavior changes
-- refactors spanning more than one module
+Small tasks still need a lightweight plan. Large tasks need a fuller plan with explicit constraints, verification, rollback, and definition of done.
 
-Small typo fixes, focused tests, and single-file docs edits do not need a plan.
+Run `scripts/agent-task.sh active-plan` before task work to check the gate.
 
 ## Plan Template
 

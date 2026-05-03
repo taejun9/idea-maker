@@ -14,12 +14,15 @@ scripts/agent-task.sh start-report <task-id> "<goal>"
 scripts/agent-task.sh worktree-start <task-id>
 cd .worktrees/<task-id>
 
+# create or update docs/exec-plans/active/plan-NNNN-<task>.md first
+scripts/agent-task.sh active-plan
+
 # implement, test, document
 scripts/agent-task.sh verify
 scripts/agent-task.sh docker-test
 
 # commit and PR from codex/<task-id>
-git commit -m "<action> plan-NNNN: <task>"
+git commit -m "<action>(plan-NNNN): <task>"
 
 # after gates pass:
 cd ../..
@@ -29,6 +32,8 @@ scripts/agent-task.sh finish-report <task-id> "merged"
 ```
 
 Default behavior: once work is implemented and required verification passes, Codex must merge and push immediately without waiting for a separate approval. Stop before merge only when the user explicitly asks to pause, when verification fails, or when the operation would be destructive beyond the documented merge/push flow.
+
+Plan gate: Codex must create or update an active execution plan before task work. If `docs/exec-plans/active/` has no `plan-NNNN-<task>.md` file, stop before implementation and create or request the missing plan.
 
 ## Branch Rules
 
@@ -44,12 +49,12 @@ Default behavior: once work is implemented and required verification passes, Cod
 Commit messages must use:
 
 ```text
-<action> plan-NNNN: <task>
+<action>(plan-NNNN): <task>
 ```
 
 - `<action>` must be one of `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`, or `perf`.
 - `plan-NNNN` must match the execution plan or task id.
-- `<task>` must be a short imperative summary, for example `docs plan-0002: update git workflow rules`.
+- `<task>` must be a short imperative summary, for example `docs(plan-0002): update git workflow rules`.
 
 ## Main Branch Policy
 

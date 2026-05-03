@@ -69,7 +69,7 @@ services/api/                Python backend
 Lifecycle:
 
 1. Prompt: user states intent; Codex extracts scope and assumptions.
-2. Execution plan: non-trivial work gets a plan in `docs/exec-plans/active/`.
+2. Execution plan: every task gets or updates a plan in `docs/exec-plans/active/` before task work.
 3. Implementation: Codex changes the smallest coherent slice.
 4. Verification: local harness and tests run.
 5. PR: short PR, checklist, docs update notes.
@@ -302,12 +302,13 @@ Git flow:
 
 1. create worktree from `main`
 2. branch name `codex/<task-id>`
-3. commit only in that worktree
-4. commit message format `<action> plan-NNNN: <task>`
-5. PR into `main`
-6. merge after gates with `scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"`
-7. push `origin/main` immediately without separate approval unless the user explicitly requested a pause
-8. delete branch and worktree
+3. create or update an active plan before task work
+4. commit only in that worktree
+5. commit message format `<action>(plan-NNNN): <task>`
+6. PR into `main`
+7. merge after gates with `scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"`
+8. push `origin/main` immediately without separate approval unless the user explicitly requested a pause
+9. delete branch and worktree
 
 ## 12. Entropy Control / Garbage Collection
 

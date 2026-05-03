@@ -26,8 +26,8 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 
 1. 작업 시작 리포트를 남긴다: 목표, 범위, 예상 변경 파일, 검증 계획.
 2. `main`에서 직접 커밋하지 않는다. worktree로 `codex/<task-id>` 브랜치를 시작한다.
-3. 작업 범위를 확인하고 관련 문서를 읽는다.
-4. 큰 변경은 `docs/exec-plans/active/`에 실행 계획을 만든다.
+3. `docs/exec-plans/active/`에 현재 작업용 plan 파일을 작성하거나 갱신한다.
+4. 작업 범위를 확인하고 관련 문서를 읽는다.
 5. 구현 전 `scripts/agent-task.sh doctor`를 실행한다.
 6. 작게 구현하고 Docker 기반 테스트, 구조 검사, 문서 검사를 실행한다.
 7. 변경한 동작, 규칙, 의사결정은 같은 PR에서 문서에 반영한다.
@@ -45,9 +45,11 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 - backend route에서 외부 API 호출, DB 쿼리, 복잡한 비즈니스 로직을 직접 작성하지 않는다.
 - shared utility는 두 곳 이상에서 실제로 필요할 때만 만든다.
 - 테스트나 lint를 약화시키는 변경은 실행 계획과 품질 점수 갱신 없이는 금지한다.
+- 모든 작업은 `docs/exec-plans/active/plan-NNNN-<task>.md` 작성 또는 갱신 후 진행한다.
+- `docs/exec-plans/active/`에 plan 파일이 하나도 없으면 작업을 진행하지 않는다.
 - `main` 브랜치 직접 커밋은 금지한다.
 - feature/fix 작업은 worktree branch -> PR/main merge -> worktree/branch cleanup 흐름을 따른다.
-- 커밋 메시지는 `<action> plan-NNNN: <task>` 형태로 작성한다. 예: `docs plan-0002: update git workflow rules`.
+- 커밋 메시지는 `<action>(plan-NNNN): <task>` 형태로 작성한다. 예: `docs(plan-0002): update git workflow rules`.
 - 사용자가 명시적으로 멈추라고 하지 않는 한, 검증 통과 후 merge와 push를 바로 진행한다.
 - 로컬 DB는 PostgreSQL 18 Docker 컨테이너만 사용한다.
 - 로컬 Node 런타임은 Docker 이미지 또는 Node 22를 사용한다.
