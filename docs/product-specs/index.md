@@ -23,6 +23,12 @@ Idea-maker is a web service that turns a short idea into a structured business/p
 4. System separates domestic Korean competitors and overseas competitors.
 5. System generates a report containing overview, clarified concept, target users, core use cases, strengths, weaknesses, differentiation opportunities, risks, MVP scope, competitor table, source references, and next validation steps.
 
+## Input Experience
+
+- The idea input starts empty so users can enter their own concept without clearing a preset value.
+- The entry form exposes visible examples, helper copy, character feedback, and validation state for keyboard and screen reader users.
+- The submit action remains unavailable until the idea has at least 5 non-space characters, matching the API contract.
+
 ## MVP Report Sections
 
 - Executive summary

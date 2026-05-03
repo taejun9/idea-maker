@@ -57,10 +57,42 @@ describe("App", () => {
 
   it("renders the idea report entry workflow", () => {
     const wrapper = mount(App);
+    const ideaInput = wrapper.find('[data-testid="idea-input"]');
+    const submitButton = wrapper.find('[data-testid="generate-report"]');
 
-    expect(wrapper.find('[data-testid="idea-input"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="generate-report"]').exists()).toBe(true);
+    expect(ideaInput.exists()).toBe(true);
+    expect((ideaInput.element as HTMLTextAreaElement).value).toBe("");
+    expect(ideaInput.attributes("aria-describedby")).toContain("idea-help");
+    expect(ideaInput.attributes("aria-invalid")).toBe("false");
+    expect(wrapper.findAll('[data-testid="idea-example"]')).toHaveLength(3);
+    expect(wrapper.find('[data-testid="idea-count"]').text()).toContain("0 / 2000자");
+    expect(submitButton.exists()).toBe(true);
+    expect(submitButton.attributes("disabled")).toBeDefined();
     expect(wrapper.find('[data-testid="report-empty"]').text()).toContain("생성된 보고서");
+  });
+
+  it("fills the idea input from a quick example", async () => {
+    const wrapper = mount(App);
+    const ideaInput = wrapper.find('[data-testid="idea-input"]');
+
+    await wrapper.findAll('[data-testid="idea-example"]')[0].trigger("click");
+
+    expect((ideaInput.element as HTMLTextAreaElement).value).toBe(
+      "동네 소상공인을 위한 AI 리뷰 분석 도구",
+    );
+    expect(wrapper.find('[data-testid="idea-count"]').text()).toContain("입력 조건을 충족");
+    expect(wrapper.find('[data-testid="generate-report"]').attributes("disabled")).toBeUndefined();
+  });
+
+  it("announces an accessible validation error for short ideas", async () => {
+    const wrapper = mount(App);
+
+    await wrapper.find('[data-testid="idea-input"]').setValue("짧음");
+    await wrapper.find("form").trigger("submit");
+
+    expect(wrapper.find("#idea-error").attributes("role")).toBe("alert");
+    expect(wrapper.find('[data-testid="idea-input"]').attributes("aria-invalid")).toBe("true");
+    expect(wrapper.find("#idea-error").text()).toContain("더 입력");
   });
 
   it("submits an idea and renders the structured report", async () => {

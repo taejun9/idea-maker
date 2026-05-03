@@ -3,12 +3,41 @@ import { computed, ref } from "vue";
 import { createIdeaReport } from "../../api/ideaReports";
 import type { Competitor, IdeaReportResponse, SourceConfidence } from "../../types/ideaReport";
 
-const idea = ref("동네 소상공인을 위한 AI 리뷰 분석 도구");
+const minIdeaLength = 5;
+const maxIdeaLength = 2000;
+const ideaExamples = [
+  "동네 소상공인을 위한 AI 리뷰 분석 도구",
+  "1인 쇼핑몰의 반품 문의를 줄이는 챗봇",
+  "스터디 모임 출석과 과제를 자동 정리하는 서비스",
+];
+
+const idea = ref("");
 const report = ref<IdeaReportResponse | null>(null);
 const isLoading = ref(false);
 const errorMessage = ref("");
+const hasTriedSubmit = ref(false);
+const isIdeaTouched = ref(false);
 
-const canSubmit = computed(() => idea.value.trim().length >= 5 && !isLoading.value);
+const normalizedIdea = computed(() => idea.value.trim());
+const ideaLength = computed(() => normalizedIdea.value.length);
+const shouldShowIdeaError = computed(
+  () => (hasTriedSubmit.value || isIdeaTouched.value) && ideaLength.value < minIdeaLength,
+);
+const ideaValidationMessage = computed(() => {
+  if (ideaLength.value >= minIdeaLength) {
+    return "입력 조건을 충족했습니다.";
+  }
+
+  if (ideaLength.value === 0) {
+    return `아이디어를 ${minIdeaLength}자 이상 입력하세요.`;
+  }
+
+  return `${minIdeaLength - ideaLength.value}자 더 입력하면 보고서를 만들 수 있습니다.`;
+});
+const ideaDescriptionIds = computed(() =>
+  shouldShowIdeaError.value ? "idea-help idea-count idea-error" : "idea-help idea-count",
+);
+const canSubmit = computed(() => ideaLength.value >= minIdeaLength && !isLoading.value);
 
 const confidenceLabel: Record<SourceConfidence, string> = {
   low: "낮음",
@@ -16,7 +45,17 @@ const confidenceLabel: Record<SourceConfidence, string> = {
   high: "높음",
 };
 
+function selectIdeaExample(example: string) {
+  idea.value = example;
+  errorMessage.value = "";
+  hasTriedSubmit.value = false;
+  isIdeaTouched.value = true;
+}
+
 async function submitReport() {
+  hasTriedSubmit.value = true;
+  isIdeaTouched.value = true;
+
   if (!canSubmit.value) {
     return;
   }
@@ -26,7 +65,7 @@ async function submitReport() {
 
   try {
     report.value = await createIdeaReport({
-      idea: idea.value.trim(),
+      idea: normalizedIdea.value,
       locale: "ko-KR",
     });
   } catch (error) {
@@ -50,28 +89,92 @@ function competitorMarketLabel(competitor: Competitor) {
         <h1 class="mt-2 text-3xl font-semibold">아이디어 보고서 생성</h1>
       </header>
 
-      <form class="grid gap-4 border-b border-slate-200 pb-6" @submit.prevent="submitReport">
-        <label class="text-sm font-medium" for="idea">아이디어</label>
-        <textarea
-          id="idea"
-          v-model="idea"
-          data-testid="idea-input"
-          class="min-h-36 resize-y rounded border border-slate-300 bg-white p-3 text-base leading-7 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-          placeholder="예: 동네 소상공인을 위한 AI 리뷰 분석 도구"
-        />
+      <form
+        class="grid gap-5 border-b border-slate-200 pb-6"
+        :aria-busy="isLoading"
+        @submit.prevent="submitReport"
+      >
+        <div class="grid gap-2">
+          <label class="text-base font-semibold" for="idea">어떤 아이디어인가요?</label>
+          <p id="idea-help" class="max-w-2xl text-sm leading-6 text-slate-600">
+            한 문장으로 시작하세요. 고객, 문제, 해결책 중 떠오르는 내용만 적어도 됩니다.
+          </p>
+        </div>
+
+        <fieldset class="grid gap-2">
+          <legend class="text-sm font-medium text-slate-700">빠른 예시</legend>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="example in ideaExamples"
+              :key="example"
+              class="rounded border border-slate-300 bg-white px-3 py-2 text-left text-sm leading-5 text-slate-700 transition hover:border-emerald-500 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              data-testid="idea-example"
+              type="button"
+              @click="selectIdeaExample(example)"
+            >
+              {{ example }}
+            </button>
+          </div>
+        </fieldset>
+
+        <div class="grid gap-2">
+          <textarea
+            id="idea"
+            v-model="idea"
+            data-testid="idea-input"
+            class="min-h-40 resize-y rounded border bg-white p-3 text-base leading-7 outline-none transition focus:ring-2"
+            :class="
+              shouldShowIdeaError
+                ? 'border-red-600 focus:border-red-700 focus:ring-red-100'
+                : 'border-slate-300 focus:border-emerald-600 focus:ring-emerald-100'
+            "
+            :aria-describedby="ideaDescriptionIds"
+            :aria-invalid="shouldShowIdeaError ? 'true' : 'false'"
+            :maxlength="maxIdeaLength"
+            :minlength="minIdeaLength"
+            placeholder="예: 동네 소상공인을 위한 AI 리뷰 분석 도구"
+            required
+            @blur="isIdeaTouched = true"
+          />
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p
+              id="idea-count"
+              data-testid="idea-count"
+              class="text-sm text-slate-600"
+              aria-live="polite"
+            >
+              {{ ideaLength }} / {{ maxIdeaLength }}자 · {{ ideaValidationMessage }}
+            </p>
+          </div>
+          <p
+            v-if="shouldShowIdeaError"
+            id="idea-error"
+            class="text-sm font-medium text-red-700"
+            role="alert"
+          >
+            {{ ideaValidationMessage }}
+          </p>
+        </div>
+
         <div class="flex flex-wrap items-center gap-3">
           <button
             data-testid="generate-report"
-            class="min-h-10 rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+            class="min-h-11 rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:bg-slate-300"
             type="submit"
+            :aria-describedby="canSubmit ? undefined : 'idea-count'"
             :disabled="!canSubmit"
           >
-            {{ isLoading ? "생성 중" : "보고서 생성" }}
+            {{ isLoading ? "보고서 생성 중" : "보고서 생성" }}
           </button>
-          <p v-if="idea.trim().length < 5" class="text-sm text-slate-500">
-            아이디어를 5자 이상 입력하세요.
+          <p v-if="isLoading" class="text-sm text-slate-600" role="status" aria-live="polite">
+            보고서를 준비하고 있습니다.
           </p>
-          <p v-if="errorMessage" data-testid="report-error" class="text-sm font-medium text-red-700">
+          <p
+            v-if="errorMessage"
+            data-testid="report-error"
+            class="text-sm font-medium text-red-700"
+            role="alert"
+          >
             {{ errorMessage }}
           </p>
         </div>
