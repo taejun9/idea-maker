@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class HealthResponse(BaseModel):
@@ -10,8 +10,36 @@ class HealthResponse(BaseModel):
 
 
 class IdeaReportRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     idea: str = Field(min_length=5, max_length=2000)
     locale: str = Field(default="ko-KR")
+
+
+class IdeaRecommendationRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    keyword: str = Field(min_length=1, max_length=80)
+    locale: str = Field(default="ko-KR")
+
+    @field_validator("keyword")
+    @classmethod
+    def keyword_must_be_single_word(cls, value: str) -> str:
+        if len(value.split()) != 1:
+            raise ValueError("keyword must contain exactly one word")
+        return value
+
+
+class IdeaRecommendation(BaseModel):
+    title: str
+    summary: str
+    rationale: str
+    report_seed: str
+
+
+class IdeaRecommendationResponse(BaseModel):
+    keyword: str
+    recommendations: list[IdeaRecommendation]
 
 
 class Competitor(BaseModel):

@@ -7,9 +7,49 @@ from services.api.app.integrations.source_collectors import (
 )
 from services.api.app.schemas import (
     Competitor,
+    IdeaRecommendation,
+    IdeaRecommendationRequest,
+    IdeaRecommendationResponse,
     IdeaReportRequest,
     IdeaReportResponse,
     SourceReference,
+)
+
+RECOMMENDATION_PATTERNS = (
+    {
+        "title": "{keyword} 고객 반응 분석 도구",
+        "summary": "{keyword} 관련 리뷰, 문의, 피드백을 모아 반복 이슈를 보여주는 운영 도구",
+        "rationale": "고객 목소리를 구조화하면 초기 MVP 문제 정의와 경쟁 분석이 쉬워집니다.",
+        "report_seed": (
+            "{keyword} 관련 고객 리뷰와 문의를 자동으로 분석해 "
+            "개선 우선순위를 제안하는 SaaS"
+        ),
+    },
+    {
+        "title": "{keyword} 업무 자동화 체크리스트",
+        "summary": "{keyword} 업무를 단계별 체크리스트와 자동 알림으로 관리하는 팀 생산성 도구",
+        "rationale": "한 단어 아이디어를 반복 업무 절감이라는 명확한 가치로 확장합니다.",
+        "report_seed": "{keyword} 업무를 체크리스트와 자동 알림으로 표준화하는 팀 생산성 서비스",
+    },
+    {
+        "title": "{keyword} 시장 기회 대시보드",
+        "summary": "{keyword} 관련 경쟁 서비스, 가격, 사용자 반응을 한 화면에 정리하는 리서치 도구",
+        "rationale": "시장 조사와 포지셔닝을 먼저 확인해야 보고서의 경쟁 분석 품질이 올라갑니다.",
+        "report_seed": "{keyword} 분야의 경쟁 서비스와 사용자 반응을 추적하는 시장 기회 대시보드",
+    },
+    {
+        "title": "{keyword} 맞춤 추천 큐레이터",
+        "summary": (
+            "사용자 상황을 받아 {keyword} 관련 콘텐츠, 서비스, 실행 과제를 추천하는 "
+            "큐레이션 서비스"
+        ),
+        "rationale": (
+            "넓은 키워드를 개인화 추천 문제로 좁히면 대상 사용자와 사용 사례를 잡기 쉽습니다."
+        ),
+        "report_seed": (
+            "사용자 상황에 맞춰 {keyword} 관련 콘텐츠와 실행 과제를 추천하는 큐레이션 서비스"
+        ),
+    },
 )
 
 
@@ -61,6 +101,24 @@ def create_idea_report(payload: IdeaReportRequest) -> IdeaReportResponse:
             "핵심 사용자 5명을 인터뷰한다.",
             "국내/해외 경쟁사 각각 5개 이상을 최신 source로 확인한다.",
             "가장 작은 MVP 기능 1개를 정의한다.",
+        ],
+    )
+
+
+def create_idea_recommendations(
+    payload: IdeaRecommendationRequest,
+) -> IdeaRecommendationResponse:
+    keyword = payload.keyword.strip()
+    return IdeaRecommendationResponse(
+        keyword=keyword,
+        recommendations=[
+            IdeaRecommendation(
+                title=pattern["title"].format(keyword=keyword),
+                summary=pattern["summary"].format(keyword=keyword),
+                rationale=pattern["rationale"].format(keyword=keyword),
+                report_seed=pattern["report_seed"].format(keyword=keyword),
+            )
+            for pattern in RECOMMENDATION_PATTERNS
         ],
     )
 
