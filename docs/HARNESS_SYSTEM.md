@@ -306,7 +306,8 @@ Git flow:
 4. commit message format `<action> plan-NNNN: <task>`
 5. PR into `main`
 6. merge after gates with `scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"`
-7. delete branch and worktree
+7. push `origin/main` immediately without separate approval unless the user explicitly requested a pause
+8. delete branch and worktree
 
 ## 12. Entropy Control / Garbage Collection
 

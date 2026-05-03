@@ -32,7 +32,8 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 6. 작게 구현하고 Docker 기반 테스트, 구조 검사, 문서 검사를 실행한다.
 7. 변경한 동작, 규칙, 의사결정은 같은 PR에서 문서에 반영한다.
 8. 완료 전 `scripts/agent-task.sh verify`와 필요한 `scripts/agent-task.sh docker-test`를 통과시킨다.
-9. 작업 종료 리포트를 남긴다: 변경 요약, 검증 결과, 남은 리스크, 다음 작업.
+9. 검증이 끝난 작업은 별도 승인 대기 없이 `main`에 merge하고 `origin/main`에 push한다.
+10. 작업 종료 리포트를 남긴다: 변경 요약, 검증 결과, 남은 리스크, 다음 작업.
 
 ## Hard Rules
 
@@ -47,6 +48,7 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 - `main` 브랜치 직접 커밋은 금지한다.
 - feature/fix 작업은 worktree branch -> PR/main merge -> worktree/branch cleanup 흐름을 따른다.
 - 커밋 메시지는 `<action> plan-NNNN: <task>` 형태로 작성한다. 예: `docs plan-0002: update git workflow rules`.
+- 사용자가 명시적으로 멈추라고 하지 않는 한, 검증 통과 후 merge와 push를 바로 진행한다.
 - 로컬 DB는 PostgreSQL 18 Docker 컨테이너만 사용한다.
 - 로컬 Node 런타임은 Docker 이미지 또는 Node 22를 사용한다.
 

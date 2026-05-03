@@ -5,7 +5,7 @@ Owner: Platform / Codex
 
 ## Purpose
 
-This repository does not commit directly on `main`. Codex works in a dedicated worktree branch, opens a PR, merges into `main`, then removes the worktree and branch.
+This repository does not commit directly on `main`. Codex works in a dedicated worktree branch, merges verified work into `main`, pushes `origin/main`, then removes the worktree and branch.
 
 ## Standard Flow
 
@@ -21,12 +21,14 @@ scripts/agent-task.sh docker-test
 # commit and PR from codex/<task-id>
 git commit -m "<action> plan-NNNN: <task>"
 
-# after gates and required review:
+# after gates pass:
 cd ../..
 scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"
 scripts/agent-task.sh worktree-clean <task-id>
 scripts/agent-task.sh finish-report <task-id> "merged"
 ```
+
+Default behavior: once work is implemented and required verification passes, Codex must merge and push immediately without waiting for a separate approval. Stop before merge only when the user explicitly asks to pause, when verification fails, or when the operation would be destructive beyond the documented merge/push flow.
 
 ## Branch Rules
 
@@ -34,6 +36,7 @@ scripts/agent-task.sh finish-report <task-id> "merged"
 - Worktree path: `.worktrees/<task-id>`.
 - Do not commit on `main`.
 - Do not merge without block gates passing.
+- Do not wait for separate merge approval after block gates pass unless the user explicitly requested a pause.
 - Delete the worktree and branch after merge.
 
 ## Commit Message Rules
@@ -68,7 +71,7 @@ Forbidden on `main`:
 
 1. Ensure PR branch is up to date with `main`.
 2. Run CI.
-3. Run `scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"` from the `main` worktree.
+3. Run `scripts/agent-task.sh main-merge-push <task-id> <action> "<task>"` from the `main` worktree without waiting for extra approval.
 4. Remove worktree.
 5. Delete local branch.
 6. Delete remote branch if it still exists.
