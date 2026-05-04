@@ -69,6 +69,10 @@ Forbidden:
 - Local Gemma4 quick-example generation receives only the six allowed
   quick-example Q5 business-field labels. It must not receive raw user ideas,
   saved reports, competitor records, secrets, local files, or backend internals.
+- Local Gemma4 item recommendation generation receives the submitted word or
+  short sentence because that user input is the recommendation seed. It must not
+  receive saved reports, competitor records, secrets, local files, or backend
+  internals, and logs must not store the raw submitted input.
 - Source collector tests must use fake payloads or explicit fixture fallback; routine
   verification must not depend on third-party availability.
 

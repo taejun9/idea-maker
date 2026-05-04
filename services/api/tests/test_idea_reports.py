@@ -6,13 +6,17 @@ from fastapi.testclient import TestClient
 
 from services.api.app.integrations.research_adapters import (
     BusinessContextGenerationResult,
+    GeneratedIdeaRecommendation,
     GeneratedQuickIdeaExample,
+    IdeaRecommendationsGenerationResult,
     LocalGemmaBusinessContextGenerator,
+    LocalGemmaIdeaRecommendationGenerator,
     LocalGemmaQuickIdeaExampleGenerator,
     OrganizationResult,
     QuickIdeaExamplesGenerationResult,
     SearchAdapterResult,
     business_context_generation_fallback,
+    item_recommendations_generation_fallback,
     quick_idea_examples_generation_fallback,
 )
 from services.api.app.integrations.source_collectors import (
@@ -22,9 +26,14 @@ from services.api.app.integrations.source_collectors import (
 )
 from services.api.app.main import allowed_cors_origins, app
 from services.api.app.repositories.idea_reports import InMemoryIdeaReportRepository
-from services.api.app.schemas import IdeaReportRequest, IdeaReportResponse
+from services.api.app.schemas import (
+    IdeaRecommendationRequest,
+    IdeaReportRequest,
+    IdeaReportResponse,
+)
 from services.api.app.services import (
     QUICK_EXAMPLE_FIELDS,
+    create_idea_recommendations,
     create_idea_report,
     create_quick_idea_examples,
     quick_idea_example_for_field,
@@ -59,6 +68,21 @@ def disable_live_business_context_generation(monkeypatch):
         )
 
     monkeypatch.setattr(LocalGemmaQuickIdeaExampleGenerator, "generate", fallback_examples)
+
+    def fallback_recommendations(
+        self,
+        *,
+        keyword: str,
+    ) -> IdeaRecommendationsGenerationResult:
+        return item_recommendations_generation_fallback(
+            "network disabled in deterministic API tests"
+        )
+
+    monkeypatch.setattr(
+        LocalGemmaIdeaRecommendationGenerator,
+        "generate",
+        fallback_recommendations,
+    )
 
 
 def fail_live_source_fetch(self, url: str, *, timeout_seconds: float) -> object:
@@ -491,10 +515,86 @@ def test_create_idea_recommendations_returns_related_items() -> None:
     body = response.json()
     assert body["keyword"] == "리뷰"
     assert len(body["recommendations"]) == 4
-    assert body["recommendations"][0]["title"] == "리뷰 고객 반응 분석 도구"
-    assert "리뷰" in body["recommendations"][0]["report_seed"]
+    assert len({recommendation["title"] for recommendation in body["recommendations"]}) == 4
+    assert all(
+        "리뷰" in " ".join(
+            (
+                recommendation["title"],
+                recommendation["summary"],
+                recommendation["rationale"],
+                recommendation["report_seed"],
+            )
+        )
+        for recommendation in body["recommendations"]
+    )
     assert len(body["recommendations"][0]["report_seed"]) >= 5
     assert body["recommendations"][0]["rationale"]
+
+
+def test_create_idea_recommendations_uses_ai_generated_output() -> None:
+    class FakeRecommendationGenerator:
+        def generate(self, *, keyword: str) -> IdeaRecommendationsGenerationResult:
+            assert keyword == "반려동물 산책"
+            return IdeaRecommendationsGenerationResult(
+                provider="gemma4",
+                status="success",
+                recommendations=(
+                    GeneratedIdeaRecommendation(
+                        title="반려동물 산책 매칭",
+                        summary="바쁜 보호자와 검증된 산책 파트너를 연결하는 예약 서비스",
+                        rationale="입력어의 산책 문제를 즉시 실행 가능한 매칭 MVP로 좁힙니다.",
+                        report_seed=(
+                            "반려동물 산책이 어려운 보호자에게 검증된 산책 "
+                            "파트너를 연결하는 서비스"
+                        ),
+                    ),
+                    GeneratedIdeaRecommendation(
+                        title="반려동물 산책 루틴 코치",
+                        summary="산책 기록과 날씨를 바탕으로 다음 산책 루틴을 추천하는 앱",
+                        rationale="반복 행동을 기록하면 보호자 유지율을 검증하기 쉽습니다.",
+                        report_seed=(
+                            "반려동물 산책 기록을 분석해 보호자에게 맞춤 "
+                            "루틴을 추천하는 앱"
+                        ),
+                    ),
+                    GeneratedIdeaRecommendation(
+                        title="반려동물 산책 안전 리포트",
+                        summary="산책 경로의 위험 메모와 체크인을 공유하는 동네 안전 도구",
+                        rationale="안전 문제는 작은 지역 커뮤니티 MVP로 검증할 수 있습니다.",
+                        report_seed=(
+                            "반려동물 산책 경로의 위험 요소와 체크인을 "
+                            "공유하는 안전 리포트 도구"
+                        ),
+                    ),
+                    GeneratedIdeaRecommendation(
+                        title="반려동물 산책 미션 구독",
+                        summary="보호자에게 짧은 산책 미션과 보상 기록을 제공하는 구독 앱",
+                        rationale="재미와 기록을 결합하면 생활 루틴 서비스로 확장할 수 있습니다.",
+                        report_seed="반려동물 산책 습관을 짧은 미션과 보상 기록으로 돕는 구독 앱",
+                    ),
+                ),
+                notes=("fake AI recommendations used",),
+            )
+
+    response = create_idea_recommendations(
+        IdeaRecommendationRequest(keyword="반려동물 산책"),
+        recommendation_generator=FakeRecommendationGenerator(),
+    )
+
+    assert response.keyword == "반려동물 산책"
+    assert response.recommendations[0].title == "반려동물 산책 매칭"
+    assert "검증된 산책 파트너" in response.recommendations[0].report_seed
+
+
+def test_create_idea_recommendations_fallback_varies_by_input() -> None:
+    review_response = create_idea_recommendations(IdeaRecommendationRequest(keyword="리뷰"))
+    learning_response = create_idea_recommendations(IdeaRecommendationRequest(keyword="학습"))
+
+    assert [item.title for item in review_response.recommendations] != [
+        item.title for item in learning_response.recommendations
+    ]
+    assert any("고객 반응" in item.title for item in review_response.recommendations)
+    assert any("학습 루틴" in item.title for item in learning_response.recommendations)
 
 
 def test_create_idea_recommendations_accepts_short_sentence() -> None:
