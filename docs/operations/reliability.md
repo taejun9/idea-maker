@@ -65,6 +65,33 @@ the local model is unavailable. Item recommendation generation receives the
 submitted word or short sentence and falls back to deterministic field-aware
 recommendations when Gemma is unavailable or invalid.
 
+Successful local Gemma outputs are cached in process for a short TTL so repeated
+requests do not block on the same model call. Fallback responses are not cached,
+which lets a recovered Gemma server serve the next request. Research reports run
+baseline source collection and Gemini CLI search in parallel, then organize the
+merged records afterward.
+
+Public source feed payloads can be cached briefly before local filtering. The
+cache stores only the public feed payload and its observed date, not user ideas or
+per-user report output. A source fetch failure is not cached and continues to use
+the existing fixture fallback path.
+
+## Generation Latency Budget
+
+Configured request-path external waits as of PLAN-0034:
+
+- Word/short-sentence recommendations: one local Gemma call with
+  `LOCAL_GEMMA_RECOMMENDATIONS_TIMEOUT_SECONDS`, default 180 seconds. Repeated
+  successful requests for the same normalized input and model use the AI cache.
+- Normal report generation: public source collection includes the PitchWall live
+  feed timeout, default 3 seconds, and supported Q5 fields may add one local Gemma
+  business-context call, default 4 seconds. Repeated public feed and Q5 context
+  hits use their caches.
+- Research report generation: baseline source collection and Gemini CLI search
+  now start in parallel. The remaining sequential waits are the slower of
+  PitchWall live feed timeout or `GEMINI_SEARCH_TIMEOUT_SECONDS`, then Gemma
+  organization, then any uncached Q5 business-context call.
+
 ## Incident Notes
 
 Use `docs/exec-plans/active/` for incident fixes that require code changes. Completed incidents move to `docs/exec-plans/completed/` with root cause and regression test notes.

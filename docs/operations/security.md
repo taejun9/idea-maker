@@ -73,6 +73,13 @@ Forbidden:
   short sentence because that user input is the recommendation seed. It must not
   receive saved reports, competitor records, secrets, local files, or backend
   internals, and logs must not store the raw submitted input.
+- Successful local Gemma outputs may be reused from a process-local TTL cache.
+  Recommendation cache keys use a digest of the normalized input rather than the
+  raw seed, but cached recommendation values can still contain the user-provided
+  word or short sentence and must remain in memory only.
+- Public source-index cache entries may store unauthenticated public source feed
+  payloads and their observed date. They must not store raw user ideas, report
+  payloads, secrets, local files, cookies, or authenticated responses.
 - Source collector tests must use fake payloads or explicit fixture fallback; routine
   verification must not depend on third-party availability.
 

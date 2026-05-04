@@ -1,9 +1,16 @@
+import hashlib
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from random import Random, SystemRandom
 from typing import Protocol
 from uuid import uuid4
 
+from services.api.app.core.settings import (
+    ai_generation_cache_max_entries,
+    ai_generation_cache_ttl_seconds,
+)
+from services.api.app.core.ttl_cache import TtlCache
 from services.api.app.integrations.research_adapters import (
     BusinessContextGenerationResult,
     GeminiCliSearchAdapter,
@@ -455,6 +462,20 @@ class IdeaRecommendationGenerator(Protocol):
         ...
 
 
+_BUSINESS_CONTEXT_CACHE = TtlCache[BusinessContextGenerationResult](
+    ttl_seconds=ai_generation_cache_ttl_seconds(),
+    max_entries=ai_generation_cache_max_entries(),
+)
+_QUICK_IDEA_EXAMPLES_CACHE = TtlCache[QuickIdeaExamplesGenerationResult](
+    ttl_seconds=ai_generation_cache_ttl_seconds(),
+    max_entries=ai_generation_cache_max_entries(),
+)
+_IDEA_RECOMMENDATIONS_CACHE = TtlCache[IdeaRecommendationsGenerationResult](
+    ttl_seconds=ai_generation_cache_ttl_seconds(),
+    max_entries=ai_generation_cache_max_entries(),
+)
+
+
 def create_quick_idea_examples(
     *,
     count: int = QUICK_EXAMPLE_DEFAULT_COUNT,
@@ -470,7 +491,12 @@ def create_quick_idea_examples(
         return QuickIdeaExampleResponse(examples=[])
 
     generator = example_generator or LocalGemmaQuickIdeaExampleGenerator()
-    generated_examples = generator.generate(fields=tuple(selected_fields))
+    requested_fields = tuple(selected_fields)
+    generated_examples = (
+        cached_quick_idea_examples(generator, requested_fields)
+        if example_generator is None
+        else generator.generate(fields=requested_fields)
+    )
     if generated_examples.status == "success":
         return QuickIdeaExampleResponse(
             examples=[
@@ -526,15 +552,24 @@ def create_idea_report(
     created_at = datetime.now(tz=UTC)
     observed = created_at.date()
     normalized_idea = payload.idea.strip()
-    baseline_records = collect_source_records(idea=normalized_idea, observed_date=observed)
     search_result: SearchAdapterResult | None = None
     organization: OrganizationResult | None = None
 
     if payload.research:
-        search_result = (search_adapter or GeminiCliSearchAdapter()).search(
-            idea=normalized_idea,
-            observed_date=observed,
-        )
+        search = search_adapter or GeminiCliSearchAdapter()
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            baseline_records_future = executor.submit(
+                collect_source_records,
+                idea=normalized_idea,
+                observed_date=observed,
+            )
+            search_result_future = executor.submit(
+                search.search,
+                idea=normalized_idea,
+                observed_date=observed,
+            )
+            baseline_records = baseline_records_future.result()
+            search_result = search_result_future.result()
         source_records = merge_source_records(
             [*search_result.records, *baseline_records],
         )
@@ -543,6 +578,10 @@ def create_idea_report(
             records=source_records,
         )
     else:
+        baseline_records = collect_source_records(
+            idea=normalized_idea,
+            observed_date=observed,
+        )
         source_records = baseline_records
         organization = default_report_organization()
 
@@ -550,9 +589,9 @@ def create_idea_report(
         normalized_idea,
         "Research organization was not requested.",
     )
-    business_field = submitted_business_field(payload.idea_intake_answers) or infer_business_field(
-        normalized_idea
-    )
+    business_field = submitted_business_field(
+        payload.idea_intake_answers
+    ) or infer_business_field(normalized_idea)
     sections = report_sections_for_idea(
         idea=normalized_idea,
         business_field=business_field,
@@ -661,7 +700,15 @@ def create_idea_recommendations(
 ) -> IdeaRecommendationResponse:
     keyword = payload.keyword.strip()
     generator = recommendation_generator or LocalGemmaIdeaRecommendationGenerator()
-    generation = generator.generate(keyword=keyword)
+    generation = (
+        cached_idea_recommendations(
+            generator,
+            keyword=keyword,
+            locale=payload.locale,
+        )
+        if recommendation_generator is None
+        else generator.generate(keyword=keyword)
+    )
     if generation.status == "success":
         return IdeaRecommendationResponse(
             keyword=keyword,
@@ -686,6 +733,41 @@ def idea_recommendation_from_generated(
         rationale=recommendation.rationale,
         report_seed=recommendation.report_seed,
     )
+
+
+def cached_quick_idea_examples(
+    generator: LocalGemmaQuickIdeaExampleGenerator,
+    fields: tuple[str, ...],
+) -> QuickIdeaExamplesGenerationResult:
+    return _QUICK_IDEA_EXAMPLES_CACHE.get_or_set(
+        ("quick_idea_examples", generator.base_url, generator.model, fields),
+        lambda: generator.generate(fields=fields),
+        cacheable=lambda result: result.status == "success",
+    )
+
+
+def cached_idea_recommendations(
+    generator: LocalGemmaIdeaRecommendationGenerator,
+    *,
+    keyword: str,
+    locale: str,
+) -> IdeaRecommendationsGenerationResult:
+    normalized_keyword = normalized_generation_cache_text(keyword)
+    return _IDEA_RECOMMENDATIONS_CACHE.get_or_set(
+        (
+            "idea_recommendations",
+            generator.base_url,
+            generator.model,
+            locale,
+            hashlib.sha256(normalized_keyword.encode("utf-8")).hexdigest(),
+        ),
+        lambda: generator.generate(keyword=keyword),
+        cacheable=lambda result: result.status == "success",
+    )
+
+
+def normalized_generation_cache_text(value: str) -> str:
+    return " ".join(value.split()).casefold()
 
 
 def deterministic_idea_recommendations(keyword: str) -> list[IdeaRecommendation]:
@@ -892,8 +974,14 @@ def business_field_context(
     if business_field not in AI_BUSINESS_CONTEXT_FIELDS:
         return fallback_context
 
-    generator = context_generator or LocalGemmaBusinessContextGenerator()
-    generated_context = generator.generate(business_field=business_field)
+    if context_generator is None:
+        generator = LocalGemmaBusinessContextGenerator()
+        generated_context = cached_business_context(
+            generator,
+            business_field=business_field,
+        )
+    else:
+        generated_context = context_generator.generate(business_field=business_field)
     if generated_context.status != "success":
         return fallback_context
 
@@ -927,6 +1015,24 @@ def business_context_from_generation_result(
         differentiation_focus=values["differentiation_focus"],
         mvp_capability=values["mvp_capability"],
     )
+
+
+def cached_business_context(
+    generator: LocalGemmaBusinessContextGenerator,
+    *,
+    business_field: str,
+) -> BusinessContextGenerationResult:
+    return _BUSINESS_CONTEXT_CACHE.get_or_set(
+        ("business_context", generator.base_url, generator.model, business_field),
+        lambda: generator.generate(business_field=business_field),
+        cacheable=lambda result: result.status == "success",
+    )
+
+
+def clear_ai_generation_caches() -> None:
+    _BUSINESS_CONTEXT_CACHE.clear()
+    _QUICK_IDEA_EXAMPLES_CACHE.clear()
+    _IDEA_RECOMMENDATIONS_CACHE.clear()
 
 
 def generated_idea_intake_answers(

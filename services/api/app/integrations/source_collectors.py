@@ -9,6 +9,12 @@ from urllib.request import Request, urlopen
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from services.api.app.core.settings import (
+    source_index_cache_max_entries,
+    source_index_cache_ttl_seconds,
+)
+from services.api.app.core.ttl_cache import TtlCache
+
 Confidence = Literal["low", "medium", "high"]
 Market = Literal["domestic_kr", "overseas"]
 AccessMethod = Literal["fixture", "live_http"]
@@ -26,6 +32,11 @@ IDEA_TOKEN_ALIASES = {
     "고객": ("customer", "customers"),
     "도구": ("tool", "tools"),
 }
+
+_PUBLIC_SOURCE_PAYLOAD_CACHE = TtlCache[object](
+    ttl_seconds=source_index_cache_ttl_seconds(),
+    max_entries=source_index_cache_max_entries(),
+)
 
 
 class SourceCollectorError(RuntimeError):
@@ -109,6 +120,12 @@ class NormalizedSourceRecord:
     access_method: AccessMethod = "fixture"
 
 
+@dataclass(frozen=True)
+class CachedPublicSourcePayload:
+    payload: object
+    observed_date: date
+
+
 class SourceCollector(Protocol):
     source_name: str
 
@@ -155,9 +172,14 @@ class PitchWallNewProductsCollector:
     max_records: int = 3
 
     def collect(self, *, idea: str, observed_date: date) -> list[NormalizedSourceRecord]:
-        payload = self.client.fetch_json(self.api_url, timeout_seconds=self.timeout_seconds)
+        payload = cached_public_source_payload(
+            client=self.client,
+            url=self.api_url,
+            timeout_seconds=self.timeout_seconds,
+            observed_date=observed_date,
+        )
         try:
-            response = PitchWallProductsResponse.model_validate(payload)
+            response = PitchWallProductsResponse.model_validate(payload.payload)
         except ValidationError as exc:
             raise SourceCollectorError(
                 "PitchWall response did not match expected product shape"
@@ -165,7 +187,7 @@ class PitchWallNewProductsCollector:
 
         idea_tokens = normalized_idea_tokens(idea)
         records = [
-            self._record_from_product(product, observed_date)
+            self._record_from_product(product, payload.observed_date)
             for product in response.data
             if self._matches_idea(product, idea_tokens)
         ][: self.max_records]
@@ -339,3 +361,23 @@ def collect_source_records(
     for collector in selected_collectors:
         records.extend(collector.collect(idea=idea, observed_date=observed_date))
     return records
+
+
+def cached_public_source_payload(
+    *,
+    client: JsonSourceClient,
+    url: str,
+    timeout_seconds: float,
+    observed_date: date,
+) -> CachedPublicSourcePayload:
+    return _PUBLIC_SOURCE_PAYLOAD_CACHE.get_or_set(
+        ("public_source_payload", url),
+        lambda: CachedPublicSourcePayload(
+            payload=client.fetch_json(url, timeout_seconds=timeout_seconds),
+            observed_date=observed_date,
+        ),
+    )
+
+
+def clear_source_index_cache() -> None:
+    _PUBLIC_SOURCE_PAYLOAD_CACHE.clear()

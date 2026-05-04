@@ -1,9 +1,11 @@
 from random import Random
+from threading import Event
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
+from services.api.app import services as idea_services
 from services.api.app.integrations.research_adapters import (
     BusinessContextGenerationResult,
     GeneratedIdeaRecommendation,
@@ -23,6 +25,7 @@ from services.api.app.integrations.source_collectors import (
     NormalizedSourceRecord,
     SourceCollectorError,
     UrlFetchingSourceClient,
+    clear_source_index_cache,
 )
 from services.api.app.main import allowed_cors_origins, app
 from services.api.app.repositories.idea_reports import InMemoryIdeaReportRepository
@@ -33,6 +36,7 @@ from services.api.app.schemas import (
 )
 from services.api.app.services import (
     QUICK_EXAMPLE_FIELDS,
+    clear_ai_generation_caches,
     create_idea_recommendations,
     create_idea_report,
     create_quick_idea_examples,
@@ -46,6 +50,15 @@ def use_in_memory_report_repository():
     app.state.idea_report_repository = InMemoryIdeaReportRepository()
     yield
     app.state.idea_report_repository = original_repository
+
+
+@pytest.fixture(autouse=True)
+def clear_generation_caches():
+    clear_ai_generation_caches()
+    clear_source_index_cache()
+    yield
+    clear_ai_generation_caches()
+    clear_source_index_cache()
 
 
 @pytest.fixture(autouse=True)
@@ -360,6 +373,49 @@ def test_create_idea_report_uses_ai_business_context_for_requested_field(
     assert report.recommended_mvp_scope[0] == "반응 수집, 감성 분류, 메시지 초안"
 
 
+def test_create_idea_report_reuses_cached_default_ai_business_context(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(UrlFetchingSourceClient, "fetch_json", fail_live_source_fetch)
+    calls: list[str] = []
+
+    def successful_context(
+        self,
+        *,
+        business_field: str,
+    ) -> BusinessContextGenerationResult:
+        calls.append(business_field)
+        return BusinessContextGenerationResult(
+            provider="gemma4",
+            status="success",
+            business_field=business_field,
+            users=("AI 제품팀", "데이터 운영자", "자동화 담당자"),
+            job="반복 업무 흐름을 읽고 다음 행동을 정하는 일",
+            outcome="처리 시간 감소",
+            adoption_risk="데이터 권한과 결과 검수",
+            differentiation_focus="한국어 업무 맥락에 맞춘 자동화",
+            mvp_capability="업무 입력, 분류, 알림",
+            notes=("fake cached context",),
+        )
+
+    monkeypatch.setattr(
+        LocalGemmaBusinessContextGenerator,
+        "generate",
+        successful_context,
+    )
+
+    for _ in range(2):
+        report = create_idea_report(
+            IdeaReportRequest(
+                idea="AI 업무 요청을 분류하고 담당자에게 알리는 서비스",
+                idea_intake_answers=[{"code": "Q5", "answer": "IT"}],
+            ),
+        )
+        assert report.idea_intake_questions[4].answer == "IT"
+
+    assert calls == ["IT"]
+
+
 def test_create_idea_report_does_not_call_ai_context_for_other_fields(
     monkeypatch,
 ) -> None:
@@ -479,6 +535,43 @@ def test_create_quick_idea_examples_uses_ai_generated_output() -> None:
     assert all("AI 생성 예시" in example.idea for example in response.examples)
 
 
+def test_create_quick_idea_examples_reuses_cached_default_ai_output(
+    monkeypatch,
+) -> None:
+    calls: list[tuple[str, ...]] = []
+
+    def successful_examples(
+        self,
+        *,
+        fields: tuple[str, ...],
+    ) -> QuickIdeaExamplesGenerationResult:
+        calls.append(fields)
+        return QuickIdeaExamplesGenerationResult(
+            provider="gemma4",
+            status="success",
+            examples=tuple(
+                GeneratedQuickIdeaExample(
+                    field=field,
+                    idea=f"{field} 분야 사용자를 위한 캐시된 AI 예시",
+                )
+                for field in fields
+            ),
+            notes=("fake cached examples",),
+        )
+
+    monkeypatch.setattr(
+        LocalGemmaQuickIdeaExampleGenerator,
+        "generate",
+        successful_examples,
+    )
+
+    first_response = create_quick_idea_examples(count=3, random_source=Random(3))
+    second_response = create_quick_idea_examples(count=3, random_source=Random(3))
+
+    assert first_response == second_response
+    assert calls == [tuple(example.field for example in first_response.examples)]
+
+
 def test_quick_idea_example_uses_ai_business_context_for_requested_field() -> None:
     class FakeBusinessContextGenerator:
         def generate(self, *, business_field: str) -> BusinessContextGenerationResult:
@@ -586,6 +679,66 @@ def test_create_idea_recommendations_uses_ai_generated_output() -> None:
     assert "검증된 산책 파트너" in response.recommendations[0].report_seed
 
 
+def test_create_idea_recommendations_reuses_cached_default_ai_output(
+    monkeypatch,
+) -> None:
+    calls: list[str] = []
+
+    def successful_recommendations(
+        self,
+        *,
+        keyword: str,
+    ) -> IdeaRecommendationsGenerationResult:
+        calls.append(keyword)
+        return IdeaRecommendationsGenerationResult(
+            provider="gemma4",
+            status="success",
+            recommendations=(
+                GeneratedIdeaRecommendation(
+                    title="반려동물 산책 매칭",
+                    summary="바쁜 보호자와 산책 파트너를 연결하는 예약 서비스",
+                    rationale="입력어의 산책 문제를 매칭 MVP로 좁힙니다.",
+                    report_seed="반려동물 산책이 어려운 보호자를 위한 매칭 서비스",
+                ),
+                GeneratedIdeaRecommendation(
+                    title="반려동물 산책 루틴 코치",
+                    summary="산책 기록을 바탕으로 다음 루틴을 추천하는 앱",
+                    rationale="반복 산책 행동을 기록해 유지율을 확인합니다.",
+                    report_seed="반려동물 산책 기록을 분석해 맞춤 루틴을 추천하는 앱",
+                ),
+                GeneratedIdeaRecommendation(
+                    title="반려동물 산책 안전 리포트",
+                    summary="산책 경로의 위험 메모를 공유하는 동네 안전 도구",
+                    rationale="산책 안전 문제를 지역 단위로 검증합니다.",
+                    report_seed="반려동물 산책 경로의 위험 요소를 공유하는 안전 도구",
+                ),
+                GeneratedIdeaRecommendation(
+                    title="반려동물 산책 미션 구독",
+                    summary="짧은 산책 미션과 보상 기록을 제공하는 구독 앱",
+                    rationale="산책 습관을 생활 루틴 서비스로 확장합니다.",
+                    report_seed="반려동물 산책 습관을 미션과 보상 기록으로 돕는 앱",
+                ),
+            ),
+            notes=("fake cached recommendations",),
+        )
+
+    monkeypatch.setattr(
+        LocalGemmaIdeaRecommendationGenerator,
+        "generate",
+        successful_recommendations,
+    )
+
+    first_response = create_idea_recommendations(
+        IdeaRecommendationRequest(keyword="반려동물 산책")
+    )
+    second_response = create_idea_recommendations(
+        IdeaRecommendationRequest(keyword="반려동물 산책")
+    )
+
+    assert first_response == second_response
+    assert calls == ["반려동물 산책"]
+
+
 def test_create_idea_recommendations_fallback_varies_by_input() -> None:
     review_response = create_idea_recommendations(IdeaRecommendationRequest(keyword="리뷰"))
     learning_response = create_idea_recommendations(IdeaRecommendationRequest(keyword="학습"))
@@ -679,6 +832,63 @@ def test_create_researched_idea_report_uses_search_and_organization_adapters() -
     assert "리뷰 담당 운영자" in report.idea_intake_questions[1].answer
     assert "리뷰 담당 운영자" in report.idea_intake_questions[2].answer
     assert "고객 반응" in " ".join(report.strengths)
+
+
+def test_researched_idea_report_starts_source_collection_and_search_in_parallel(
+    monkeypatch,
+) -> None:
+    source_started = Event()
+    search_started = Event()
+
+    def fake_collect_source_records(*, idea: str, observed_date) -> list[NormalizedSourceRecord]:
+        assert idea == "리뷰 고객 반응 분석 도구"
+        source_started.set()
+        assert search_started.wait(timeout=1)
+        return []
+
+    class FakeSearchAdapter:
+        def search(self, *, idea: str, observed_date) -> SearchAdapterResult:
+            assert source_started.wait(timeout=1)
+            search_started.set()
+            return SearchAdapterResult(
+                provider="gemini_cli",
+                status="success",
+                records=(),
+                notes=("fake parallel search used",),
+            )
+
+    class FakeOrganizer:
+        def organize(self, *, idea: str, records: list[NormalizedSourceRecord]):
+            return OrganizationResult(
+                provider="gemma4",
+                status="success",
+                summary=f"{idea} organized after parallel collection.",
+                target_users=("리뷰 담당 운영자",),
+                core_use_cases=("리뷰 이슈를 모아 우선순위를 정한다.",),
+                opportunities=("리뷰 기반 개선 루프를 자동화한다.",),
+                risks=("검색 결과 사실 확인이 필요하다.",),
+                mvp_scope=("리뷰 수집과 이슈 분류",),
+                notes=("fake gemma organizer used",),
+            )
+
+    monkeypatch.setattr(
+        idea_services,
+        "collect_source_records",
+        fake_collect_source_records,
+    )
+
+    report = create_idea_report(
+        IdeaReportRequest(
+            idea="리뷰 고객 반응 분석 도구",
+            research=True,
+        ),
+        search_adapter=FakeSearchAdapter(),
+        organizer=FakeOrganizer(),
+    )
+
+    assert report.research_status.search_status == "success"
+    assert source_started.is_set()
+    assert search_started.is_set()
 
 
 def test_idea_report_cors_allows_local_web_origin() -> None:
