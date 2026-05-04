@@ -392,7 +392,28 @@ BUSINESS_FIELD_REPORT_CONTEXTS = {
     ),
 }
 
-QUICK_EXAMPLE_TEMPLATES = (
+@dataclass(frozen=True)
+class QuickExampleFallbackScenario:
+    problem: str
+    capability: str
+    outcome: str
+
+
+@dataclass(frozen=True)
+class QuickExampleFallbackContext:
+    users: tuple[str, ...]
+    scenarios: tuple[QuickExampleFallbackScenario, ...]
+    product_types: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class QuickExampleFallbackParts:
+    user: str
+    scenario: QuickExampleFallbackScenario
+    product_type: str
+
+
+QUICK_EXAMPLE_CONTEXT_TEMPLATES = (
     "{user} 대상 {mvp_capability} 기능을 바로 쓰는 {product_type}",
     "{field} 현장에서 {job}을 빠르게 처리하는 {product_type}",
     "{user} 대상 {outcome} 성과를 확인하는 {product_type}",
@@ -409,16 +430,96 @@ QUICK_EXAMPLE_PRODUCT_TYPES = (
     "리포트 자동화 도구",
 )
 
+QUICK_EXAMPLE_FALLBACK_TEMPLATES = (
+    "{user} 대상 {capability} 기능으로 {problem} 문제를 줄이는 {product_type}",
+    "{user}에게 {outcome} 성과를 안내하고 {problem} 문제를 정리하는 {product_type}",
+    "{user}용 {product_type}: {capability} 기능으로 {problem} 문제를 관리",
+    "{user} 대상 {outcome} 성과를 돕는 {capability} 기반 {product_type}",
+)
+
+QUICK_EXAMPLE_FALLBACK_CONTEXTS = {
+    "IT": QuickExampleFallbackContext(
+        users=(
+            "사내 운영팀",
+            "B2B SaaS 제품팀",
+            "데이터 운영자",
+            "개발 리드",
+            "보안 담당자",
+        ),
+        scenarios=(
+            QuickExampleFallbackScenario(
+                problem="반복 승인 요청 누락",
+                capability="승인 흐름 자동 분류와 담당자 알림",
+                outcome="처리 우선순위 확인",
+            ),
+            QuickExampleFallbackScenario(
+                problem="장애 원인 정리 지연",
+                capability="로그 요약과 원인 후보 추적",
+                outcome="장애 대응 시간 단축",
+            ),
+            QuickExampleFallbackScenario(
+                problem="고객 문의 속 기능 요청 누락",
+                capability="문의 태깅과 기능 요청 군집화",
+                outcome="제품 개선 후보 선별",
+            ),
+            QuickExampleFallbackScenario(
+                problem="배포 전 점검 항목 분산",
+                capability="릴리스 체크리스트 자동 검수",
+                outcome="배포 리스크 사전 점검",
+            ),
+            QuickExampleFallbackScenario(
+                problem="권한 변경 이력 추적 부담",
+                capability="권한 변경 알림과 감사 리포트",
+                outcome="보안 검토 누락 감소",
+            ),
+        ),
+        product_types=("SaaS", "대시보드", "워크플로우 도구", "알림 서비스"),
+    ),
+    "교육": QuickExampleFallbackContext(
+        users=(
+            "초등 학습자",
+            "방과후 교사",
+            "학원 운영자",
+            "온라인 강의 튜터",
+            "학부모 코치",
+        ),
+        scenarios=(
+            QuickExampleFallbackScenario(
+                problem="오답 원인 파악 지연",
+                capability="오답 패턴 분석과 다음 문제 추천",
+                outcome="개인별 복습 우선순위 제안",
+            ),
+            QuickExampleFallbackScenario(
+                problem="출결과 과제 확인 반복",
+                capability="출결·과제 자동 체크와 보호자 알림",
+                outcome="수업 운영 시간 절감",
+            ),
+            QuickExampleFallbackScenario(
+                problem="수준별 복습 계획 부족",
+                capability="수준별 복습 루틴 생성",
+                outcome="학습 공백 조기 발견",
+            ),
+            QuickExampleFallbackScenario(
+                problem="질문 답변 대기 시간 증가",
+                capability="질문 분류와 튜터 답변 초안",
+                outcome="질문 응답 속도 개선",
+            ),
+            QuickExampleFallbackScenario(
+                problem="학습 습관 유지 어려움",
+                capability="짧은 학습 목표와 보상 루프",
+                outcome="꾸준한 학습 루틴 형성",
+            ),
+        ),
+        product_types=("학습 앱", "튜터 대시보드", "알림 서비스", "코칭 도구"),
+    ),
+}
+
 QUICK_EXAMPLE_FIELDS = (
     "IT",
     "교육",
-    "금융",
-    "라이프스타일",
-    "마케팅/PR",
-    "미디어/엔터테인먼트",
 )
 
-QUICK_EXAMPLE_DEFAULT_COUNT = 5
+QUICK_EXAMPLE_DEFAULT_COUNT = 2
 
 
 class IdeaReportRepository(Protocol):
@@ -466,10 +567,6 @@ _BUSINESS_CONTEXT_CACHE = TtlCache[BusinessContextGenerationResult](
     ttl_seconds=ai_generation_cache_ttl_seconds(),
     max_entries=ai_generation_cache_max_entries(),
 )
-_QUICK_IDEA_EXAMPLES_CACHE = TtlCache[QuickIdeaExamplesGenerationResult](
-    ttl_seconds=ai_generation_cache_ttl_seconds(),
-    max_entries=ai_generation_cache_max_entries(),
-)
 _IDEA_RECOMMENDATIONS_CACHE = TtlCache[IdeaRecommendationsGenerationResult](
     ttl_seconds=ai_generation_cache_ttl_seconds(),
     max_entries=ai_generation_cache_max_entries(),
@@ -492,11 +589,7 @@ def create_quick_idea_examples(
 
     generator = example_generator or LocalGemmaQuickIdeaExampleGenerator()
     requested_fields = tuple(selected_fields)
-    generated_examples = (
-        cached_quick_idea_examples(generator, requested_fields)
-        if example_generator is None
-        else generator.generate(fields=requested_fields)
-    )
+    generated_examples = generator.generate(fields=requested_fields)
     if generated_examples.status == "success":
         return QuickIdeaExampleResponse(
             examples=[
@@ -523,12 +616,19 @@ def quick_idea_example_for_field(
     *,
     context_generator: BusinessContextGenerator | None = None,
 ) -> QuickIdeaExample:
+    if context_generator is None and field in QUICK_EXAMPLE_FALLBACK_CONTEXTS:
+        return quick_idea_example_from_fallback_context(
+            field,
+            randomizer,
+            QUICK_EXAMPLE_FALLBACK_CONTEXTS[field],
+        )
+
     context = (
         business_field_context(field, context_generator=context_generator)
         if context_generator is not None
         else BUSINESS_FIELD_REPORT_CONTEXTS.get(field, BUSINESS_FIELD_REPORT_CONTEXTS["기타"])
     )
-    template = randomizer.choice(QUICK_EXAMPLE_TEMPLATES)
+    template = randomizer.choice(QUICK_EXAMPLE_CONTEXT_TEMPLATES)
     idea = template.format(
         field=field,
         user=randomizer.choice(context.users),
@@ -538,6 +638,27 @@ def quick_idea_example_for_field(
         differentiation_focus=context.differentiation_focus,
         mvp_capability=context.mvp_capability,
         product_type=randomizer.choice(QUICK_EXAMPLE_PRODUCT_TYPES),
+    )
+    return QuickIdeaExample(field=field, idea=idea)
+
+
+def quick_idea_example_from_fallback_context(
+    field: str,
+    randomizer: Random | SystemRandom,
+    context: QuickExampleFallbackContext,
+) -> QuickIdeaExample:
+    template = randomizer.choice(QUICK_EXAMPLE_FALLBACK_TEMPLATES)
+    parts = QuickExampleFallbackParts(
+        user=randomizer.choice(context.users),
+        scenario=randomizer.choice(context.scenarios),
+        product_type=randomizer.choice(context.product_types),
+    )
+    idea = template.format(
+        user=parts.user,
+        problem=parts.scenario.problem,
+        capability=parts.scenario.capability,
+        outcome=parts.scenario.outcome,
+        product_type=parts.product_type,
     )
     return QuickIdeaExample(field=field, idea=idea)
 
@@ -732,17 +853,6 @@ def idea_recommendation_from_generated(
         summary=recommendation.summary,
         rationale=recommendation.rationale,
         report_seed=recommendation.report_seed,
-    )
-
-
-def cached_quick_idea_examples(
-    generator: LocalGemmaQuickIdeaExampleGenerator,
-    fields: tuple[str, ...],
-) -> QuickIdeaExamplesGenerationResult:
-    return _QUICK_IDEA_EXAMPLES_CACHE.get_or_set(
-        ("quick_idea_examples", generator.base_url, generator.model, fields),
-        lambda: generator.generate(fields=fields),
-        cacheable=lambda result: result.status == "success",
     )
 
 
@@ -1031,7 +1141,6 @@ def cached_business_context(
 
 def clear_ai_generation_caches() -> None:
     _BUSINESS_CONTEXT_CACHE.clear()
-    _QUICK_IDEA_EXAMPLES_CACHE.clear()
     _IDEA_RECOMMENDATIONS_CACHE.clear()
 
 

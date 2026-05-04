@@ -52,10 +52,10 @@ boundary to generate business-field context for IT, 교육, 금융, 라이프스
 validates JSON output, and falls back to deterministic context when unavailable.
 
 `LocalGemmaQuickIdeaExampleGenerator` uses the same boundary for
-`GET /api/quick-idea-examples`. The service selects only IT, 교육, 금융,
-라이프스타일, 마케팅/PR, and 미디어/엔터테인먼트 labels, sends only those
-labels to Gemma, validates one generated idea per requested field, and falls
-back to deterministic examples when the adapter is unavailable or invalid.
+`GET /api/quick-idea-examples`. The service selects only IT and 교육 labels,
+sends only those labels plus a non-user variation angle to Gemma, validates one
+unique generated idea per requested field, and falls back to varied deterministic
+IT/education examples when the adapter is unavailable or invalid.
 
 `LocalGemmaIdeaRecommendationGenerator` uses the same boundary for
 `POST /api/idea-recommendations`. It receives the submitted word or short
@@ -63,11 +63,12 @@ sentence, asks Gemma for four concrete Korean item recommendations, validates
 JSON shape, uniqueness, and connection to at least one input term, then falls
 back to deterministic field-aware recommendations when unavailable or invalid.
 
-Successful local Gemma results are cached in process for a short TTL by model,
-endpoint, and request shape. This preserves generated quality while avoiding
-repeat calls for the same quick-example field set, Q5 business-field context, or
-word/short-sentence recommendation seed. Recommendation cache keys use a digest
-of the normalized input; cached values remain process-local and are not persisted.
+Successful local Gemma results for Q5 business-field context and
+word/short-sentence recommendations are cached in process for a short TTL by
+model, endpoint, and request shape. Quick-example AI output is deliberately not
+cached so page-load examples can vary across repeated requests. Recommendation
+cache keys use a digest of the normalized input; cached values remain
+process-local and are not persisted.
 Structured JSON Gemma requests disable model thinking when the OpenAI-compatible
 llama.cpp endpoint supports `chat_template_kwargs.enable_thinking`.
 
@@ -94,7 +95,8 @@ Runtime configuration:
 - `LOCAL_GEMMA_RECOMMENDATIONS_TIMEOUT_SECONDS`, default `180`, used for
   AI-generated item recommendations from short user input
 - `AI_GENERATION_CACHE_TTL_SECONDS`, default `600`, used for process-local
-  successful Gemma result reuse
+  successful Gemma result reuse for Q5 business-field context and item
+  recommendations
 - `AI_GENERATION_CACHE_MAX_ENTRIES`, default `128`
 - `SOURCE_INDEX_CACHE_TTL_SECONDS`, default `300`, used for public source feed
   payload reuse before local filtering

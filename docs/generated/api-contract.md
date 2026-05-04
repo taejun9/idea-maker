@@ -11,7 +11,7 @@ Generated date: 2026-05-04
 | Method | Path | Request | Response |
 | --- | --- | --- | --- |
 | `GET` | `/health` | none | `HealthResponse` |
-| `GET` | `/api/quick-idea-examples` | optional `count` query, 1-10, default 5 | `QuickIdeaExampleResponse` |
+| `GET` | `/api/quick-idea-examples` | optional `count` query, 1-10, default 2 | `QuickIdeaExampleResponse` |
 | `POST` | `/api/idea-reports` | `IdeaReportRequest` | `IdeaReportResponse` |
 | `GET` | `/api/idea-reports` | optional `limit` query, 1-100, default 50 | `IdeaReportListResponse` |
 | `GET` | `/api/idea-reports/{report_id}` | path `report_id` | `IdeaReportResponse` |
@@ -22,13 +22,13 @@ Generated date: 2026-05-04
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `examples` | `QuickIdeaExample[]` | default five quick-start ideas from the allowed quick-example fields; requests above six return at most the six allowed fields; the backend asks local Gemma4 to generate the idea text and falls back to deterministic examples when the model is unavailable or invalid |
+| `examples` | `QuickIdeaExample[]` | default two quick-start ideas from the allowed quick-example fields; requests above two return at most the two allowed fields; the backend asks local Gemma4 to generate fresh idea text and falls back to varied deterministic examples when the model is unavailable or invalid |
 
 ## `QuickIdeaExample`
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `field` | string | one of `IT`, `교육`, `금융`, `라이프스타일`, `마케팅/PR`, or `미디어/엔터테인먼트` |
+| `field` | string | one of `IT` or `교육` |
 | `idea` | string | 5-240 characters; AI-generated Korean idea text when Gemma succeeds |
 
 ## `IdeaReportRequest`

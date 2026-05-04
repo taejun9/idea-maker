@@ -1,6 +1,10 @@
 export const quickExampleBusinessFields = [
   "IT",
   "교육",
+] as const;
+
+export const businessFieldOptions = [
+  ...quickExampleBusinessFields,
   "금융",
   "운영관리",
   "네트워킹",
@@ -16,4 +20,5 @@ export const quickExampleBusinessFields = [
   "재무",
   "프롭테크",
   "하드웨어",
-];
+  "기타",
+] as const;

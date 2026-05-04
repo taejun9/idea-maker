@@ -66,17 +66,19 @@ Forbidden:
 - Local Gemma4 business-context generation receives only a Q5 business-field
   label such as `IT` or `마케팅/PR`; it must not receive raw user ideas,
   competitor records, secrets, local files, or backend internals.
-- Local Gemma4 quick-example generation receives only the six allowed
-  quick-example Q5 business-field labels. It must not receive raw user ideas,
-  saved reports, competitor records, secrets, local files, or backend internals.
+- Local Gemma4 quick-example generation receives only the two allowed
+  quick-example Q5 business-field labels and a non-user variation angle. It must
+  not receive raw user ideas, saved reports, competitor records, secrets, local
+  files, or backend internals.
 - Local Gemma4 item recommendation generation receives the submitted word or
   short sentence because that user input is the recommendation seed. It must not
   receive saved reports, competitor records, secrets, local files, or backend
   internals, and logs must not store the raw submitted input.
-- Successful local Gemma outputs may be reused from a process-local TTL cache.
-  Recommendation cache keys use a digest of the normalized input rather than the
-  raw seed, but cached recommendation values can still contain the user-provided
-  word or short sentence and must remain in memory only.
+- Successful local Gemma outputs for Q5 business-field context and item
+  recommendations may be reused from a process-local TTL cache. Quick-example AI
+  output is not cached. Recommendation cache keys use a digest of the normalized
+  input rather than the raw seed, but cached recommendation values can still
+  contain the user-provided word or short sentence and must remain in memory only.
 - Public source-index cache entries may store unauthenticated public source feed
   payloads and their observed date. They must not store raw user ideas, report
   payloads, secrets, local files, cookies, or authenticated responses.

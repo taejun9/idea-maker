@@ -145,6 +145,9 @@ def test_local_gemma_quick_idea_example_generator_parses_examples_payload(
     assert [example.field for example in result.examples] == ["IT", "교육"]
     assert result.examples[0].idea.startswith("사내 운영팀")
     assert requested_bodies[0]["chat_template_kwargs"] == {"enable_thinking": False}
+    prompt = requested_bodies[0]["messages"][1]["content"]
+    assert "in this exact order: IT, 교육" in prompt
+    assert "Creative angle for this batch:" in prompt
 
 
 def test_local_gemma_quick_idea_example_generator_falls_back_on_field_mismatch(
@@ -186,6 +189,48 @@ def test_local_gemma_quick_idea_example_generator_falls_back_on_field_mismatch(
     assert result.provider == "fallback"
     assert result.status == "fallback"
     assert "fields mismatch" in result.notes[0]
+
+
+def test_local_gemma_quick_idea_example_generator_falls_back_on_duplicate_ideas(
+    monkeypatch,
+):
+    def fake_urlopen(request, *, timeout: float):
+        return FakeUrlResponse(
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "examples": [
+                                        {
+                                            "field": "IT",
+                                            "idea": "팀이 반복 업무를 줄이는 AI 도구",
+                                        },
+                                        {
+                                            "field": "교육",
+                                            "idea": "팀이 반복 업무를 줄이는 AI 도구",
+                                        },
+                                    ]
+                                },
+                                ensure_ascii=False,
+                            )
+                        }
+                    }
+                ]
+            }
+        )
+
+    monkeypatch.setattr(research_adapters, "urlopen", fake_urlopen)
+
+    result = LocalGemmaQuickIdeaExampleGenerator(
+        base_url="http://gemma.local",
+        timeout_seconds=0.5,
+    ).generate(fields=("IT", "교육"))
+
+    assert result.provider == "fallback"
+    assert result.status == "fallback"
+    assert "duplicate quick idea example idea" in result.notes[0]
 
 
 def test_local_gemma_idea_recommendation_generator_parses_recommendations_payload(
