@@ -15,11 +15,11 @@ import type {
 } from '../../types/ideaReport';
 import IdeaIntakeQuestions from './IdeaIntakeQuestions.vue';
 import LoadingAnimation from '../../components/ui/LoadingAnimation.vue';
-import { quickExampleBusinessFields } from './quickExamples';
+import { businessFieldOptions as supportedBusinessFieldOptions } from './quickExamples';
 
 const minIdeaLength = 5;
 const maxIdeaLength = 2000;
-const businessFieldOptions: string[] = [...quickExampleBusinessFields, '기타'];
+const businessFieldOptions: string[] = [...supportedBusinessFieldOptions];
 const businessFieldKeywordPatterns: Array<{
   field: string;
   keywords: string[];

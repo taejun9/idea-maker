@@ -8,6 +8,7 @@ import subprocess
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
+from random import SystemRandom
 from typing import Literal
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -27,6 +28,14 @@ DEFAULT_GEMINI_COMMAND = "gemini"
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 DEFAULT_GEMMA_BASE_URL = "http://localhost:8089"
 DEFAULT_GEMMA_MODEL = "gemma4"
+
+QUICK_IDEA_EXAMPLE_VARIATION_ANGLES = (
+    "underserved workflow with a clear first user",
+    "small-team operations pain with measurable time savings",
+    "AI-assisted review or coaching loop that still feels practical",
+    "mobile-first habit or alert loop for frequent use",
+    "dashboard-first product with a concrete decision moment",
+)
 
 
 @dataclass(frozen=True)
@@ -473,10 +482,15 @@ class LocalGemmaQuickIdeaExampleGenerator:
                     },
                     {
                         "role": "user",
-                        "content": gemma_quick_idea_examples_prompt(requested_fields),
+                        "content": gemma_quick_idea_examples_prompt(
+                            requested_fields,
+                            variation_angle=SystemRandom().choice(
+                                QUICK_IDEA_EXAMPLE_VARIATION_ANGLES
+                            ),
+                        ),
                     },
                 ],
-                "temperature": 0.9,
+                "temperature": 1.0,
                 "max_tokens": 1000,
                 "response_format": {"type": "json_object"},
                 "chat_template_kwargs": {"enable_thinking": False},
@@ -702,9 +716,14 @@ def validated_quick_idea_examples(
     requested_fields: tuple[str, ...],
 ) -> tuple[GeneratedQuickIdeaExample, ...]:
     examples_by_field: dict[str, GeneratedQuickIdeaExample] = {}
+    seen_ideas: set[str] = set()
     for item in payload.examples:
         if item.field in examples_by_field:
             raise ValueError(f"duplicate quick idea example field: {item.field}")
+        normalized_idea = " ".join(item.idea.split()).casefold()
+        if normalized_idea in seen_ideas:
+            raise ValueError(f"duplicate quick idea example idea: {item.idea}")
+        seen_ideas.add(normalized_idea)
         examples_by_field[item.field] = GeneratedQuickIdeaExample(
             field=item.field,
             idea=item.idea,
@@ -867,7 +886,11 @@ def gemma_business_context_prompt(business_field: str) -> str:
     )
 
 
-def gemma_quick_idea_examples_prompt(fields: tuple[str, ...]) -> str:
+def gemma_quick_idea_examples_prompt(
+    fields: tuple[str, ...],
+    *,
+    variation_angle: str,
+) -> str:
     field_list = ", ".join(fields)
     return (
         "Generate one Korean startup/product idea example for each requested business "
@@ -877,7 +900,12 @@ def gemma_quick_idea_examples_prompt(fields: tuple[str, ...]) -> str:
         "exactly match the requested label; each idea must be 25 to 90 Korean "
         "characters, concrete enough to click as a starter idea, and should describe "
         "a user, problem, and product shape. Avoid markdown, numbering, placeholders, "
-        "generic slogans, and repeated product wording."
+        "generic slogans, and repeated product wording. Field boundaries: IT means "
+        "software, AI, data, developer tooling, internal operations, security, or "
+        "workflow automation; 교육 means learners, teachers, tutoring, assessment, "
+        "study operations, or learning habit products. Do not drift into unrelated "
+        "consumer, finance, media, logistics, property, or marketing examples. "
+        f"Creative angle for this batch: {variation_angle}."
     )
 
 

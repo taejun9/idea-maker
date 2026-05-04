@@ -470,20 +470,21 @@ def test_get_idea_report_returns_not_found_for_missing_report() -> None:
     assert response.json()["detail"]["error_code"] == "idea_report_not_found"
 
 
-def test_get_quick_idea_examples_returns_five_business_field_examples() -> None:
+def test_get_quick_idea_examples_returns_it_and_education_examples() -> None:
     client = TestClient(app)
 
     response = client.get("/api/quick-idea-examples")
 
     assert response.status_code == 200
     body = response.json()
-    assert len(body["examples"]) == 5
-    assert len({example["field"] for example in body["examples"]}) == 5
+    assert len(body["examples"]) == 2
+    assert len({example["field"] for example in body["examples"]}) == 2
+    assert {example["field"] for example in body["examples"]} == {"IT", "교육"}
     assert all(example["field"] in QUICK_EXAMPLE_FIELDS for example in body["examples"])
     assert all(example["idea"] for example in body["examples"])
 
 
-def test_get_quick_idea_examples_limits_fields_to_supported_ai_contexts() -> None:
+def test_get_quick_idea_examples_limits_fields_to_quick_example_scope() -> None:
     client = TestClient(app)
 
     response = client.get("/api/quick-idea-examples?count=10")
@@ -498,10 +499,10 @@ def test_get_quick_idea_examples_limits_fields_to_supported_ai_contexts() -> Non
 
 def test_create_quick_idea_examples_randomizes_generated_output() -> None:
     first_response = create_quick_idea_examples(random_source=Random(1))
-    second_response = create_quick_idea_examples(random_source=Random(2))
+    second_response = create_quick_idea_examples(random_source=Random(5))
 
-    assert len(first_response.examples) == 5
-    assert len(second_response.examples) == 5
+    assert len(first_response.examples) == 2
+    assert len(second_response.examples) == 2
     assert first_response.examples != second_response.examples
 
 
@@ -526,16 +527,16 @@ def test_create_quick_idea_examples_uses_ai_generated_output() -> None:
             )
 
     response = create_quick_idea_examples(
-        count=3,
+        count=2,
         random_source=Random(3),
         example_generator=FakeQuickIdeaExampleGenerator(),
     )
 
-    assert len(response.examples) == 3
+    assert len(response.examples) == 2
     assert all("AI 생성 예시" in example.idea for example in response.examples)
 
 
-def test_create_quick_idea_examples_reuses_cached_default_ai_output(
+def test_create_quick_idea_examples_regenerates_default_ai_output(
     monkeypatch,
 ) -> None:
     calls: list[tuple[str, ...]] = []
@@ -550,13 +551,10 @@ def test_create_quick_idea_examples_reuses_cached_default_ai_output(
             provider="gemma4",
             status="success",
             examples=tuple(
-                GeneratedQuickIdeaExample(
-                    field=field,
-                    idea=f"{field} 분야 사용자를 위한 캐시된 AI 예시",
-                )
+                GeneratedQuickIdeaExample(field=field, idea=f"{field} 분야 AI 예시")
                 for field in fields
             ),
-            notes=("fake cached examples",),
+            notes=("fake generated examples",),
         )
 
     monkeypatch.setattr(
@@ -569,7 +567,8 @@ def test_create_quick_idea_examples_reuses_cached_default_ai_output(
     second_response = create_quick_idea_examples(count=3, random_source=Random(3))
 
     assert first_response == second_response
-    assert calls == [tuple(example.field for example in first_response.examples)]
+    expected_fields = tuple(example.field for example in first_response.examples)
+    assert calls == [expected_fields, expected_fields]
 
 
 def test_quick_idea_example_uses_ai_business_context_for_requested_field() -> None:

@@ -1,7 +1,10 @@
 import { mount } from "@vue/test-utils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "../src/App.vue";
-import { quickExampleBusinessFields } from "../src/features/idea-report/quickExamples";
+import {
+  businessFieldOptions,
+  quickExampleBusinessFields,
+} from "../src/features/idea-report/quickExamples";
 
 const expectedApiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000").replace(
   /\/$/,
@@ -191,18 +194,6 @@ const sampleQuickExamples = {
       field: "교육",
       idea: "학습자를 위한 오답 진단과 다음 학습 추천 앱",
     },
-    {
-      field: "마케팅/PR",
-      idea: "브랜드 운영자를 위한 고객 반응 메시지 초안 도구",
-    },
-    {
-      field: "유통/물류",
-      idea: "커머스 운영자를 위한 재고 위험 알림 대시보드",
-    },
-    {
-      field: "프롭테크",
-      idea: "건물 관리자를 위한 공실 상태 요약 서비스",
-    },
   ],
 };
 
@@ -232,8 +223,12 @@ describe("App", () => {
     window.history.replaceState(null, "", "/");
   });
 
-  it("keeps quick examples aligned to every supported business field", () => {
-    expect(quickExampleBusinessFields).toEqual([
+  it("keeps quick examples limited to IT and education", () => {
+    expect(quickExampleBusinessFields).toEqual(["IT", "교육"]);
+  });
+
+  it("keeps Q5 business field options broader than quick examples", () => {
+    expect(businessFieldOptions).toEqual([
       "IT",
       "교육",
       "금융",
@@ -251,6 +246,7 @@ describe("App", () => {
       "재무",
       "프롭테크",
       "하드웨어",
+      "기타",
     ]);
   });
 
@@ -262,7 +258,7 @@ describe("App", () => {
     const submitButton = wrapper.find('[data-testid="generate-report"]');
 
     await vi.waitFor(() => {
-      expect(wrapper.findAll('[data-testid="idea-example"]')).toHaveLength(5);
+      expect(wrapper.findAll('[data-testid="idea-example"]')).toHaveLength(2);
     });
 
     expect(ideaInput.exists()).toBe(true);
@@ -286,7 +282,7 @@ describe("App", () => {
     const ideaInput = wrapper.find('[data-testid="idea-input"]');
 
     await vi.waitFor(() => {
-      expect(wrapper.findAll('[data-testid="idea-example"]')).toHaveLength(5);
+      expect(wrapper.findAll('[data-testid="idea-example"]')).toHaveLength(2);
     });
     const firstExample = wrapper.findAll('[data-testid="idea-example"]')[0];
 

@@ -60,16 +60,19 @@ timeouts and must return structured fallback status instead of failing the repor
 quick-example, or recommendation request. Routine verification must not require
 Gemini authentication or a running llama.cpp server. Business-context generation
 is scoped to selected Q5 labels and quick-example generation receives only the
-six allowed quick-example labels; both fall back to deterministic content when
-the local model is unavailable. Item recommendation generation receives the
-submitted word or short sentence and falls back to deterministic field-aware
-recommendations when Gemma is unavailable or invalid.
+two allowed quick-example labels plus a non-user variation angle; both fall back
+to deterministic content when the local model is unavailable. Item
+recommendation generation receives the submitted word or short sentence and
+falls back to deterministic field-aware recommendations when Gemma is unavailable
+or invalid.
 
-Successful local Gemma outputs are cached in process for a short TTL so repeated
-requests do not block on the same model call. Fallback responses are not cached,
-which lets a recovered Gemma server serve the next request. Research reports run
-baseline source collection and Gemini CLI search in parallel, then organize the
-merged records afterward.
+Successful local Gemma outputs for Q5 business-field context and item
+recommendations are cached in process for a short TTL so repeated requests do not
+block on the same model call. Quick-example AI output is not cached, preserving
+freshness for repeated page loads. Fallback responses are not cached, which lets
+a recovered Gemma server serve the next request. Research reports run baseline
+source collection and Gemini CLI search in parallel, then organize the merged
+records afterward.
 
 Public source feed payloads can be cached briefly before local filtering. The
 cache stores only the public feed payload and its observed date, not user ideas or
@@ -78,8 +81,12 @@ the existing fixture fallback path.
 
 ## Generation Latency Budget
 
-Configured request-path external waits as of PLAN-0034:
+Configured request-path external waits as of PLAN-0036:
 
+- Quick examples: one local Gemma call with
+  `LOCAL_GEMMA_QUICK_EXAMPLES_TIMEOUT_SECONDS`, default 180 seconds. Successful
+  quick-example output is not cached because the first screen should not repeat
+  the same generated examples across page loads.
 - Word/short-sentence recommendations: one local Gemma call with
   `LOCAL_GEMMA_RECOMMENDATIONS_TIMEOUT_SECONDS`, default 180 seconds. Repeated
   successful requests for the same normalized input and model use the AI cache.

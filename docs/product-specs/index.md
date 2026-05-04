@@ -36,12 +36,13 @@ Idea-maker is a web service that turns a short idea into a structured business/p
 - The idea input starts empty so users can enter their own concept without clearing a preset value.
 - The entry form exposes visible examples, helper copy, character feedback, and validation state for keyboard and screen reader users.
 - Quick examples are requested from the backend on page load. The API selects
-  random fields from the quick-example set `IT`, `교육`, `금융`, `라이프스타일`,
-  `마케팅/PR`, and `미디어/엔터테인먼트`, asks local Gemma4 to write one
-  concrete Korean idea example for each selected field, validates the JSON
-  output, and falls back to deterministic examples when the model is unavailable
-  or returns invalid output. The default response contains five examples, and
-  requests above six return the full six-field set.
+  random fields from the quick-example set `IT` and `교육`, asks local Gemma4 to
+  write one concrete Korean idea example for each selected field, validates the
+  JSON output for exact fields and unique idea text, and falls back to varied
+  deterministic IT/education examples when the model is unavailable or returns
+  invalid output. The default response contains two examples, and requests above
+  two return the full two-field set. Successful quick-example AI output is not
+  cached so repeated page loads can produce fresh examples.
 - Word or short-sentence input with at least 1 non-space character requests
   related item recommendations instead of directly calling the report API. The
   backend asks local Gemma4 to generate four varied, implementation-ready item
@@ -145,12 +146,13 @@ database outside Docker.
   confidence, and whether they came from live HTTP or fixture fallback.
 - Local Gemma4 is scoped to organizing normalized research records for selected
   recommendations, generating business-field context from Q5 labels for the
-  supported AI-context fields, generating quick-example idea text from the six
+  supported AI-context fields, generating quick-example idea text from the two
   allowed quick-example labels, and generating item recommendations from a user
-  word or short sentence. Context and quick-example generation send only field
-  labels, not raw user ideas. Item recommendation generation sends the submitted
-  word or short sentence to the local model because that input is the generation
-  seed. Deterministic fallback must complete the request when Gemma is
+  word or short sentence. Context generation sends only field labels, and
+  quick-example generation sends only requested field labels plus a non-user
+  variation angle, not raw user ideas. Item recommendation generation sends the
+  submitted word or short sentence to the local model because that input is the
+  generation seed. Deterministic fallback must complete the request when Gemma is
   unavailable.
 
 ## Non-Goals

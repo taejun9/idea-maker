@@ -22,6 +22,9 @@ from services.api.app.schemas import (
     QuickIdeaExampleResponse,
 )
 from services.api.app.services import (
+    QUICK_EXAMPLE_DEFAULT_COUNT,
+)
+from services.api.app.services import (
     create_idea_recommendations as build_idea_recommendations,
 )
 from services.api.app.services import (
@@ -101,7 +104,7 @@ def health() -> HealthResponse:
 
 @app.get("/api/quick-idea-examples", response_model=QuickIdeaExampleResponse)
 def list_quick_idea_examples(
-    count: Annotated[int, Query(ge=1, le=10)] = 5,
+    count: Annotated[int, Query(ge=1, le=10)] = QUICK_EXAMPLE_DEFAULT_COUNT,
 ) -> QuickIdeaExampleResponse:
     return build_quick_idea_examples(count=count)
 
