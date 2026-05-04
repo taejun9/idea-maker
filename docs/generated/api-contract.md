@@ -22,13 +22,13 @@ Generated date: 2026-05-04
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `examples` | `QuickIdeaExample[]` | default five quick-start ideas; the backend asks local Gemma4 to generate the idea text and falls back to deterministic examples when the model is unavailable or invalid |
+| `examples` | `QuickIdeaExample[]` | default five quick-start ideas from the allowed quick-example fields; requests above six return at most the six allowed fields; the backend asks local Gemma4 to generate the idea text and falls back to deterministic examples when the model is unavailable or invalid |
 
 ## `QuickIdeaExample`
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `field` | string | selected Q5 business-field label, excluding `기타` |
+| `field` | string | one of `IT`, `교육`, `금융`, `라이프스타일`, `마케팅/PR`, or `미디어/엔터테인먼트` |
 | `idea` | string | 5-240 characters; AI-generated Korean idea text when Gemma succeeds |
 
 ## `IdeaReportRequest`

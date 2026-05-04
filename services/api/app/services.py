@@ -317,6 +317,15 @@ QUICK_EXAMPLE_PRODUCT_TYPES = (
     "리포트 자동화 도구",
 )
 
+QUICK_EXAMPLE_FIELDS = (
+    "IT",
+    "교육",
+    "금융",
+    "라이프스타일",
+    "마케팅/PR",
+    "미디어/엔터테인먼트",
+)
+
 QUICK_EXAMPLE_DEFAULT_COUNT = 5
 
 
@@ -360,7 +369,7 @@ def create_quick_idea_examples(
     example_generator: QuickIdeaExampleGenerator | None = None,
 ) -> QuickIdeaExampleResponse:
     randomizer = random_source or SystemRandom()
-    example_fields = [field for field in BUSINESS_FIELD_OPTIONS if field != "기타"]
+    example_fields = list(QUICK_EXAMPLE_FIELDS)
     randomizer.shuffle(example_fields)
     selected_fields = example_fields[: max(0, min(count, len(example_fields)))]
     if not selected_fields:

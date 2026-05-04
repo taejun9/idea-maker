@@ -59,8 +59,8 @@ adapters. They have explicit timeouts and must return structured fallback status
 instead of failing the report or quick-example request. Routine verification
 must not require Gemini authentication or a running llama.cpp server.
 Business-context generation is scoped to selected Q5 labels and quick-example
-generation receives only selected Q5 labels; both fall back to deterministic
-content when the local model is unavailable.
+generation receives only the six allowed quick-example labels; both fall back to
+deterministic content when the local model is unavailable.
 
 ## Incident Notes
 
