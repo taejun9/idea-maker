@@ -1,6 +1,6 @@
 # Product Specs
 
-Last reviewed: 2026-05-03
+Last reviewed: 2026-05-04
 Owner: Product / Codex
 
 ## Product Type
@@ -144,6 +144,10 @@ database outside Docker.
 - Public source feed payloads may be reused through a short-lived source-index
   cache before local filtering. Records still expose source URL, observed date,
   confidence, and whether they came from live HTTP or fixture fallback.
+- Normalized live public source records may be reused through the persistent
+  source index. The index stores source records and local deterministic source
+  vectors, not raw user ideas or saved reports. Vector retrieval can add matching
+  indexed records to later reports, with token retrieval as fallback.
 - Local Gemma4 is scoped to organizing normalized research records for selected
   recommendations, generating business-field context from Q5 labels for the
   supported AI-context fields, generating quick-example idea text from the two

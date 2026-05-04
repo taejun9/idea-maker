@@ -1,6 +1,6 @@
 # Source Collectors
 
-Last reviewed: 2026-05-03
+Last reviewed: 2026-05-04
 Owner: Backend / Codex
 
 ## Purpose
@@ -18,6 +18,12 @@ reused through a short-lived in-process source-index cache before local filterin
 Fixture records are not live market facts and must not be presented as current
 facts without a live collector or explicit browsing verification.
 
+Source-index persistence stores only indexable live public records, not fixture
+records that may include the submitted idea for deterministic report framing.
+Indexable records also receive a local deterministic source vector for retrieval.
+Retrieved source-index records are reused as normalized source records and shown
+with source URL, observed date, confidence, and a source-index note.
+
 ## Normalized Record Fields
 
 Collectors return:
@@ -32,6 +38,7 @@ Collectors return:
 - `observed_date`
 - `confidence`
 - `source_name`
+- `access_method`
 
 ## Current Collectors
 

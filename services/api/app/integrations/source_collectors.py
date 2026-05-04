@@ -17,7 +17,7 @@ from services.api.app.core.ttl_cache import TtlCache
 
 Confidence = Literal["low", "medium", "high"]
 Market = Literal["domestic_kr", "overseas"]
-AccessMethod = Literal["fixture", "live_http"]
+AccessMethod = Literal["fixture", "live_http", "source_index"]
 KOREAN_REVIEW_SEARCH_URL = (
     "https://www.google.com/search?q=%EA%B5%AD%EB%82%B4+%EB%A6%AC%EB%B7%B0+%EB%B6%84%EC%84%9D+SaaS"
 )

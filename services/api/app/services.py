@@ -1,7 +1,7 @@
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from random import Random, SystemRandom
 from typing import Protocol
 from uuid import uuid4
@@ -29,6 +29,13 @@ from services.api.app.integrations.source_collectors import (
     Market,
     NormalizedSourceRecord,
     collect_source_records,
+)
+from services.api.app.repositories.source_index import (
+    SourceIndexError,
+    SourceIndexQuery,
+    SourceIndexRepository,
+    SourceIndexRetrievalResult,
+    source_index_fallback,
 )
 from services.api.app.schemas import (
     BUSINESS_FIELD_OPTIONS,
@@ -669,12 +676,18 @@ def create_idea_report(
     search_adapter: GeminiCliSearchAdapter | None = None,
     organizer: LocalGemmaOrganizer | None = None,
     context_generator: BusinessContextGenerator | None = None,
+    source_index_repository: SourceIndexRepository | None = None,
 ) -> IdeaReportResponse:
     created_at = datetime.now(tz=UTC)
     observed = created_at.date()
     normalized_idea = payload.idea.strip()
     search_result: SearchAdapterResult | None = None
     organization: OrganizationResult | None = None
+    source_index_result = retrieve_source_index_records(
+        source_index_repository,
+        idea=normalized_idea,
+        observed_date=observed,
+    )
 
     if payload.research:
         search = search_adapter or GeminiCliSearchAdapter()
@@ -691,8 +704,13 @@ def create_idea_report(
             )
             baseline_records = baseline_records_future.result()
             search_result = search_result_future.result()
+        index_source_records(
+            source_index_repository,
+            baseline_records,
+            sensitive_text=normalized_idea,
+        )
         source_records = merge_source_records(
-            [*search_result.records, *baseline_records],
+            [*search_result.records, *source_index_result.records, *baseline_records],
         )
         organization = (organizer or LocalGemmaOrganizer()).organize(
             idea=normalized_idea,
@@ -703,7 +721,13 @@ def create_idea_report(
             idea=normalized_idea,
             observed_date=observed,
         )
+        index_source_records(
+            source_index_repository,
+            baseline_records,
+            sensitive_text=normalized_idea,
+        )
         source_records = baseline_records
+        source_records = merge_source_records([*source_index_result.records, *source_records])
         organization = default_report_organization()
 
     organization = organization or organization_fallback(
@@ -1279,6 +1303,40 @@ def merge_source_records(records: list[NormalizedSourceRecord]) -> list[Normaliz
     return list(deduped.values())
 
 
+def retrieve_source_index_records(
+    repository: SourceIndexRepository | None,
+    *,
+    idea: str,
+    observed_date: date,
+) -> SourceIndexRetrievalResult:
+    if repository is None:
+        return source_index_fallback("Source index repository is not configured.")
+    try:
+        return repository.retrieve_records(
+            SourceIndexQuery(
+                idea=idea,
+                observed_date=observed_date,
+            )
+        )
+    except SourceIndexError as exc:
+        return source_index_fallback(f"Source index retrieval unavailable: {exc}")
+
+
+def index_source_records(
+    repository: SourceIndexRepository | None,
+    records: list[NormalizedSourceRecord],
+    *,
+    sensitive_text: str,
+) -> int:
+    if repository is None:
+        return 0
+    try:
+        return repository.upsert_records(records, sensitive_text=sensitive_text)
+    except SourceIndexError:
+        # Source-index writes are best-effort; report generation keeps its collector fallback.
+        return 0
+
+
 def research_status_from_results(
     *,
     requested: bool,
@@ -1354,6 +1412,13 @@ def source_reference_note(record: NormalizedSourceRecord) -> str:
             f"{record.category} collector record. "
             "Live public source data was fetched without credentials or user-query forwarding; "
             "observed date and confidence describe collection time, not market fit."
+        )
+
+    if record.access_method == "source_index":
+        return (
+            f"{record.category} source-index record. "
+            "Public source data was retrieved from the local source index; "
+            "verify observed date and confidence before external claims."
         )
 
     return (

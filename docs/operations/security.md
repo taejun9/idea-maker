@@ -1,6 +1,6 @@
 # Security
 
-Last reviewed: 2026-05-03
+Last reviewed: 2026-05-04
 Owner: Security / Codex
 
 ## Baseline Security Policy
@@ -82,6 +82,20 @@ Forbidden:
 - Public source-index cache entries may store unauthenticated public source feed
   payloads and their observed date. They must not store raw user ideas, report
   payloads, secrets, local files, cookies, or authenticated responses.
+- Persistent RAG/source-index tables store only normalized public source
+  records from approved collectors. They must not store raw user ideas, saved
+  report payloads, authenticated responses, cookies, credentials, local files, or
+  private user exports.
+- Local deterministic source embeddings are derived from normalized public source
+  records and stored with the source index. Query vectors are computed
+  request-locally and must not be stored. Sending a submitted idea to an external
+  embedding or vector provider requires a separate product and security decision
+  that documents the provider, model, data retention, region, secrets, logging
+  posture, and Korean retrieval quality evaluation.
+- Retrieval logs may include method, source names, record counts, freshness
+  buckets, confidence buckets, and request ids. They must not include raw ideas,
+  raw prompts, full source payloads, embedding vectors, API keys, auth headers,
+  or provider request bodies.
 - Source collector tests must use fake payloads or explicit fixture fallback; routine
   verification must not depend on third-party availability.
 
@@ -94,3 +108,5 @@ Human review is required when:
 - report sharing/export changes
 - secrets, billing, or user identity is introduced
 - production deployment configuration changes
+- persistent source-index tables, embeddings, vector search, or a new retrieval
+  provider are introduced

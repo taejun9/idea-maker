@@ -12,6 +12,11 @@ from services.api.app.repositories.idea_reports import (
     InMemoryIdeaReportRepository,
     PostgresIdeaReportRepository,
 )
+from services.api.app.repositories.source_index import (
+    InMemorySourceIndexRepository,
+    PostgresSourceIndexRepository,
+    SourceIndexRepository,
+)
 from services.api.app.schemas import (
     HealthResponse,
     IdeaRecommendationRequest,
@@ -76,14 +81,25 @@ def build_idea_report_repository(
     return InMemoryIdeaReportRepository()
 
 
+def build_source_index_repository(
+    environment: Mapping[str, str] = os.environ,
+) -> SourceIndexRepository:
+    configured_database_url = database_url(environment)
+    if configured_database_url:
+        return PostgresSourceIndexRepository(configured_database_url)
+    return InMemorySourceIndexRepository()
+
+
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI) -> AsyncIterator[None]:
     app_instance.state.idea_report_repository.ensure_schema()
+    app_instance.state.source_index_repository.ensure_schema()
     yield
 
 
 app = FastAPI(title="Idea Maker API", lifespan=lifespan)
 app.state.idea_report_repository = build_idea_report_repository()
+app.state.source_index_repository = build_source_index_repository()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_cors_origins(),
@@ -95,6 +111,10 @@ app.add_middleware(
 
 def idea_report_repository() -> IdeaReportRepository:
     return app.state.idea_report_repository
+
+
+def source_index_repository() -> SourceIndexRepository:
+    return app.state.source_index_repository
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -111,7 +131,10 @@ def list_quick_idea_examples(
 
 @app.post("/api/idea-reports", response_model=IdeaReportResponse)
 def create_idea_report(payload: IdeaReportRequest) -> IdeaReportResponse:
-    report = build_idea_report(payload)
+    report = build_idea_report(
+        payload,
+        source_index_repository=source_index_repository(),
+    )
     idea_report_repository().save_report(report)
     return report
 

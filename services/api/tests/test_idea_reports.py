@@ -1,3 +1,4 @@
+from datetime import date
 from random import Random
 from threading import Event
 from uuid import uuid4
@@ -29,6 +30,7 @@ from services.api.app.integrations.source_collectors import (
 )
 from services.api.app.main import allowed_cors_origins, app
 from services.api.app.repositories.idea_reports import InMemoryIdeaReportRepository
+from services.api.app.repositories.source_index import InMemorySourceIndexRepository
 from services.api.app.schemas import (
     IdeaRecommendationRequest,
     IdeaReportRequest,
@@ -47,9 +49,12 @@ from services.api.app.services import (
 @pytest.fixture(autouse=True)
 def use_in_memory_report_repository():
     original_repository = app.state.idea_report_repository
+    original_source_index_repository = app.state.source_index_repository
     app.state.idea_report_repository = InMemoryIdeaReportRepository()
+    app.state.source_index_repository = InMemorySourceIndexRepository()
     yield
     app.state.idea_report_repository = original_repository
+    app.state.source_index_repository = original_source_index_repository
 
 
 @pytest.fixture(autouse=True)
@@ -435,6 +440,44 @@ def test_create_idea_report_does_not_call_ai_context_for_other_fields(
 
     assert report.idea_intake_questions[4].answer == "운영관리"
     assert any("현장 운영 매니저" in item for item in report.target_users)
+
+
+def test_create_idea_report_uses_preloaded_source_index_records(monkeypatch) -> None:
+    monkeypatch.setattr(UrlFetchingSourceClient, "fetch_json", fail_live_source_fetch)
+    source_index_repository = InMemorySourceIndexRepository()
+    source_index_repository.upsert_records(
+        [
+            NormalizedSourceRecord(
+                title="ReviewRadar",
+                url="https://example.com/reviewradar",
+                market="overseas",
+                category="startup directory live HTTP record",
+                summary="Review analysis for customer feedback operations.",
+                strengths=("Public indexed source record",),
+                weaknesses=("Needs market-fit verification",),
+                observed_date=date(2026, 5, 4),
+                confidence="medium",
+                source_name="Test Directory",
+                access_method="live_http",
+            )
+        ],
+        sensitive_text="리뷰 분석 도구",
+    )
+
+    report = create_idea_report(
+        IdeaReportRequest(idea="리뷰 분석 도구를 만드는 서비스"),
+        source_index_repository=source_index_repository,
+    )
+
+    assert "ReviewRadar" in [
+        competitor.name for competitor in report.overseas_competitors
+    ]
+    indexed_reference = next(
+        reference
+        for reference in report.source_references
+        if reference.source_url == "https://example.com/reviewradar"
+    )
+    assert "source-index record" in indexed_reference.note
 
 
 def test_create_idea_report_falls_back_when_ai_context_generation_fails(

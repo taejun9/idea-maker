@@ -12,6 +12,11 @@
 - 국내 경쟁 서비스와 해외 경쟁 서비스를 분리해 시장 맥락을 비교할 수 있게 한다.
 - Product Hunt, PitchWall, BetaList 같은 공개 출처는 참고 자료로 쓰되, 출처 URL, 관측일, 신뢰도 메모를 함께 남긴다.
 - 로컬 Gemma4와 Gemini CLI 같은 선택적 AI/research adapter를 활용하되, 사용할 수 없을 때도 deterministic fallback으로 흐름을 완료한다.
+- 현재 research 경로는 PostgreSQL 기반 공개 source index와 로컬
+  deterministic vector retrieval을 활용할 수 있다. 외부 embedding provider,
+  pgvector, 별도 vector service는 아직 도입하지 않았고, 품질 평가와
+  보안 결정이 끝난 경우에만 provider-backed embedding/vector 단계로
+  확장한다.
 - Codex가 반복 가능하게 구현, 검증, 문서 갱신을 수행하도록 저장소 운영 규칙을 문서와 스크립트로 관리한다.
 
 ## 주요 사용자

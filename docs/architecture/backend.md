@@ -1,6 +1,6 @@
 # Backend
 
-Last reviewed: 2026-05-03
+Last reviewed: 2026-05-04
 Owner: Backend / Codex
 
 ## Stack
@@ -76,6 +76,30 @@ Research report generation starts baseline source collection and Gemini CLI
 search in parallel because both depend only on the normalized idea and observed
 date. Gemma organization still runs after records are merged so the organizer has
 the full evidence set.
+
+## RAG / Source Index Boundary
+
+The current research path is source-augmented generation with persistent
+source-index retrieval and local deterministic vector scoring. Future
+provider-backed RAG work must keep the same backend boundaries:
+
+- collectors and retrieval modules return normalized source records
+- repositories own PostgreSQL source-index reads and writes
+- services orchestrate retrieval, merging, and report organization
+- routes do not call collectors, embedding providers, vector search, SQL, or
+  subprocesses directly
+
+The current implementation persists normalized public source records, stores
+JSONB local source embeddings, and retrieves with token-gated vector scoring
+before token fallback. External embedding providers or `pgvector` may be added
+only after the source schema, freshness rules, invalidation, and retrieval
+evaluation method are accepted.
+
+The retrieval contract returns source records plus status, method, and notes.
+Report output marks indexed records with `access_method="source_index"` through
+their source-reference note. Retrieval must not leak vector ids, provider
+metadata, raw collector payloads, credentials, or untrusted source instructions
+into report generation. Query vectors are request-local and are not persisted.
 
 Runtime configuration:
 

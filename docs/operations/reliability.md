@@ -1,6 +1,6 @@
 # Reliability
 
-Last reviewed: 2026-05-03
+Last reviewed: 2026-05-04
 Owner: Reliability / Codex
 
 ## Reliability Goals
@@ -78,6 +78,20 @@ Public source feed payloads can be cached briefly before local filtering. The
 cache stores only the public feed payload and its observed date, not user ideas or
 per-user report output. A source fetch failure is not cached and continues to use
 the existing fixture fallback path.
+
+Persistent RAG/source-index work preserves the same failure posture. Source
+index retrieval returns structured `success`, `partial`, or `fallback` status.
+Token-gated vector retrieval runs first, token retrieval is the deterministic
+fallback when no vector match is available, and report generation continues with
+available collector records when the index is empty, stale, or unavailable. A
+stale indexed record stays labeled by its observed date and confidence; storage
+does not upgrade fixture records into live market facts.
+
+Retrieval evaluation must be reproducible without live third-party services.
+Routine verification should use checked-in source fixtures for ordering,
+freshness filtering, duplicate handling, and domestic/overseas separation. Live
+collector smoke checks should run separately on a documented cadence because
+external directories can drift or rate-limit.
 
 ## Generation Latency Budget
 
