@@ -6,10 +6,14 @@ from fastapi.testclient import TestClient
 
 from services.api.app.integrations.research_adapters import (
     BusinessContextGenerationResult,
+    GeneratedQuickIdeaExample,
     LocalGemmaBusinessContextGenerator,
+    LocalGemmaQuickIdeaExampleGenerator,
     OrganizationResult,
+    QuickIdeaExamplesGenerationResult,
     SearchAdapterResult,
     business_context_generation_fallback,
+    quick_idea_examples_generation_fallback,
 )
 from services.api.app.integrations.source_collectors import (
     NormalizedSourceRecord,
@@ -43,6 +47,17 @@ def disable_live_business_context_generation(monkeypatch):
         )
 
     monkeypatch.setattr(LocalGemmaBusinessContextGenerator, "generate", fallback_context)
+
+    def fallback_examples(
+        self,
+        *,
+        fields: tuple[str, ...],
+    ) -> QuickIdeaExamplesGenerationResult:
+        return quick_idea_examples_generation_fallback(
+            "network disabled in deterministic API tests"
+        )
+
+    monkeypatch.setattr(LocalGemmaQuickIdeaExampleGenerator, "generate", fallback_examples)
 
 
 def fail_live_source_fetch(self, url: str, *, timeout_seconds: float) -> object:
@@ -394,6 +409,36 @@ def test_create_quick_idea_examples_randomizes_generated_output() -> None:
     assert len(first_response.examples) == 5
     assert len(second_response.examples) == 5
     assert first_response.examples != second_response.examples
+
+
+def test_create_quick_idea_examples_uses_ai_generated_output() -> None:
+    class FakeQuickIdeaExampleGenerator:
+        def generate(
+            self,
+            *,
+            fields: tuple[str, ...],
+        ) -> QuickIdeaExamplesGenerationResult:
+            return QuickIdeaExamplesGenerationResult(
+                provider="gemma4",
+                status="success",
+                examples=tuple(
+                    GeneratedQuickIdeaExample(
+                        field=field,
+                        idea=f"{field} 분야 사용자가 반복 문제를 해결하는 AI 생성 예시",
+                    )
+                    for field in fields
+                ),
+                notes=("fake AI quick examples used",),
+            )
+
+    response = create_quick_idea_examples(
+        count=3,
+        random_source=Random(3),
+        example_generator=FakeQuickIdeaExampleGenerator(),
+    )
+
+    assert len(response.examples) == 3
+    assert all("AI 생성 예시" in example.idea for example in response.examples)
 
 
 def test_quick_idea_example_uses_ai_business_context_for_requested_field() -> None:

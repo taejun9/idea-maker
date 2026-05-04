@@ -9,7 +9,9 @@ from services.api.app.integrations.research_adapters import (
     GeminiCliSearchAdapter,
     LocalGemmaBusinessContextGenerator,
     LocalGemmaOrganizer,
+    LocalGemmaQuickIdeaExampleGenerator,
     OrganizationResult,
+    QuickIdeaExamplesGenerationResult,
     SearchAdapterResult,
     organization_fallback,
 )
@@ -341,16 +343,38 @@ class BusinessContextGenerator(Protocol):
         ...
 
 
+class QuickIdeaExampleGenerator(Protocol):
+    def generate(
+        self,
+        *,
+        fields: tuple[str, ...],
+    ) -> QuickIdeaExamplesGenerationResult:
+        ...
+
+
 def create_quick_idea_examples(
     *,
     count: int = QUICK_EXAMPLE_DEFAULT_COUNT,
     random_source: Random | SystemRandom | None = None,
     context_generator: BusinessContextGenerator | None = None,
+    example_generator: QuickIdeaExampleGenerator | None = None,
 ) -> QuickIdeaExampleResponse:
     randomizer = random_source or SystemRandom()
     example_fields = [field for field in BUSINESS_FIELD_OPTIONS if field != "기타"]
     randomizer.shuffle(example_fields)
     selected_fields = example_fields[: max(0, min(count, len(example_fields)))]
+    if not selected_fields:
+        return QuickIdeaExampleResponse(examples=[])
+
+    generator = example_generator or LocalGemmaQuickIdeaExampleGenerator()
+    generated_examples = generator.generate(fields=tuple(selected_fields))
+    if generated_examples.status == "success":
+        return QuickIdeaExampleResponse(
+            examples=[
+                QuickIdeaExample(field=example.field, idea=example.idea)
+                for example in generated_examples.examples
+            ],
+        )
 
     return QuickIdeaExampleResponse(
         examples=[
@@ -370,7 +394,11 @@ def quick_idea_example_for_field(
     *,
     context_generator: BusinessContextGenerator | None = None,
 ) -> QuickIdeaExample:
-    context = business_field_context(field, context_generator=context_generator)
+    context = (
+        business_field_context(field, context_generator=context_generator)
+        if context_generator is not None
+        else BUSINESS_FIELD_REPORT_CONTEXTS.get(field, BUSINESS_FIELD_REPORT_CONTEXTS["기타"])
+    )
     template = randomizer.choice(QUICK_EXAMPLE_TEMPLATES)
     idea = template.format(
         field=field,
