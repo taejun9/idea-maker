@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { deleteIdeaReport, listIdeaReports } from '../../api/ideaReports';
 import type { IdeaReportSummary } from '../../types/ideaReport';
+import LoadingAnimation from '../../components/ui/LoadingAnimation.vue';
 
 const reports = ref<IdeaReportSummary[]>([]);
 const isLoading = ref(true);
@@ -73,13 +74,12 @@ function businessFieldLabel(value: string | null | undefined) {
       </h1>
     </header>
 
-    <p
+    <div
       v-if="isLoading"
-      class="flex items-center justify-center rounded-2xl bg-white p-12 text-sm font-medium text-slate-500 shadow-sm ring-1 ring-slate-200/60"
-      role="status"
+      class="flex items-center justify-center rounded-2xl bg-white p-12 shadow-sm ring-1 ring-slate-200/60"
     >
-      보고서 목록을 불러오고 있습니다.
-    </p>
+      <LoadingAnimation message="보고서 목록을 불러오고 있습니다." size="md" />
+    </div>
 
     <p
       v-else-if="errorMessage"

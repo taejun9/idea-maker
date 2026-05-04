@@ -14,6 +14,7 @@ import type {
   SourceConfidence,
 } from '../../types/ideaReport';
 import IdeaIntakeQuestions from './IdeaIntakeQuestions.vue';
+import LoadingAnimation from '../../components/ui/LoadingAnimation.vue';
 import { quickExampleBusinessFields } from './quickExamples';
 
 const minIdeaLength = 5;
@@ -441,15 +442,13 @@ function formatDateTime(value: string) {
 
       <fieldset class="grid gap-2">
         <legend class="text-sm font-medium text-slate-700">빠른 예시</legend>
-        <p
+        <LoadingAnimation
           v-if="isQuickExamplesLoading"
-          class="text-sm text-slate-600"
+          message="빠른 예시를 불러오고 있습니다."
+          size="sm"
+          layout="row"
           data-testid="quick-examples-loading"
-          role="status"
-          aria-live="polite"
-        >
-          빠른 예시를 불러오고 있습니다.
-        </p>
+        />
         <div v-if="ideaExamples.length > 0" class="flex flex-wrap gap-3">
           <button
             v-for="example in ideaExamples"
@@ -576,22 +575,18 @@ function formatDateTime(value: string) {
         >
           {{ submitButtonLabel }}
         </button>
-        <p
+        <LoadingAnimation
           v-if="isLoading && loadingMode === 'report'"
-          class="text-sm text-slate-600"
-          role="status"
-          aria-live="polite"
-        >
-          보고서를 준비하고 있습니다.
-        </p>
-        <p
+          message="보고서를 준비하고 있습니다."
+          size="sm"
+          layout="row"
+        />
+        <LoadingAnimation
           v-if="isLoading && loadingMode === 'recommendations'"
-          class="text-sm text-slate-600"
-          role="status"
-          aria-live="polite"
-        >
-          추천 아이템을 찾고 있습니다.
-        </p>
+          message="추천 아이템을 찾고 있습니다."
+          size="sm"
+          layout="row"
+        />
         <p
           v-if="errorMessage"
           data-testid="report-error"
