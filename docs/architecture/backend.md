@@ -57,6 +57,12 @@ validates JSON output, and falls back to deterministic context when unavailable.
 labels to Gemma, validates one generated idea per requested field, and falls
 back to deterministic examples when the adapter is unavailable or invalid.
 
+`LocalGemmaIdeaRecommendationGenerator` uses the same boundary for
+`POST /api/idea-recommendations`. It receives the submitted word or short
+sentence, asks Gemma for four concrete Korean item recommendations, validates
+JSON shape, uniqueness, and connection to at least one input term, then falls
+back to deterministic field-aware recommendations when unavailable or invalid.
+
 Runtime configuration:
 
 - `GEMINI_CLI_COMMAND`, default `gemini`
@@ -72,6 +78,8 @@ Runtime configuration:
 - `LOCAL_GEMMA_QUICK_EXAMPLES_TIMEOUT_SECONDS`, default `180`, used for
   quick-example idea generation because page-load examples may tolerate slower
   model responses
+- `LOCAL_GEMMA_RECOMMENDATIONS_TIMEOUT_SECONDS`, default `180`, used for
+  AI-generated item recommendations from short user input
 
 Routes must not call subprocesses or HTTP adapters directly; this logic belongs in service/integration modules.
 The API Docker image includes Node 22 and `@google/gemini-cli` so Docker Compose

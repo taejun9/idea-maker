@@ -78,6 +78,22 @@ class QuickIdeaExamplesGenerationResult:
     notes: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class GeneratedIdeaRecommendation:
+    title: str
+    summary: str
+    rationale: str
+    report_seed: str
+
+
+@dataclass(frozen=True)
+class IdeaRecommendationsGenerationResult:
+    provider: ResearchProvider
+    status: ResearchStageStatus
+    recommendations: tuple[GeneratedIdeaRecommendation, ...]
+    notes: tuple[str, ...]
+
+
 class GeminiSearchItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -128,6 +144,24 @@ class GemmaQuickIdeaExamplesPayload(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     examples: list[GemmaQuickIdeaExampleItem] = Field(min_length=1, max_length=10)
+
+
+class GemmaIdeaRecommendationItem(BaseModel):
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    title: str = Field(min_length=3, max_length=80)
+    summary: str = Field(min_length=10, max_length=180)
+    rationale: str = Field(min_length=10, max_length=220)
+    report_seed: str = Field(min_length=5, max_length=240)
+
+
+class GemmaIdeaRecommendationsPayload(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    recommendations: list[GemmaIdeaRecommendationItem] = Field(
+        min_length=4,
+        max_length=4,
+    )
 
 
 class GeminiCliSearchAdapter:
@@ -489,6 +523,95 @@ class LocalGemmaQuickIdeaExampleGenerator:
         )
 
 
+class LocalGemmaIdeaRecommendationGenerator:
+    def __init__(
+        self,
+        *,
+        base_url: str | None = None,
+        model: str | None = None,
+        timeout_seconds: float | None = None,
+        environment: Mapping[str, str] = os.environ,
+    ) -> None:
+        self.base_url = (
+            base_url or environment.get("LOCAL_GEMMA_BASE_URL", DEFAULT_GEMMA_BASE_URL)
+        ).rstrip("/")
+        self.model = model or environment.get("LOCAL_GEMMA_MODEL", DEFAULT_GEMMA_MODEL)
+        self.timeout_seconds = timeout_seconds or float(
+            environment.get("LOCAL_GEMMA_RECOMMENDATIONS_TIMEOUT_SECONDS", "180")
+        )
+
+    def generate(
+        self,
+        *,
+        keyword: str,
+    ) -> IdeaRecommendationsGenerationResult:
+        request_body = json.dumps(
+            {
+                "model": self.model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You create concise Korean product/startup item "
+                            "recommendations. Return only a JSON object that "
+                            "matches the requested schema."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": gemma_idea_recommendations_prompt(keyword),
+                    },
+                ],
+                "temperature": 0.85,
+                "max_tokens": 1200,
+                "response_format": {"type": "json_object"},
+                "chat_template_kwargs": {"enable_thinking": False},
+            },
+            ensure_ascii=False,
+        ).encode("utf-8")
+        request = Request(
+            f"{self.base_url}/v1/chat/completions",
+            data=request_body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        try:
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                raw_body = response.read(250_000)
+        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            return item_recommendations_generation_fallback(
+                f"Gemma item recommendation generator unavailable: {exc}"
+            )
+
+        try:
+            response_payload = json.loads(raw_body.decode("utf-8"))
+            content = response_payload["choices"][0]["message"]["content"]
+            payload = GemmaIdeaRecommendationsPayload.model_validate(
+                parse_json_object(content)
+            )
+            recommendations = validated_idea_recommendations(payload, keyword)
+        except (
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            KeyError,
+            IndexError,
+            TypeError,
+            ValidationError,
+            ValueError,
+        ) as exc:
+            return item_recommendations_generation_fallback(
+                f"Gemma item recommendation output was not valid JSON: {exc}"
+            )
+
+        return IdeaRecommendationsGenerationResult(
+            provider="gemma4",
+            status="success",
+            recommendations=recommendations,
+            notes=(f"Gemma generated {len(recommendations)} item recommendations.",),
+        )
+
+
 def search_fallback(reason: str) -> SearchAdapterResult:
     return SearchAdapterResult(
         provider="fallback",
@@ -560,6 +683,17 @@ def quick_idea_examples_generation_fallback(
     )
 
 
+def item_recommendations_generation_fallback(
+    reason: str,
+) -> IdeaRecommendationsGenerationResult:
+    return IdeaRecommendationsGenerationResult(
+        provider="fallback",
+        status="fallback",
+        recommendations=(),
+        notes=(reason, "Using deterministic item recommendations instead of local Gemma4."),
+    )
+
+
 def validated_quick_idea_examples(
     payload: GemmaQuickIdeaExamplesPayload,
     requested_fields: tuple[str, ...],
@@ -583,6 +717,67 @@ def validated_quick_idea_examples(
         )
 
     return tuple(examples_by_field[field] for field in requested_fields)
+
+
+def validated_idea_recommendations(
+    payload: GemmaIdeaRecommendationsPayload,
+    keyword: str,
+) -> tuple[GeneratedIdeaRecommendation, ...]:
+    keyword_terms = normalized_keyword_terms(keyword)
+    seen_titles: set[str] = set()
+    seen_report_seeds: set[str] = set()
+    recommendations: list[GeneratedIdeaRecommendation] = []
+
+    for item in payload.recommendations:
+        title_key = item.title.casefold()
+        report_seed_key = item.report_seed.casefold()
+        if title_key in seen_titles:
+            raise ValueError(f"duplicate item recommendation title: {item.title}")
+        if report_seed_key in seen_report_seeds:
+            raise ValueError(
+                f"duplicate item recommendation report_seed: {item.report_seed}"
+            )
+
+        combined_text = normalized_keyword_match_text(
+            item.title,
+            item.summary,
+            item.rationale,
+            item.report_seed,
+        )
+        if keyword_terms and not any(term in combined_text for term in keyword_terms):
+            raise ValueError(
+                f"item recommendation is not tied to keyword: {item.title}"
+            )
+
+        seen_titles.add(title_key)
+        seen_report_seeds.add(report_seed_key)
+        recommendations.append(
+            GeneratedIdeaRecommendation(
+                title=item.title,
+                summary=item.summary,
+                rationale=item.rationale,
+                report_seed=item.report_seed,
+            )
+        )
+
+    return tuple(recommendations)
+
+
+def normalized_keyword_terms(keyword: str) -> tuple[str, ...]:
+    return tuple(
+        dict.fromkeys(
+            term
+            for term in (
+                token.strip().casefold().replace(" ", "")
+                for token in keyword.split()
+            )
+            if term
+        )
+    )
+
+
+def normalized_keyword_match_text(*values: str) -> str:
+    return " ".join(values).casefold().replace(" ", "")
 
 
 def gemini_subprocess_environment(environment: Mapping[str, str]) -> dict[str, str]:
@@ -680,4 +875,22 @@ def gemma_quick_idea_examples_prompt(fields: tuple[str, ...]) -> str:
         "characters, concrete enough to click as a starter idea, and should describe "
         "a user, problem, and product shape. Avoid markdown, numbering, placeholders, "
         "generic slogans, and repeated product wording."
+    )
+
+
+def gemma_idea_recommendations_prompt(keyword: str) -> str:
+    return (
+        "Generate exactly four Korean startup/product item recommendations from the "
+        "user's word or short sentence. Return only JSON with this exact schema: "
+        '{"recommendations":[{"title":"item title","summary":"short summary",'
+        '"rationale":"why it fits the input","report_seed":"full idea for report"}]}. '
+        "Rules: every item must be realistically implementable as an MVP in 2-6 weeks; "
+        "each item should describe a specific user, problem, and product shape; make the "
+        "four items meaningfully different from each other; include or clearly reuse at "
+        "least one term from the user input in each title, summary, rationale, or "
+        "report_seed; do not invent market facts, company names, URLs, statistics, or "
+        "claims of current adoption; avoid markdown, numbering, placeholders, generic "
+        "slogans, and repeated product wording. All values must be concise Korean "
+        "strings suitable for a startup idea report.\n\n"
+        f"User input: {keyword}"
     )

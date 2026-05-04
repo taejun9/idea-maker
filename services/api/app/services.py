@@ -7,7 +7,10 @@ from uuid import uuid4
 from services.api.app.integrations.research_adapters import (
     BusinessContextGenerationResult,
     GeminiCliSearchAdapter,
+    GeneratedIdeaRecommendation,
+    IdeaRecommendationsGenerationResult,
     LocalGemmaBusinessContextGenerator,
+    LocalGemmaIdeaRecommendationGenerator,
     LocalGemmaOrganizer,
     LocalGemmaQuickIdeaExampleGenerator,
     OrganizationResult,
@@ -40,6 +43,7 @@ from services.api.app.schemas import (
 
 RECOMMENDATION_PATTERNS = (
     {
+        "fields": ("마케팅/PR", "운영관리"),
         "title": "{keyword} 고객 반응 분석 도구",
         "summary": "{keyword} 관련 리뷰, 문의, 피드백을 모아 반복 이슈를 보여주는 운영 도구",
         "rationale": "고객 목소리를 구조화하면 초기 MVP 문제 정의와 경쟁 분석이 쉬워집니다.",
@@ -49,18 +53,21 @@ RECOMMENDATION_PATTERNS = (
         ),
     },
     {
+        "fields": ("운영관리", "IT"),
         "title": "{keyword} 업무 자동화 체크리스트",
         "summary": "{keyword} 업무를 단계별 체크리스트와 자동 알림으로 관리하는 팀 생산성 도구",
         "rationale": "한 단어 아이디어를 반복 업무 절감이라는 명확한 가치로 확장합니다.",
         "report_seed": "{keyword} 업무를 체크리스트와 자동 알림으로 표준화하는 팀 생산성 서비스",
     },
     {
+        "fields": ("공통",),
         "title": "{keyword} 시장 기회 대시보드",
         "summary": "{keyword} 관련 경쟁 서비스, 가격, 사용자 반응을 한 화면에 정리하는 리서치 도구",
         "rationale": "시장 조사와 포지셔닝을 먼저 확인해야 보고서의 경쟁 분석 품질이 올라갑니다.",
         "report_seed": "{keyword} 분야의 경쟁 서비스와 사용자 반응을 추적하는 시장 기회 대시보드",
     },
     {
+        "fields": ("공통", "라이프스타일", "미디어/엔터테인먼트"),
         "title": "{keyword} 맞춤 추천 큐레이터",
         "summary": (
             "사용자 상황을 받아 {keyword} 관련 콘텐츠, 서비스, 실행 과제를 추천하는 "
@@ -71,6 +78,84 @@ RECOMMENDATION_PATTERNS = (
         ),
         "report_seed": (
             "사용자 상황에 맞춰 {keyword} 관련 콘텐츠와 실행 과제를 추천하는 큐레이션 서비스"
+        ),
+    },
+    {
+        "fields": ("교육",),
+        "title": "{keyword} 학습 루틴 코치",
+        "summary": "{keyword} 학습 기록을 받아 다음 복습 과제와 피드백을 제안하는 교육 앱",
+        "rationale": "학습 맥락으로 좁히면 사용자, 반복 행동, 성과 지표가 명확해집니다.",
+        "report_seed": "{keyword} 학습 기록을 분석해 개인별 복습 루틴을 추천하는 교육 코치 앱",
+    },
+    {
+        "fields": ("금융", "재무"),
+        "title": "{keyword} 비용 알림 플래너",
+        "summary": "{keyword} 관련 지출, 수수료, 갱신 일정을 모아 절약 행동을 알려주는 도구",
+        "rationale": "금융/재무 아이디어는 비교와 알림 중심 MVP로 빠르게 검증할 수 있습니다.",
+        "report_seed": "{keyword} 비용과 조건 변화를 추적해 절약 행동을 제안하는 재무 관리 서비스",
+    },
+    {
+        "fields": ("유통/물류",),
+        "title": "{keyword} 재고·반품 관리 보드",
+        "summary": "{keyword} 판매 흐름에서 재고 부족, 반품 사유, 처리 상태를 관리하는 운영 보드",
+        "rationale": "커머스 문제는 현장 운영자가 매일 보는 상태 관리 화면으로 시작하기 좋습니다.",
+        "report_seed": (
+            "{keyword} 판매자의 재고와 반품 이슈를 한 화면에서 관리하는 "
+            "커머스 운영 도구"
+        ),
+    },
+    {
+        "fields": ("네트워킹",),
+        "title": "{keyword} 목적 기반 매칭 서비스",
+        "summary": "{keyword} 관심사와 목적을 입력하면 대화할 사람과 첫 메시지를 추천하는 서비스",
+        "rationale": "네트워킹 아이디어는 매칭 기준과 후속 행동을 함께 검증해야 합니다.",
+        "report_seed": (
+            "{keyword} 관심사를 기반으로 적합한 사람과 첫 대화 주제를 "
+            "추천하는 매칭 서비스"
+        ),
+    },
+    {
+        "fields": ("미디어/엔터테인먼트",),
+        "title": "{keyword} 콘텐츠 기획 캘린더",
+        "summary": "{keyword} 소재를 짧은 콘텐츠 기획안, 일정, 배포 체크리스트로 바꾸는 도구",
+        "rationale": (
+            "콘텐츠 분야는 반복 제작 과정을 줄이는 작은 워크플로우부터 "
+            "검증할 수 있습니다."
+        ),
+        "report_seed": "{keyword} 소재를 숏폼 콘텐츠 기획안과 배포 일정으로 변환하는 제작 도구",
+    },
+    {
+        "fields": ("라이프스타일",),
+        "title": "{keyword} 생활 루틴 실험 앱",
+        "summary": "{keyword} 목표를 작은 일일 실험과 기록 카드로 쪼개 지속 여부를 확인하는 앱",
+        "rationale": "라이프스타일 아이디어는 가벼운 반복 사용과 성취 피드백이 핵심입니다.",
+        "report_seed": "{keyword} 목표를 일일 실험과 기록 루틴으로 관리하는 라이프스타일 앱",
+    },
+    {
+        "fields": ("IT",),
+        "title": "{keyword} 노코드 워크플로우 봇",
+        "summary": "{keyword} 관련 반복 입력, 분류, 알림을 노코드 규칙으로 자동화하는 SaaS",
+        "rationale": "IT 아이디어는 좁은 반복 업무 자동화로 초기 가치를 빠르게 보여줄 수 있습니다.",
+        "report_seed": "{keyword} 반복 업무를 노코드 규칙과 알림으로 자동화하는 워크플로우 SaaS",
+    },
+    {
+        "fields": ("공통",),
+        "title": "{keyword} 검증 랜딩 실험 키트",
+        "summary": "{keyword} 가설, 랜딩 문구, 인터뷰 질문, 신청 폼을 한 번에 만드는 검증 도구",
+        "rationale": "구현 전 수요를 확인할 수 있어 실제 MVP 범위를 줄이는 데 도움이 됩니다.",
+        "report_seed": "{keyword} 아이디어의 랜딩 페이지 문구와 인터뷰 질문을 생성하는 검증 키트",
+    },
+    {
+        "fields": ("공통",),
+        "title": "{keyword} 전문가 상담 마켓",
+        "summary": (
+            "{keyword} 문제를 가진 사용자와 짧은 상담을 제공할 전문가를 "
+            "연결하는 마켓플레이스"
+        ),
+        "rationale": "전문가 연결형 MVP는 공급자와 수요자의 반복 문제를 빠르게 확인할 수 있습니다.",
+        "report_seed": (
+            "{keyword} 문제 해결을 원하는 사용자와 전문가를 연결하는 "
+            "짧은 상담 마켓플레이스"
         ),
     },
 )
@@ -361,6 +446,15 @@ class QuickIdeaExampleGenerator(Protocol):
         ...
 
 
+class IdeaRecommendationGenerator(Protocol):
+    def generate(
+        self,
+        *,
+        keyword: str,
+    ) -> IdeaRecommendationsGenerationResult:
+        ...
+
+
 def create_quick_idea_examples(
     *,
     count: int = QUICK_EXAMPLE_DEFAULT_COUNT,
@@ -562,20 +656,83 @@ def report_business_field(report: IdeaReportResponse) -> str:
 
 def create_idea_recommendations(
     payload: IdeaRecommendationRequest,
+    *,
+    recommendation_generator: IdeaRecommendationGenerator | None = None,
 ) -> IdeaRecommendationResponse:
     keyword = payload.keyword.strip()
+    generator = recommendation_generator or LocalGemmaIdeaRecommendationGenerator()
+    generation = generator.generate(keyword=keyword)
+    if generation.status == "success":
+        return IdeaRecommendationResponse(
+            keyword=keyword,
+            recommendations=[
+                idea_recommendation_from_generated(recommendation)
+                for recommendation in generation.recommendations
+            ],
+        )
+
     return IdeaRecommendationResponse(
         keyword=keyword,
-        recommendations=[
-            IdeaRecommendation(
-                title=pattern["title"].format(keyword=keyword),
-                summary=pattern["summary"].format(keyword=keyword),
-                rationale=pattern["rationale"].format(keyword=keyword),
-                report_seed=pattern["report_seed"].format(keyword=keyword),
-            )
-            for pattern in RECOMMENDATION_PATTERNS
-        ],
+        recommendations=deterministic_idea_recommendations(keyword),
     )
+
+
+def idea_recommendation_from_generated(
+    recommendation: GeneratedIdeaRecommendation,
+) -> IdeaRecommendation:
+    return IdeaRecommendation(
+        title=recommendation.title,
+        summary=recommendation.summary,
+        rationale=recommendation.rationale,
+        report_seed=recommendation.report_seed,
+    )
+
+
+def deterministic_idea_recommendations(keyword: str) -> list[IdeaRecommendation]:
+    business_field = infer_business_field(keyword)
+    field_patterns = [
+        pattern
+        for pattern in RECOMMENDATION_PATTERNS
+        if business_field in pattern["fields"]
+    ]
+    common_patterns = [
+        pattern for pattern in RECOMMENDATION_PATTERNS if "공통" in pattern["fields"]
+    ]
+    other_patterns = [
+        pattern
+        for pattern in RECOMMENDATION_PATTERNS
+        if business_field not in pattern["fields"] and "공통" not in pattern["fields"]
+    ]
+
+    selected_patterns: list[dict[str, object]] = []
+    selected_patterns.extend(rotated_patterns(field_patterns, keyword)[:2])
+    common_target = 4 - len(selected_patterns)
+    selected_patterns.extend(rotated_patterns(common_patterns, keyword)[:common_target])
+    if len(selected_patterns) < 4:
+        selected_patterns.extend(
+            rotated_patterns(other_patterns, keyword)[: 4 - len(selected_patterns)]
+        )
+
+    return [
+        IdeaRecommendation(
+            title=str(pattern["title"]).format(keyword=keyword),
+            summary=str(pattern["summary"]).format(keyword=keyword),
+            rationale=str(pattern["rationale"]).format(keyword=keyword),
+            report_seed=str(pattern["report_seed"]).format(keyword=keyword),
+        )
+        for pattern in selected_patterns[:4]
+    ]
+
+
+def rotated_patterns(
+    patterns: list[dict[str, object]],
+    keyword: str,
+) -> list[dict[str, object]]:
+    if not patterns:
+        return []
+    offset = sum((index + 1) * ord(character) for index, character in enumerate(keyword))
+    offset %= len(patterns)
+    return [*patterns[offset:], *patterns[:offset]]
 
 
 def report_overview(

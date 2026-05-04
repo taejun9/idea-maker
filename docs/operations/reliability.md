@@ -54,13 +54,16 @@ no retry inside the request path, and deterministic fixture fallback when the en
 fails or no local token match is found.
 
 Gemini CLI search, local Gemma4 organization, local Gemma4 business-context
-generation, and local Gemma4 quick-example generation are optional request-path
-adapters. They have explicit timeouts and must return structured fallback status
-instead of failing the report or quick-example request. Routine verification
-must not require Gemini authentication or a running llama.cpp server.
-Business-context generation is scoped to selected Q5 labels and quick-example
-generation receives only the six allowed quick-example labels; both fall back to
-deterministic content when the local model is unavailable.
+generation, local Gemma4 quick-example generation, and local Gemma4 item
+recommendation generation are optional request-path adapters. They have explicit
+timeouts and must return structured fallback status instead of failing the report,
+quick-example, or recommendation request. Routine verification must not require
+Gemini authentication or a running llama.cpp server. Business-context generation
+is scoped to selected Q5 labels and quick-example generation receives only the
+six allowed quick-example labels; both fall back to deterministic content when
+the local model is unavailable. Item recommendation generation receives the
+submitted word or short sentence and falls back to deterministic field-aware
+recommendations when Gemma is unavailable or invalid.
 
 ## Incident Notes
 

@@ -114,13 +114,13 @@ Generated date: 2026-05-04
 | Field | Type | Notes |
 | --- | --- | --- |
 | `keyword` | string | normalized keyword |
-| `recommendations` | `IdeaRecommendation[]` | concrete item recommendations |
+| `recommendations` | `IdeaRecommendation[]` | four concrete item recommendations; the backend prefers validated local Gemma4 output and falls back to deterministic field-aware recommendations when the model is unavailable or invalid |
 
 ## `IdeaRecommendation`
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `title` | string | recommendation title |
+| `title` | string | recommendation title, unique within the response |
 | `summary` | string | short recommendation summary |
 | `rationale` | string | why this item fits the input |
 | `report_seed` | string | full idea seed used to create a report |
