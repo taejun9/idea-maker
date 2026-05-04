@@ -24,6 +24,7 @@ from services.api.app.main import allowed_cors_origins, app
 from services.api.app.repositories.idea_reports import InMemoryIdeaReportRepository
 from services.api.app.schemas import IdeaReportRequest, IdeaReportResponse
 from services.api.app.services import (
+    QUICK_EXAMPLE_FIELDS,
     create_idea_report,
     create_quick_idea_examples,
     quick_idea_example_for_field,
@@ -398,8 +399,21 @@ def test_get_quick_idea_examples_returns_five_business_field_examples() -> None:
     body = response.json()
     assert len(body["examples"]) == 5
     assert len({example["field"] for example in body["examples"]}) == 5
-    assert all(example["field"] != "기타" for example in body["examples"])
+    assert all(example["field"] in QUICK_EXAMPLE_FIELDS for example in body["examples"])
     assert all(example["idea"] for example in body["examples"])
+
+
+def test_get_quick_idea_examples_limits_fields_to_supported_ai_contexts() -> None:
+    client = TestClient(app)
+
+    response = client.get("/api/quick-idea-examples?count=10")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["examples"]) == len(QUICK_EXAMPLE_FIELDS)
+    assert {example["field"] for example in body["examples"]} == set(
+        QUICK_EXAMPLE_FIELDS
+    )
 
 
 def test_create_quick_idea_examples_randomizes_generated_output() -> None:

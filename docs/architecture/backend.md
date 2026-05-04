@@ -52,10 +52,10 @@ boundary to generate business-field context for IT, 교육, 금융, 라이프스
 validates JSON output, and falls back to deterministic context when unavailable.
 
 `LocalGemmaQuickIdeaExampleGenerator` uses the same boundary for
-`GET /api/quick-idea-examples`. The service selects supported Q5 field labels,
-sends only those labels to Gemma, validates one generated idea per requested
-field, and falls back to deterministic examples when the adapter is unavailable
-or invalid.
+`GET /api/quick-idea-examples`. The service selects only IT, 교육, 금융,
+라이프스타일, 마케팅/PR, and 미디어/엔터테인먼트 labels, sends only those
+labels to Gemma, validates one generated idea per requested field, and falls
+back to deterministic examples when the adapter is unavailable or invalid.
 
 Runtime configuration:
 

@@ -66,9 +66,9 @@ Forbidden:
 - Local Gemma4 business-context generation receives only a Q5 business-field
   label such as `IT` or `마케팅/PR`; it must not receive raw user ideas,
   competitor records, secrets, local files, or backend internals.
-- Local Gemma4 quick-example generation receives only selected Q5 business-field
-  labels. It must not receive raw user ideas, saved reports, competitor records,
-  secrets, local files, or backend internals.
+- Local Gemma4 quick-example generation receives only the six allowed
+  quick-example Q5 business-field labels. It must not receive raw user ideas,
+  saved reports, competitor records, secrets, local files, or backend internals.
 - Source collector tests must use fake payloads or explicit fixture fallback; routine
   verification must not depend on third-party availability.
 
