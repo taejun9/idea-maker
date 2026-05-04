@@ -64,6 +64,20 @@ class BusinessContextGenerationResult:
     notes: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class GeneratedQuickIdeaExample:
+    field: str
+    idea: str
+
+
+@dataclass(frozen=True)
+class QuickIdeaExamplesGenerationResult:
+    provider: ResearchProvider
+    status: ResearchStageStatus
+    examples: tuple[GeneratedQuickIdeaExample, ...]
+    notes: tuple[str, ...]
+
+
 class GeminiSearchItem(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -101,6 +115,19 @@ class GemmaBusinessContextPayload(BaseModel):
     adoption_risk: str = Field(min_length=1, max_length=240)
     differentiation_focus: str = Field(min_length=1, max_length=240)
     mvp_capability: str = Field(min_length=1, max_length=240)
+
+
+class GemmaQuickIdeaExampleItem(BaseModel):
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    field: str = Field(min_length=1, max_length=80)
+    idea: str = Field(min_length=5, max_length=240)
+
+
+class GemmaQuickIdeaExamplesPayload(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    examples: list[GemmaQuickIdeaExampleItem] = Field(min_length=1, max_length=10)
 
 
 class GeminiCliSearchAdapter:
@@ -366,6 +393,102 @@ class LocalGemmaBusinessContextGenerator:
         )
 
 
+class LocalGemmaQuickIdeaExampleGenerator:
+    def __init__(
+        self,
+        *,
+        base_url: str | None = None,
+        model: str | None = None,
+        timeout_seconds: float | None = None,
+        environment: Mapping[str, str] = os.environ,
+    ) -> None:
+        self.base_url = (
+            base_url or environment.get("LOCAL_GEMMA_BASE_URL", DEFAULT_GEMMA_BASE_URL)
+        ).rstrip("/")
+        self.model = model or environment.get("LOCAL_GEMMA_MODEL", DEFAULT_GEMMA_MODEL)
+        self.timeout_seconds = timeout_seconds or float(
+            environment.get("LOCAL_GEMMA_QUICK_EXAMPLES_TIMEOUT_SECONDS", "180")
+        )
+
+    def generate(
+        self,
+        *,
+        fields: tuple[str, ...],
+    ) -> QuickIdeaExamplesGenerationResult:
+        requested_fields = tuple(dict.fromkeys(fields))
+        if not requested_fields:
+            return QuickIdeaExamplesGenerationResult(
+                provider="gemma4",
+                status="success",
+                examples=(),
+                notes=("No quick idea example fields were requested.",),
+            )
+
+        request_body = json.dumps(
+            {
+                "model": self.model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You create concise Korean startup idea examples. "
+                            "Return only a JSON object that matches the requested schema."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": gemma_quick_idea_examples_prompt(requested_fields),
+                    },
+                ],
+                "temperature": 0.9,
+                "max_tokens": 1000,
+                "response_format": {"type": "json_object"},
+            },
+            ensure_ascii=False,
+        ).encode("utf-8")
+        request = Request(
+            f"{self.base_url}/v1/chat/completions",
+            data=request_body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        try:
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                raw_body = response.read(250_000)
+        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            return quick_idea_examples_generation_fallback(
+                f"Gemma quick idea example generator unavailable: {exc}"
+            )
+
+        try:
+            response_payload = json.loads(raw_body.decode("utf-8"))
+            content = response_payload["choices"][0]["message"]["content"]
+            payload = GemmaQuickIdeaExamplesPayload.model_validate(
+                parse_json_object(content)
+            )
+            examples = validated_quick_idea_examples(payload, requested_fields)
+        except (
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+            KeyError,
+            IndexError,
+            TypeError,
+            ValidationError,
+            ValueError,
+        ) as exc:
+            return quick_idea_examples_generation_fallback(
+                f"Gemma quick idea example output was not valid JSON: {exc}"
+            )
+
+        return QuickIdeaExamplesGenerationResult(
+            provider="gemma4",
+            status="success",
+            examples=examples,
+            notes=(f"Gemma generated {len(examples)} quick idea examples.",),
+        )
+
+
 def search_fallback(reason: str) -> SearchAdapterResult:
     return SearchAdapterResult(
         provider="fallback",
@@ -424,6 +547,42 @@ def business_context_generation_fallback(
         mvp_capability="",
         notes=(reason, "Using deterministic business-field context instead of local Gemma4."),
     )
+
+
+def quick_idea_examples_generation_fallback(
+    reason: str,
+) -> QuickIdeaExamplesGenerationResult:
+    return QuickIdeaExamplesGenerationResult(
+        provider="fallback",
+        status="fallback",
+        examples=(),
+        notes=(reason, "Using deterministic quick examples instead of local Gemma4."),
+    )
+
+
+def validated_quick_idea_examples(
+    payload: GemmaQuickIdeaExamplesPayload,
+    requested_fields: tuple[str, ...],
+) -> tuple[GeneratedQuickIdeaExample, ...]:
+    examples_by_field: dict[str, GeneratedQuickIdeaExample] = {}
+    for item in payload.examples:
+        if item.field in examples_by_field:
+            raise ValueError(f"duplicate quick idea example field: {item.field}")
+        examples_by_field[item.field] = GeneratedQuickIdeaExample(
+            field=item.field,
+            idea=item.idea,
+        )
+
+    requested_field_set = set(requested_fields)
+    generated_field_set = set(examples_by_field)
+    if generated_field_set != requested_field_set:
+        missing = sorted(requested_field_set - generated_field_set)
+        extra = sorted(generated_field_set - requested_field_set)
+        raise ValueError(
+            f"quick idea example fields mismatch; missing={missing}, extra={extra}"
+        )
+
+    return tuple(examples_by_field[field] for field in requested_fields)
 
 
 def gemini_subprocess_environment(environment: Mapping[str, str]) -> dict[str, str]:
@@ -507,4 +666,18 @@ def gemma_business_context_prompt(business_field: str) -> str:
         '"mvp_capability":"minimum viable capability"}. '
         "All values must be concise Korean strings suitable for a startup idea report.\n\n"
         f"Business field: {business_field}"
+    )
+
+
+def gemma_quick_idea_examples_prompt(fields: tuple[str, ...]) -> str:
+    field_list = ", ".join(fields)
+    return (
+        "Generate one Korean startup/product idea example for each requested business "
+        f"field, in this exact order: {field_list}. Return only JSON with this schema: "
+        '{"examples":[{"field":"exact requested field","idea":"concise Korean idea"}]}. '
+        "Rules: include exactly one example per requested field; each field value must "
+        "exactly match the requested label; each idea must be 25 to 90 Korean "
+        "characters, concrete enough to click as a starter idea, and should describe "
+        "a user, problem, and product shape. Avoid markdown, numbering, placeholders, "
+        "generic slogans, and repeated product wording."
     )

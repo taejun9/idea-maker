@@ -51,6 +51,12 @@ boundary to generate business-field context for IT, 교육, 금융, 라이프스
 마케팅/PR, and 미디어/엔터테인먼트. It receives only the business-field label,
 validates JSON output, and falls back to deterministic context when unavailable.
 
+`LocalGemmaQuickIdeaExampleGenerator` uses the same boundary for
+`GET /api/quick-idea-examples`. The service selects supported Q5 field labels,
+sends only those labels to Gemma, validates one generated idea per requested
+field, and falls back to deterministic examples when the adapter is unavailable
+or invalid.
+
 Runtime configuration:
 
 - `GEMINI_CLI_COMMAND`, default `gemini`
@@ -63,6 +69,9 @@ Runtime configuration:
 - `LOCAL_GEMMA_TIMEOUT_SECONDS`, default `4`
 - `LOCAL_GEMMA_CONTEXT_TIMEOUT_SECONDS`, default `LOCAL_GEMMA_TIMEOUT_SECONDS`
   or `4`, used for business-field context generation
+- `LOCAL_GEMMA_QUICK_EXAMPLES_TIMEOUT_SECONDS`, default `180`, used for
+  quick-example idea generation because page-load examples may tolerate slower
+  model responses
 
 Routes must not call subprocesses or HTTP adapters directly; this logic belongs in service/integration modules.
 The API Docker image includes Node 22 and `@google/gemini-cli` so Docker Compose
