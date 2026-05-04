@@ -46,6 +46,7 @@ Codex 전용 작업 지침이다. 이 파일은 백과사전이 아니라 저장
 - backend route에서 외부 API 호출, DB 쿼리, 복잡한 비즈니스 로직을 직접 작성하지 않는다.
 - shared utility는 두 곳 이상에서 실제로 필요할 때만 만든다.
 - 테스트나 lint를 약화시키는 변경은 실행 계획과 품질 점수 갱신 없이는 금지한다.
+- 기능을 추가하거나 수정하면 루트 `README.md`를 같은 변경에서 반드시 갱신한다.
 - 모든 작업은 요청 접수 회의로 plan 범위를 확정한 뒤 `docs/exec-plans/active/plan-NNNN-<task>.md` 작성 또는 갱신 후 진행한다.
 - `docs/exec-plans/active/`에 plan 파일이 하나도 없으면 작업을 진행하지 말고 요청 접수 회의부터 수행해 plan을 만든다.
 - 완료나 종료 보고 시점에 누락된 plan을 소급 작성하는 것은 금지한다.
@@ -85,6 +86,7 @@ Minimum checks:
 
 Update docs in the same change when:
 
+- feature behavior is added or changed; root `README.md` must be updated
 - user-facing behavior changes
 - architecture boundary changes
 - new external integration is added
