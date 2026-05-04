@@ -38,6 +38,7 @@ sources still use fixture-backed fallbacks.
 - `codex-prompt-pack.md`: reusable Codex prompts.
 - `codex-extensions.md`: recommended skills, MCP/plugin capabilities, and installation policy.
 - `source-collectors.md`: source collector normalization, fixture limitations, and upgrade rules.
+- `rag-source-index.md`: RAG/source-index direction for fresher competitor research.
 
 ## Update When
 

@@ -1,10 +1,13 @@
 from datetime import date
 
+import pytest
+
 from services.api.app.integrations.source_collectors import (
     FallbackSourceCollector,
     PitchWallNewProductsCollector,
     SourceCollectorError,
     UrlFetchingSourceClient,
+    clear_source_index_cache,
     collect_source_records,
     default_collectors,
     pitchwall_fixture_collector,
@@ -25,6 +28,13 @@ class FakeJsonClient:
 class FailingJsonClient:
     def fetch_json(self, url: str, *, timeout_seconds: float) -> object:
         raise SourceCollectorError("network disabled in deterministic tests")
+
+
+@pytest.fixture(autouse=True)
+def clear_public_source_cache():
+    clear_source_index_cache()
+    yield
+    clear_source_index_cache()
 
 
 def test_default_collectors_return_normalized_records(monkeypatch) -> None:
@@ -128,6 +138,31 @@ def test_pitchwall_live_collector_does_not_forward_idea_as_query() -> None:
     assert fake_client.requested_urls == ["https://auth.pitchwall.co/api/products/new?page=1"]
     assert "기밀" not in fake_client.requested_urls[0]
     assert "리뷰" not in fake_client.requested_urls[0]
+
+
+def test_pitchwall_live_collector_reuses_cached_public_feed() -> None:
+    observed = date(2026, 5, 3)
+    fake_client = FakeJsonClient(
+        {
+            "data": [
+                {
+                    "title": "AI Review Desk",
+                    "summary": "AI review analysis for customer feedback.",
+                    "page": "/product/ai-review-desk",
+                }
+            ]
+        }
+    )
+    collector = PitchWallNewProductsCollector(client=fake_client)
+
+    first_records = collector.collect(idea="AI 리뷰 분석 도구", observed_date=observed)
+    second_records = collector.collect(idea="AI 리뷰 분석 도구", observed_date=observed)
+
+    assert fake_client.requested_urls == [
+        "https://auth.pitchwall.co/api/products/new?page=1"
+    ]
+    assert first_records == second_records
+    assert first_records[0].access_method == "live_http"
 
 
 def test_pitchwall_fixture_fallback_remains_deterministic() -> None:

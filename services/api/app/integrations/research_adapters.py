@@ -287,6 +287,7 @@ class LocalGemmaOrganizer:
                 "temperature": 0.2,
                 "max_tokens": 900,
                 "response_format": {"type": "json_object"},
+                "chat_template_kwargs": {"enable_thinking": False},
             }
         ).encode("utf-8")
         request = Request(
@@ -376,6 +377,7 @@ class LocalGemmaBusinessContextGenerator:
                 "temperature": 0.7,
                 "max_tokens": 700,
                 "response_format": {"type": "json_object"},
+                "chat_template_kwargs": {"enable_thinking": False},
             },
             ensure_ascii=False,
         ).encode("utf-8")
@@ -477,6 +479,7 @@ class LocalGemmaQuickIdeaExampleGenerator:
                 "temperature": 0.9,
                 "max_tokens": 1000,
                 "response_format": {"type": "json_object"},
+                "chat_template_kwargs": {"enable_thinking": False},
             },
             ensure_ascii=False,
         ).encode("utf-8")

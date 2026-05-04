@@ -63,6 +63,19 @@ sentence, asks Gemma for four concrete Korean item recommendations, validates
 JSON shape, uniqueness, and connection to at least one input term, then falls
 back to deterministic field-aware recommendations when unavailable or invalid.
 
+Successful local Gemma results are cached in process for a short TTL by model,
+endpoint, and request shape. This preserves generated quality while avoiding
+repeat calls for the same quick-example field set, Q5 business-field context, or
+word/short-sentence recommendation seed. Recommendation cache keys use a digest
+of the normalized input; cached values remain process-local and are not persisted.
+Structured JSON Gemma requests disable model thinking when the OpenAI-compatible
+llama.cpp endpoint supports `chat_template_kwargs.enable_thinking`.
+
+Research report generation starts baseline source collection and Gemini CLI
+search in parallel because both depend only on the normalized idea and observed
+date. Gemma organization still runs after records are merged so the organizer has
+the full evidence set.
+
 Runtime configuration:
 
 - `GEMINI_CLI_COMMAND`, default `gemini`
@@ -80,6 +93,12 @@ Runtime configuration:
   model responses
 - `LOCAL_GEMMA_RECOMMENDATIONS_TIMEOUT_SECONDS`, default `180`, used for
   AI-generated item recommendations from short user input
+- `AI_GENERATION_CACHE_TTL_SECONDS`, default `600`, used for process-local
+  successful Gemma result reuse
+- `AI_GENERATION_CACHE_MAX_ENTRIES`, default `128`
+- `SOURCE_INDEX_CACHE_TTL_SECONDS`, default `300`, used for public source feed
+  payload reuse before local filtering
+- `SOURCE_INDEX_CACHE_MAX_ENTRIES`, default `16`
 
 Routes must not call subprocesses or HTTP adapters directly; this logic belongs in service/integration modules.
 The API Docker image includes Node 22 and `@google/gemini-cli` so Docker Compose

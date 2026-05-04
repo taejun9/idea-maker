@@ -25,9 +25,11 @@ class FakeUrlResponse:
 
 def test_local_gemma_business_context_generator_parses_context_payload(monkeypatch):
     requested_urls: list[str] = []
+    requested_bodies: list[dict[str, object]] = []
 
     def fake_urlopen(request, *, timeout: float):
         requested_urls.append(request.full_url)
+        requested_bodies.append(json.loads(request.data.decode("utf-8")))
         assert timeout == 0.25
         return FakeUrlResponse(
             {
@@ -65,6 +67,7 @@ def test_local_gemma_business_context_generator_parses_context_payload(monkeypat
     assert result.business_field == "교육"
     assert result.users == ("학습자", "강사", "교육 운영자")
     assert result.mvp_capability == "오답 기록과 다음 학습 추천"
+    assert requested_bodies[0]["chat_template_kwargs"] == {"enable_thinking": False}
 
 
 def test_local_gemma_business_context_generator_falls_back_on_invalid_payload(
@@ -90,9 +93,11 @@ def test_local_gemma_quick_idea_example_generator_parses_examples_payload(
     monkeypatch,
 ):
     requested_urls: list[str] = []
+    requested_bodies: list[dict[str, object]] = []
 
     def fake_urlopen(request, *, timeout: float):
         requested_urls.append(request.full_url)
+        requested_bodies.append(json.loads(request.data.decode("utf-8")))
         assert timeout == 0.5
         return FakeUrlResponse(
             {
@@ -139,6 +144,7 @@ def test_local_gemma_quick_idea_example_generator_parses_examples_payload(
     assert result.status == "success"
     assert [example.field for example in result.examples] == ["IT", "교육"]
     assert result.examples[0].idea.startswith("사내 운영팀")
+    assert requested_bodies[0]["chat_template_kwargs"] == {"enable_thinking": False}
 
 
 def test_local_gemma_quick_idea_example_generator_falls_back_on_field_mismatch(

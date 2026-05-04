@@ -13,9 +13,10 @@ The current implementation uses source collectors in
 `services/api/app/integrations/source_collectors.py`.
 
 Most sources still use deterministic fixture-backed records. PitchWall now has an
-approved live HTTP collector with fixture fallback. Fixture records are not live market
-facts and must not be presented as current facts without a live collector or explicit
-browsing verification.
+approved live HTTP collector with fixture fallback. Its public feed payload can be
+reused through a short-lived in-process source-index cache before local filtering.
+Fixture records are not live market facts and must not be presented as current
+facts without a live collector or explicit browsing verification.
 
 ## Normalized Record Fields
 
@@ -54,6 +55,10 @@ Collectors return:
 - Timeout policy: 3 seconds.
 - Retry policy: one attempt in the request path. A failure or empty local match falls
   back to the deterministic PitchWall fixture.
+- Cache policy: successful public feed payloads are cached in process for
+  `SOURCE_INDEX_CACHE_TTL_SECONDS` seconds, default 300. The cache stores the
+  feed payload and observed date, not user ideas. Each report still filters the
+  cached payload locally against the submitted idea.
 - Rate posture: page 1 only, max 3 normalized records per report request.
 - Collected fields: product title, summary, PitchWall product page, published date when
   present.
